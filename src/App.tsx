@@ -57,6 +57,13 @@ const App = () => {
     addTeamMember(name);
   }, [addTeamMember]);
 
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("taskflow-tasks");
+    localStorage.removeItem("taskflow-team-members");
+    sessionStorage.clear();
+    window.location.reload();
+  }, []);
+
   return (
     <TooltipProvider>
       <Toaster />
@@ -64,10 +71,10 @@ const App = () => {
       <BrowserRouter>
         <SidebarProvider>
           <div className="app-shell min-h-screen flex w-full bg-[#e7e7e8] p-3 md:p-5">
-            <AppSidebar onAddProject={handleNew} onAddMember={() => setMemberDialogOpen(true)} />
+            <AppSidebar onAddProject={handleNew} onAddMember={() => setMemberDialogOpen(true)} onLogout={handleLogout} />
             <SidebarInset className="app-shell-main min-w-0 overflow-hidden rounded-[2rem] border border-white/60 bg-[#f3f3f4] shadow-[0_24px_70px_-58px_rgba(15,23,42,0.4)]">
               <Routes>
-                <Route path="/" element={<DashboardPage tasks={tasks} teamMembers={teamMembers} onEdit={handleEdit} onDelete={deleteTask} onNew={handleNew} onAddMember={() => setMemberDialogOpen(true)} />} />
+                <Route path="/" element={<DashboardPage tasks={tasks} teamMembers={teamMembers} onEdit={handleEdit} onDelete={deleteTask} onAddProject={handleNew} onNew={handleNew} onAddMember={() => setMemberDialogOpen(true)} />} />
                 <Route path="/tasks" element={<TasksPage tasks={tasks} teamMembers={teamMembers} onEdit={handleEdit} onDelete={deleteTask} onNew={handleNew} />} />
                 <Route path="/board" element={<BoardPage tasks={tasks} teamMembers={teamMembers} onEdit={handleEdit} onDelete={deleteTask} onNew={handleNew} onUpdateStatus={handleUpdateStatus} />} />
                 <Route path="/projects/:projectId" element={<ProjectDetailsPage tasks={tasks} teamMembers={teamMembers} onEdit={handleEdit} onNew={handleNew} />} />

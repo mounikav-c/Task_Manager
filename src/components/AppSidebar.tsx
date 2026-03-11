@@ -31,9 +31,10 @@ const generalItems = [
 interface AppSidebarProps {
   onAddProject: () => void;
   onAddMember: () => void;
+  onLogout: () => void;
 }
 
-export function AppSidebar({ onAddProject, onAddMember }: AppSidebarProps) {
+export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
@@ -122,7 +123,7 @@ export function AppSidebar({ onAddProject, onAddMember }: AppSidebarProps) {
               + Add Member
             </Button>
           </div>
-          <Button variant="ghost" className="h-11 justify-start rounded-2xl border border-red-200/70 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600">
+          <Button onClick={onLogout} variant="ghost" className="h-11 justify-start rounded-2xl border border-red-200/70 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600">
             <LogOut className="h-4 w-4" />
             Log Out
           </Button>

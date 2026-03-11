@@ -11,6 +11,7 @@ interface Props {
   teamMembers: Assignee[];
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onAddProject: () => void;
   onNew: () => void;
   onAddMember: () => void;
 }
@@ -51,7 +52,7 @@ const quickActions = [
   },
 ];
 
-export function DashboardPage({ tasks, teamMembers, onEdit, onNew, onAddMember }: Props) {
+export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew, onAddMember }: Props) {
   const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0];
 
@@ -75,7 +76,7 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onNew, onAddMember }
     .slice(0, 4);
 
   const actionHandlers = [
-    () => navigate("/board"),
+    () => onAddProject(),
     () => onNew(),
     () => onAddMember(),
     () => navigate("/members"),
