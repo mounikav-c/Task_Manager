@@ -76,7 +76,7 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
                       to={item.url}
                       end={item.url === "/"}
                       className="sidebar-nav-link flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition-colors"
-                      activeClassName="bg-white text-violet-700 shadow-[0_10px_24px_-22px_rgba(139,92,246,0.55)]"
+                      activeClassName="bg-sidebar-accent text-primary shadow-[0_10px_24px_-22px_rgba(139,92,246,0.55)]"
                     >
                       <item.icon className="h-4.5 w-4.5 shrink-0" />
                       {!collapsed && <span>{item.title}</span>}
