@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @layer base {
   :root {
@@ -56,40 +56,45 @@
     --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
     --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
 
+    --glow-primary: 0 0 20px hsl(267 84% 57% / 0.15);
+    --glow-primary-strong: 0 0 30px hsl(267 84% 57% / 0.25);
+
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
   .dark {
-    --background: 228 20% 10%;
-    --foreground: 220 14% 90%;
-    --card: 228 22% 13%;
-    --card-foreground: 220 14% 90%;
-    --popover: 228 22% 13%;
-    --popover-foreground: 220 14% 90%;
+    --background: 230 18% 7%;
+    --foreground: 220 14% 92%;
+    --card: 230 18% 11%;
+    --card-foreground: 220 14% 92%;
+    --popover: 230 18% 11%;
+    --popover-foreground: 220 14% 92%;
     --primary: 267 84% 62%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 228 18% 16%;
-    --secondary-foreground: 220 14% 90%;
-    --muted: 228 18% 16%;
-    --muted-foreground: 220 9% 55%;
-    --accent: 228 18% 18%;
-    --accent-foreground: 220 14% 90%;
+    --secondary: 230 16% 14%;
+    --secondary-foreground: 220 14% 92%;
+    --muted: 230 16% 14%;
+    --muted-foreground: 220 9% 52%;
+    --accent: 230 16% 16%;
+    --accent-foreground: 220 14% 92%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 228 18% 18%;
-    --input: 228 18% 18%;
+    --border: 230 14% 16%;
+    --input: 230 14% 16%;
     --ring: 267 84% 62%;
-    --sidebar-background: 228 24% 8%;
-    --sidebar-foreground: 220 14% 55%;
+    --sidebar-background: 230 22% 6%;
+    --sidebar-foreground: 220 14% 50%;
     --sidebar-primary: 267 84% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 228 22% 14%;
-    --sidebar-accent-foreground: 220 14% 90%;
-    --sidebar-border: 228 18% 14%;
+    --sidebar-accent: 230 18% 13%;
+    --sidebar-accent-foreground: 220 14% 92%;
+    --sidebar-border: 230 16% 12%;
     --sidebar-ring: 267 84% 62%;
 
-    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.15);
-    --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+    --shadow-card: 0 2px 8px 0 rgb(0 0 0 / 0.25), 0 1px 3px -1px rgb(0 0 0 / 0.2);
+    --shadow-card-hover: 0 8px 24px 0 rgb(0 0 0 / 0.35), 0 4px 8px -2px rgb(0 0 0 / 0.25);
+    --glow-primary: 0 0 25px hsl(267 84% 62% / 0.12);
+    --glow-primary-strong: 0 0 40px hsl(267 84% 62% / 0.2);
   }
 }
 
@@ -104,6 +109,7 @@
 }
 
 @layer components {
+  /* ─── Task Cards ─── */
   .task-card {
     @apply bg-card rounded-xl border p-4 transition-all duration-200 cursor-pointer relative overflow-hidden;
     box-shadow: var(--shadow-card);
@@ -113,15 +119,15 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, hsl(var(--primary) / 0.06), transparent 35%);
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.06), transparent 40%);
     opacity: 0;
     transition: opacity 200ms ease;
     pointer-events: none;
   }
 
   .task-card:hover {
-    box-shadow: var(--shadow-card-hover);
-    @apply -translate-y-0.5 border-primary/25;
+    box-shadow: var(--shadow-card-hover), var(--glow-primary);
+    @apply -translate-y-0.5 border-primary/30;
   }
 
   .task-card:hover::before {
@@ -172,17 +178,18 @@
   }
 
   .task-card-urgency-high:hover {
-    box-shadow: inset 4px 0 0 hsl(var(--priority-high)), var(--shadow-card-hover);
+    box-shadow: inset 4px 0 0 hsl(var(--priority-high)), var(--shadow-card-hover), var(--glow-primary);
   }
 
   .task-card-urgency-medium:hover {
-    box-shadow: inset 4px 0 0 hsl(var(--priority-medium)), var(--shadow-card-hover);
+    box-shadow: inset 4px 0 0 hsl(var(--priority-medium)), var(--shadow-card-hover), var(--glow-primary);
   }
 
   .task-card-urgency-low:hover {
-    box-shadow: inset 4px 0 0 hsl(var(--priority-low)), var(--shadow-card-hover);
+    box-shadow: inset 4px 0 0 hsl(var(--priority-low)), var(--shadow-card-hover), var(--glow-primary);
   }
 
+  /* ─── Stat Cards ─── */
   .stat-card {
     @apply bg-card rounded-xl border p-6 transition-all duration-200 cursor-pointer relative overflow-hidden;
     box-shadow: var(--shadow-card);
@@ -195,7 +202,7 @@
     right: 0;
     top: 0;
     height: 3px;
-    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--status-inprogress)));
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.4));
     transform: scaleX(0.18);
     transform-origin: left;
     transition: transform 220ms ease;
@@ -207,16 +214,16 @@
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(circle at top right, hsl(var(--primary) / 0.12), transparent 24%),
-      linear-gradient(180deg, transparent, hsl(var(--secondary) / 0.55));
+      radial-gradient(circle at top right, hsl(var(--primary) / 0.08), transparent 24%),
+      linear-gradient(180deg, transparent, hsl(var(--secondary) / 0.4));
     opacity: 0;
     transition: opacity 200ms ease;
     pointer-events: none;
   }
 
   .stat-card:hover {
-    box-shadow: 0 16px 32px -18px rgb(0 0 0 / 0.22), 0 6px 16px -12px rgb(0 0 0 / 0.12);
-    @apply -translate-y-1 border-primary/25;
+    box-shadow: var(--shadow-card-hover), var(--glow-primary);
+    @apply -translate-y-1 border-primary/30;
   }
 
   .stat-card:hover::before {
@@ -258,8 +265,10 @@
     transform: translateY(1px);
   }
 
+  /* ─── Sidebar ─── */
   .sidebar-workspace-card {
-    @apply flex items-center gap-3 rounded-[1.35rem] border border-sidebar-border/80 bg-card p-3 shadow-[0_14px_32px_-28px_rgba(0,0,0,0.4)];
+    @apply flex items-center gap-3 rounded-[1.35rem] border border-sidebar-border/80 bg-sidebar-accent p-3;
+    box-shadow: var(--shadow-card);
   }
 
   .sidebar-nav-link {
@@ -271,6 +280,7 @@
     color: hsl(var(--sidebar-accent-foreground));
   }
 
+  /* ─── Project Cards ─── */
   .project-card {
     @apply rounded-[1.4rem] border border-border/70 bg-card p-4 transition-all duration-200;
     box-shadow: var(--shadow-card);
@@ -278,25 +288,29 @@
 
   .project-card:hover {
     @apply -translate-y-1 border-primary/30;
-    box-shadow: var(--shadow-card-hover);
+    box-shadow: var(--shadow-card-hover), var(--glow-primary);
   }
 
   .project-card-badge {
-    @apply h-10 w-10 shrink-0 rounded-xl shadow-[0_16px_24px_-18px_rgba(15,23,42,0.45)];
+    @apply h-10 w-10 shrink-0 rounded-xl shadow-[0_16px_24px_-18px_rgba(0,0,0,0.45)];
   }
 
+  /* ─── Dashboard Panels ─── */
   .dashboard-panel {
-    @apply rounded-[1.5rem] border border-border/80 bg-secondary p-4 md:p-5;
+    @apply rounded-[1.5rem] border border-border/80 bg-secondary/60 p-4 md:p-5;
     box-shadow: var(--shadow-card);
+    backdrop-filter: blur(8px);
   }
 
   .dashboard-action-card {
-    @apply flex items-start gap-3 rounded-[1.35rem] border border-border/80 bg-secondary p-4 transition-all duration-200;
+    @apply flex items-start gap-3 rounded-[1.35rem] border border-border/80 bg-card/80 p-4 transition-all duration-200;
     box-shadow: var(--shadow-card);
+    backdrop-filter: blur(6px);
   }
 
   .dashboard-action-card:hover {
-    @apply -translate-y-0.5 border-primary/20 bg-card;
+    @apply -translate-y-0.5 border-primary/25 bg-card;
+    box-shadow: var(--shadow-card-hover), var(--glow-primary);
   }
 
   .dashboard-action-icon {
@@ -304,55 +318,61 @@
   }
 
   .dashboard-task-row {
-    @apply flex w-full items-center justify-between gap-4 rounded-[1.15rem] border border-transparent bg-card px-4 py-3 transition-all duration-200;
+    @apply flex w-full items-center justify-between gap-4 rounded-[1.15rem] border border-border/40 bg-card/70 px-4 py-3 transition-all duration-200;
+    backdrop-filter: blur(4px);
   }
 
   .dashboard-task-row:hover {
-    @apply border-primary/20;
-    box-shadow: var(--shadow-card-hover);
+    @apply border-primary/25 bg-card;
+    box-shadow: var(--shadow-card-hover), var(--glow-primary);
   }
 
   .dashboard-task-eye {
-    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-secondary text-muted-foreground transition-colors duration-200;
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-secondary text-muted-foreground transition-all duration-200;
   }
 
   .dashboard-task-row:hover .dashboard-task-eye {
-    @apply border-primary/20 text-primary;
+    @apply border-primary/30 text-primary;
+    box-shadow: var(--glow-primary);
   }
 
   .dashboard-project-card {
-    @apply rounded-[1.2rem] border border-border/75 bg-card p-4 transition-all duration-200;
+    @apply rounded-[1.2rem] border border-border/60 bg-card/80 p-4 transition-all duration-200;
+    backdrop-filter: blur(4px);
   }
 
   .dashboard-project-card:hover {
-    @apply border-primary/20;
-    box-shadow: var(--shadow-card-hover);
+    @apply border-primary/25 bg-card;
+    box-shadow: var(--shadow-card-hover), var(--glow-primary);
   }
 
   .dashboard-person-card {
-    @apply rounded-[1.2rem] border border-border/75 bg-card px-4 py-5 transition-all duration-200;
+    @apply rounded-[1.2rem] border border-border/60 bg-card/80 px-4 py-5 transition-all duration-200;
+    backdrop-filter: blur(4px);
   }
 
   .dashboard-person-card:hover {
-    @apply border-primary/20;
-    box-shadow: var(--shadow-card-hover);
+    @apply border-primary/25 bg-card;
+    box-shadow: var(--shadow-card-hover), var(--glow-primary);
   }
 
   .dashboard-activity-row {
-    @apply flex items-start gap-3 rounded-[1.2rem] border border-border/75 bg-card px-4 py-3;
+    @apply flex items-start gap-3 rounded-[1.2rem] border border-border/50 bg-card/70 px-4 py-3;
+    backdrop-filter: blur(4px);
   }
 
+  /* ─── Project Details ─── */
   .project-details-stat {
     @apply rounded-[1.15rem] border border-border/75 bg-card px-4 py-3;
   }
 
   .project-onboarding-banner {
     @apply rounded-[1.2rem] border border-primary/15 bg-card px-4 py-4;
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-card), var(--glow-primary);
   }
 
   .project-details-kicker {
-    @apply text-xs font-semibold tracking-[0.08em] text-muted-foreground;
+    @apply text-xs font-semibold tracking-[0.08em] text-primary;
   }
 
   .project-details-label {
@@ -373,13 +393,14 @@
 
   .project-task-detail-card:hover {
     @apply border-primary/20;
-    box-shadow: var(--shadow-card-hover);
+    box-shadow: var(--shadow-card-hover), var(--glow-primary);
   }
 
   .project-example-task-card {
     @apply rounded-[1rem] border border-border/75 bg-secondary px-4 py-4;
   }
 
+  /* ─── Priority & Status Pills ─── */
   .priority-high {
     color: hsl(0 0% 100%);
     background-color: hsl(var(--priority-high) / 0.9);
@@ -387,33 +408,33 @@
   }
 
   .priority-medium {
-    color: hsl(32 95% 15%);
-    background-color: hsl(var(--priority-medium) / 0.32);
-    border-color: hsl(var(--priority-medium) / 0.5);
+    color: hsl(38 95% 75%);
+    background-color: hsl(var(--priority-medium) / 0.2);
+    border-color: hsl(var(--priority-medium) / 0.4);
   }
 
   .priority-low {
-    color: hsl(157 71% 18%);
-    background-color: hsl(var(--priority-low) / 0.26);
-    border-color: hsl(var(--priority-low) / 0.45);
+    color: hsl(157 71% 70%);
+    background-color: hsl(var(--priority-low) / 0.15);
+    border-color: hsl(var(--priority-low) / 0.35);
   }
 
   .status-todo {
     color: hsl(var(--status-todo));
-    background-color: hsl(var(--status-todo) / 0.14);
-    border-color: hsl(var(--status-todo) / 0.26);
+    background-color: hsl(var(--status-todo) / 0.12);
+    border-color: hsl(var(--status-todo) / 0.22);
   }
 
   .status-inprogress {
-    color: hsl(var(--status-inprogress));
-    background-color: hsl(var(--status-inprogress) / 0.14);
-    border-color: hsl(var(--status-inprogress) / 0.28);
+    color: hsl(38 92% 70%);
+    background-color: hsl(var(--status-inprogress) / 0.12);
+    border-color: hsl(var(--status-inprogress) / 0.22);
   }
 
   .status-completed {
-    color: hsl(var(--status-completed));
-    background-color: hsl(var(--status-completed) / 0.14);
-    border-color: hsl(var(--status-completed) / 0.28);
+    color: hsl(162 63% 65%);
+    background-color: hsl(var(--status-completed) / 0.12);
+    border-color: hsl(var(--status-completed) / 0.22);
   }
 
   .priority-pill,

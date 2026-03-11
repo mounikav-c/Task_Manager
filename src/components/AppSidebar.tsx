@@ -1,4 +1,4 @@
-import { FolderKanban, HelpCircle, LayoutDashboard, ListTodo, LogOut, Settings, Users } from "lucide-react";
+import { FolderKanban, HelpCircle, LayoutDashboard, ListTodo, LogOut, Settings, Users, Sparkles } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,26 +39,26 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
   const collapsed = state === "collapsed";
 
   return (
-    <Sidebar collapsible="icon" variant="floating" className="p-5">
+    <Sidebar collapsible="icon" variant="floating" className="p-3">
       <SidebarHeader className="px-3 pt-4 pb-3">
         <div className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#7c3aed] text-white shadow-[0_10px_24px_-18px_rgba(124,58,237,0.7)]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-lg shadow-primary/20">
             <FolderKanban className="h-5 w-5" />
           </div>
           {!collapsed && (
             <div>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-sidebar-foreground/55">Workspace</p>
-              <p className="text-[1.75rem] leading-none font-semibold tracking-tight text-sidebar-accent-foreground">GoldenHills India</p>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-sidebar-foreground/40 font-medium">Workspace</p>
+              <p className="text-lg leading-tight font-semibold tracking-tight text-sidebar-accent-foreground">TaskFlow</p>
             </div>
           )}
         </div>
 
         {!collapsed && (
-          <div className="sidebar-workspace-card mt-5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-lime-100 text-lime-700">G</div>
+          <div className="sidebar-workspace-card mt-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 text-sm font-bold text-primary-foreground">G</div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-foreground">GoldenHills India</p>
-              <p className="text-xs text-muted-foreground">Company workspace</p>
+              <p className="text-[11px] text-muted-foreground">Company workspace</p>
             </div>
           </div>
         )}
@@ -66,7 +66,7 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
 
       <SidebarContent className="px-3 pb-3">
         <SidebarGroup className="px-0">
-          {!collapsed && <SidebarGroupLabel className="px-2 text-[11px] uppercase tracking-[0.18em] text-sidebar-foreground/45">Main Menu</SidebarGroupLabel>}
+          {!collapsed && <SidebarGroupLabel className="px-2 text-[10px] uppercase tracking-[0.2em] text-sidebar-foreground/35 font-semibold">Main Menu</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
               {mainItems.map((item) => (
@@ -75,10 +75,10 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="sidebar-nav-link flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition-colors"
-                      activeClassName="bg-sidebar-accent text-primary shadow-[0_10px_24px_-22px_rgba(139,92,246,0.55)]"
+                      className="sidebar-nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150"
+                      activeClassName="bg-primary/15 text-primary border border-primary/20 shadow-[0_0_15px_-5px_hsl(var(--primary)/0.3)]"
                     >
-                      <item.icon className="h-4.5 w-4.5 shrink-0" />
+                      <item.icon className="h-4 w-4 shrink-0" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
@@ -88,10 +88,10 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator className="my-3 bg-sidebar-border/70" />
+        <SidebarSeparator className="my-3 bg-sidebar-border/50" />
 
         <SidebarGroup className="px-0">
-          {!collapsed && <SidebarGroupLabel className="px-2 text-[11px] uppercase tracking-[0.18em] text-sidebar-foreground/45">General</SidebarGroupLabel>}
+          {!collapsed && <SidebarGroupLabel className="px-2 text-[10px] uppercase tracking-[0.2em] text-sidebar-foreground/35 font-semibold">General</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
               {generalItems.map((item) => (
@@ -99,10 +99,10 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
-                      className="sidebar-nav-link flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition-colors"
-                      activeClassName="bg-sidebar-accent text-primary shadow-[0_10px_24px_-22px_rgba(139,92,246,0.55)]"
+                      className="sidebar-nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150"
+                      activeClassName="bg-primary/15 text-primary border border-primary/20"
                     >
-                      <item.icon className="h-4.5 w-4.5 shrink-0" />
+                      <item.icon className="h-4 w-4 shrink-0" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
@@ -115,16 +115,18 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
 
       {!collapsed && (
         <SidebarFooter className="px-3 pb-4 pt-2">
-          <div className="rounded-[1.35rem] border border-sidebar-border/70 bg-card p-3 shadow-[0_12px_28px_-24px_rgba(0,0,0,0.3)]">
-            <Button onClick={onAddProject} className="h-11 w-full justify-start rounded-xl bg-[#6d28d9] hover:bg-[#5b21b6] shadow-[0_14px_24px_-18px_rgba(109,40,217,0.55)]">
-              + Add Project
+          <div className="rounded-xl border border-border/50 bg-card/80 p-2.5 space-y-1.5 backdrop-blur-sm">
+            <Button onClick={onAddProject} className="h-10 w-full justify-start rounded-lg bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20 gap-2 text-sm">
+              <Sparkles className="h-3.5 w-3.5" />
+              New Project
             </Button>
-            <Button onClick={onAddMember} variant="ghost" className="mt-2 h-10 w-full justify-start rounded-xl text-sidebar-foreground/65 hover:bg-sidebar-accent/70">
-              + Add Member
+            <Button onClick={onAddMember} variant="ghost" className="h-9 w-full justify-start rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 text-sm gap-2">
+              <Users className="h-3.5 w-3.5" />
+              Add Member
             </Button>
           </div>
-          <Button onClick={onLogout} variant="ghost" className="h-11 justify-start rounded-2xl border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive">
-            <LogOut className="h-4 w-4" />
+          <Button onClick={onLogout} variant="ghost" className="h-9 justify-start rounded-lg text-destructive/70 hover:text-destructive hover:bg-destructive/10 text-sm gap-2 mt-1">
+            <LogOut className="h-3.5 w-3.5" />
             Log Out
           </Button>
         </SidebarFooter>
