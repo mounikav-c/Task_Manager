@@ -123,7 +123,7 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
               + Add Member
             </Button>
           </div>
-          <Button onClick={onLogout} variant="ghost" className="h-11 justify-start rounded-2xl border border-red-200/70 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600">
+          <Button onClick={onLogout} variant="ghost" className="h-11 justify-start rounded-2xl border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive">
             <LogOut className="h-4 w-4" />
             Log Out
           </Button>

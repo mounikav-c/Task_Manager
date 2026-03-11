@@ -368,16 +368,16 @@
   }
 
   .project-task-detail-card {
-    @apply rounded-[1.2rem] border border-border/75 bg-white p-4 transition-all duration-200;
+    @apply rounded-[1.2rem] border border-border/75 bg-card p-4 transition-all duration-200;
   }
 
   .project-task-detail-card:hover {
     @apply border-primary/20;
-    box-shadow: 0 14px 28px -26px rgb(15 23 42 / 0.22);
+    box-shadow: var(--shadow-card-hover);
   }
 
   .project-example-task-card {
-    @apply rounded-[1rem] border border-border/75 bg-[#f7f7f9] px-4 py-4;
+    @apply rounded-[1rem] border border-border/75 bg-secondary px-4 py-4;
   }
 
   .priority-high {

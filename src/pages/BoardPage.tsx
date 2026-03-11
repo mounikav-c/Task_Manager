@@ -116,8 +116,8 @@ export function BoardPage({ tasks, teamMembers, onNew }: Props) {
                     <span className="text-sm font-medium text-foreground">Project Progress</span>
                     <span className="text-xs font-semibold text-muted-foreground">{project.progress}%</span>
                   </div>
-                  <div className="h-2 rounded-full bg-[#e2e2e5]">
-                    <div className="h-full rounded-full bg-[#b58cf4] transition-all duration-300" style={{ width: `${project.progress}%` }} />
+                  <div className="h-2 rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary/70 transition-all duration-300" style={{ width: `${project.progress}%` }} />
                   </div>
                 </div>
               </button>

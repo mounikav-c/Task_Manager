@@ -88,7 +88,7 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
                   <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Assigned Projects</p>
                   <div className="space-y-2">
                     {member.assignedTasks.slice(0, 3).map((task) => (
-                      <div key={task.id} className="rounded-xl border border-border/70 bg-[#fafafb] px-3 py-2">
+                      <div key={task.id} className="rounded-xl border border-border/70 bg-secondary px-3 py-2">
                         <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           {task.status === "completed" ? "Completed" : task.status === "inprogress" ? "In progress" : "Todo"}

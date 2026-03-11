@@ -48,7 +48,7 @@ const quickActions = [
     title: "Schedule Meeting",
     description: "Schedule a meeting for project",
     icon: Video,
-    tone: "bg-amber-100 text-amber-600",
+    tone: "bg-amber-500/15 text-amber-400",
   },
 ];
 
