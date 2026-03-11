@@ -97,7 +97,7 @@ export function BoardPage({ tasks, teamMembers, onNew }: Props) {
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex -space-x-2">
                     {project.team.slice(0, 3).map((member) => (
-                      <Avatar key={member.id} className="h-8 w-8 border-2 border-white shadow-sm">
+                      <Avatar key={member.id} className="h-8 w-8 border-2 border-card shadow-sm">
                         <AvatarFallback className="text-[10px] font-semibold text-white" style={{ backgroundColor: member.color }}>
                           {member.initials}
                         </AvatarFallback>
