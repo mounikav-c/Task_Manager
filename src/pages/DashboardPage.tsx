@@ -220,7 +220,7 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
                     onClick={() => navigate("/members")}
                     className="dashboard-person-card text-center"
                   >
-                    <Avatar className="mx-auto h-14 w-14 border border-white shadow-sm">
+                    <Avatar className="mx-auto h-14 w-14 border border-border shadow-sm">
                       <AvatarFallback className="text-sm font-semibold text-white" style={{ backgroundColor: member.color }}>
                         {member.initials}
                       </AvatarFallback>
