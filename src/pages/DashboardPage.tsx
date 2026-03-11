@@ -36,7 +36,7 @@ const quickActions = [
     title: "Create Task",
     description: "Create task for your project",
     icon: Plus,
-    tone: "bg-sky-100 text-sky-600",
+    tone: "bg-sky-500/15 text-sky-400",
   },
   {
     title: "Invite to Team",
