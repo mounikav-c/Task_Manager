@@ -15,6 +15,7 @@ interface TaskCardProps {
 
 export function TaskCard({ task, onEdit, onDelete, compact }: TaskCardProps) {
   const assignee = getAssignee(task.assigneeId);
+  const isCompleted = task.status === "completed";
 
   return (
     <motion.div
@@ -22,15 +23,17 @@ export function TaskCard({ task, onEdit, onDelete, compact }: TaskCardProps) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      className="task-card group"
+      className={`task-card group ${isCompleted ? "task-card-completed" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <h3 className={`font-medium text-card-foreground ${compact ? "text-sm" : ""} ${task.status === "completed" ? "line-through opacity-60" : ""}`}>
+          <h3 className={`font-medium text-card-foreground ${compact ? "text-sm" : ""} ${isCompleted ? "text-card-foreground/80" : ""}`}>
             {task.title}
           </h3>
           {!compact && task.description && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
+            <p className={`text-sm mt-1 line-clamp-2 ${isCompleted ? "text-muted-foreground/90" : "text-muted-foreground"}`}>
+              {task.description}
+            </p>
           )}
         </div>
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
