@@ -304,16 +304,16 @@
   }
 
   .dashboard-task-row {
-    @apply flex w-full items-center justify-between gap-4 rounded-[1.15rem] border border-transparent bg-white px-4 py-3 transition-all duration-200;
+    @apply flex w-full items-center justify-between gap-4 rounded-[1.15rem] border border-transparent bg-card px-4 py-3 transition-all duration-200;
   }
 
   .dashboard-task-row:hover {
     @apply border-primary/20;
-    box-shadow: 0 14px 26px -24px rgb(15 23 42 / 0.22);
+    box-shadow: var(--shadow-card-hover);
   }
 
   .dashboard-task-eye {
-    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-[#fafafb] text-muted-foreground transition-colors duration-200;
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-secondary text-muted-foreground transition-colors duration-200;
   }
 
   .dashboard-task-row:hover .dashboard-task-eye {
