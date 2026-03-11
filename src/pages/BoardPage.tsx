@@ -87,7 +87,7 @@ export function BoardPage({ tasks, teamMembers, onNew }: Props) {
                       <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{project.description}</p>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border/70 bg-[#fafafb] p-2 text-muted-foreground transition-colors group-hover:border-violet-200 group-hover:text-violet-700">
+                  <div className="rounded-xl border border-border/70 bg-secondary p-2 text-muted-foreground transition-colors group-hover:border-primary/30 group-hover:text-primary">
                     <MoreHorizontal className="h-4 w-4" />
                   </div>
                 </div>
