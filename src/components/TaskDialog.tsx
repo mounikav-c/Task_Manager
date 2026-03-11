@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import type { Task, Status, Priority } from "@/lib/store";
+import { TEAM_MEMBERS } from "@/lib/store";
 
 interface TaskDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ export function TaskDialog({ open, onClose, onSave, task }: TaskDialogProps) {
   const [status, setStatus] = useState<Status>("todo");
   const [priority, setPriority] = useState<Priority>("medium");
   const [dueDate, setDueDate] = useState("");
+  const [assigneeId, setAssigneeId] = useState<string>("");
 
   useEffect(() => {
     if (task) {
@@ -28,19 +30,21 @@ export function TaskDialog({ open, onClose, onSave, task }: TaskDialogProps) {
       setStatus(task.status);
       setPriority(task.priority);
       setDueDate(task.dueDate);
+      setAssigneeId(task.assigneeId || "");
     } else {
       setTitle("");
       setDescription("");
       setStatus("todo");
       setPriority("medium");
       setDueDate(new Date().toISOString().split("T")[0]);
+      setAssigneeId("");
     }
   }, [task, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    onSave({ title, description, status, priority, dueDate });
+    onSave({ title, description, status, priority, dueDate, assigneeId: assigneeId || undefined });
     onClose();
   };
 
@@ -83,9 +87,28 @@ export function TaskDialog({ open, onClose, onSave, task }: TaskDialogProps) {
               </Select>
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="due">Due Date</Label>
-            <Input id="due" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="due">Due Date</Label>
+              <Input id="due" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Assignee</Label>
+              <Select value={assigneeId || "unassigned"} onValueChange={(v) => setAssigneeId(v === "unassigned" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {TEAM_MEMBERS.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      <span className="flex items-center gap-2">
+                        <span className="h-4 w-4 rounded-full inline-flex items-center justify-center text-[8px] font-bold text-primary-foreground" style={{ backgroundColor: m.color }}>{m.initials}</span>
+                        {m.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
