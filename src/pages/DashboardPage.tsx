@@ -30,7 +30,7 @@ const quickActions = [
     title: "Create Project",
     description: "Create a project for your tasks",
     icon: FolderPlus,
-    tone: "bg-emerald-100 text-emerald-600",
+    tone: "bg-emerald-500/15 text-emerald-400",
   },
   {
     title: "Create Task",
