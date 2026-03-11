@@ -37,27 +37,27 @@ export function TaskCard({ task, onEdit, onDelete, compact, teamMembers }: TaskC
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      className={`task-card task-card-urgency-${priorityKey} group ${isCompleted ? "task-card-completed" : ""}`}
+      className={`task-card task-card-urgency-${priorityKey} group ${isCompleted ? "task-card-completed opacity-70" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className={`task-card-title font-medium text-card-foreground ${compact ? "text-sm" : ""} ${isCompleted ? "text-card-foreground/80" : ""}`}>
+            <h3 className={`task-card-title font-medium text-card-foreground ${compact ? "text-sm" : ""} ${isCompleted ? "text-card-foreground/70 line-through" : ""}`}>
               {task.title}
             </h3>
             <ArrowUpRight className="task-card-arrow h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           </div>
           {!compact && task.description && (
-            <p className={`task-card-description text-sm mt-1 line-clamp-2 ${isCompleted ? "text-muted-foreground/90" : "text-muted-foreground"}`}>
+            <p className={`task-card-description text-sm mt-1 line-clamp-2 ${isCompleted ? "text-muted-foreground/60" : "text-muted-foreground"}`}>
               {task.description}
             </p>
           )}
         </div>
-        <div className="task-card-actions flex gap-1 shrink-0">
-          <button onClick={() => onEdit(task)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+        <div className="task-card-actions flex gap-0.5 shrink-0">
+          <button onClick={() => onEdit(task)} className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
             <Pencil className="h-3.5 w-3.5" />
           </button>
-          <button onClick={() => onDelete(task.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+          <button onClick={() => onDelete(task.id)} className="p-1.5 rounded-md hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-colors">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -72,7 +72,7 @@ export function TaskCard({ task, onEdit, onDelete, compact, teamMembers }: TaskC
         {assignee && (
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <span
-              className="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-semibold text-primary-foreground shrink-0"
+              className="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-semibold text-primary-foreground shrink-0 ring-1 ring-border/30"
               style={{ backgroundColor: assignee.color }}
             >
               {assignee.initials}
