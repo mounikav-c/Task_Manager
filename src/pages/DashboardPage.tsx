@@ -164,7 +164,7 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
                     onClick={() => navigate("/board")}
                     className="dashboard-project-card text-left"
                   >
-                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-white text-base font-semibold text-foreground">
+                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-secondary text-base font-semibold text-foreground">
                       {project.projectName[0]}
                     </div>
                     <p className="text-base font-medium text-foreground">{project.projectName}</p>
