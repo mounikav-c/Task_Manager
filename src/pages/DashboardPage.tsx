@@ -116,7 +116,7 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
                   <h2 className="text-lg font-semibold">Assigned Tasks</h2>
                   <p className="text-sm text-muted-foreground">What needs attention first.</p>
                 </div>
-                <Button variant="outline" size="sm" className="rounded-xl border-border/70 bg-white">
+                <Button variant="outline" size="sm" className="rounded-xl border-border/70 bg-card">
                   Nearest Due Date
                 </Button>
               </div>
