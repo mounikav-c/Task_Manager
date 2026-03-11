@@ -55,7 +55,7 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
                       <p className="text-sm text-muted-foreground">Workspace member</p>
                     </div>
                   </div>
-                  <div className="rounded-full border border-border/70 bg-[#fafafb] px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                  <div className="rounded-full border border-border/70 bg-secondary px-2.5 py-1 text-xs font-medium text-muted-foreground">
                     {member.assignedTasks.length} assigned
                   </div>
                 </div>
