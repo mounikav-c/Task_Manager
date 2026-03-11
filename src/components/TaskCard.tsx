@@ -1,5 +1,6 @@
 import { Calendar, Pencil, Trash2 } from "lucide-react";
 import type { Task } from "@/lib/store";
+import { getAssignee } from "@/lib/store";
 import { motion } from "framer-motion";
 
 const priorityLabel = { low: "Low", medium: "Medium", high: "High" } as const;
@@ -13,6 +14,8 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onEdit, onDelete, compact }: TaskCardProps) {
+  const assignee = getAssignee(task.assigneeId);
+
   return (
     <motion.div
       layout
@@ -46,6 +49,17 @@ export function TaskCard({ task, onEdit, onDelete, compact }: TaskCardProps) {
         <span className={`text-xs font-medium px-2 py-0.5 rounded-full status-${task.status}`}>
           {statusLabel[task.status]}
         </span>
+        {assignee && (
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span
+              className="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-semibold text-primary-foreground shrink-0"
+              style={{ backgroundColor: assignee.color }}
+            >
+              {assignee.initials}
+            </span>
+            {!compact && assignee.name}
+          </span>
+        )}
         {task.dueDate && (
           <span className="text-xs text-muted-foreground flex items-center gap-1 ml-auto">
             <Calendar className="h-3 w-3" />

@@ -1,8 +1,9 @@
-import { CheckCircle2, Clock, ListTodo, TrendingUp } from "lucide-react";
+import { CheckCircle2, Clock, ListTodo, AlertTriangle } from "lucide-react";
 import { TopNav } from "@/components/TopNav";
 import { TaskCard } from "@/components/TaskCard";
 import type { Task } from "@/lib/store";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   tasks: Task[];
@@ -11,17 +12,19 @@ interface Props {
 }
 
 export function DashboardPage({ tasks, onEdit, onDelete }: Props) {
+  const navigate = useNavigate();
   const total = tasks.length;
   const completed = tasks.filter((t) => t.status === "completed").length;
-  const pending = tasks.filter((t) => t.status === "todo").length;
-  const inProgress = tasks.filter((t) => t.status === "inprogress").length;
+  const pending = tasks.filter((t) => t.status === "todo" || t.status === "inprogress").length;
+  const today = new Date().toISOString().split("T")[0];
+  const overdue = tasks.filter((t) => t.dueDate < today && t.status !== "completed").length;
   const recent = [...tasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
 
   const stats = [
-    { label: "Total Tasks", value: total, icon: ListTodo, color: "text-foreground" },
-    { label: "Completed", value: completed, icon: CheckCircle2, color: "text-status-completed" },
-    { label: "In Progress", value: inProgress, icon: TrendingUp, color: "text-status-inprogress" },
-    { label: "Pending", value: pending, icon: Clock, color: "text-muted-foreground" },
+    { label: "Total Tasks", value: total, icon: ListTodo, color: "text-foreground", filter: "all" },
+    { label: "Completed", value: completed, icon: CheckCircle2, color: "text-status-completed", filter: "completed" },
+    { label: "Pending", value: pending, icon: Clock, color: "text-muted-foreground", filter: "pending" },
+    { label: "Overdue", value: overdue, icon: AlertTriangle, color: "text-destructive", filter: "overdue" },
   ];
 
   return (
@@ -35,7 +38,8 @@ export function DashboardPage({ tasks, onEdit, onDelete }: Props) {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="stat-card"
+              className="stat-card cursor-pointer"
+              onClick={() => navigate(`/tasks?filter=${stat.filter}`)}
             >
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium text-muted-foreground">{stat.label}</span>
