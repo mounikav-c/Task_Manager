@@ -1,82 +1,129 @@
-import { Plus } from "lucide-react";
+import { CalendarDays, MoreHorizontal, Plus } from "lucide-react";
 import { TopNav } from "@/components/TopNav";
-import { TaskCard } from "@/components/TaskCard";
 import { Button } from "@/components/ui/button";
-import type { Task, Status } from "@/lib/store";
-import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
-
-const columns: { id: Status; label: string; colorClass: string }[] = [
-  { id: "todo", label: "Todo", colorClass: "bg-muted-foreground" },
-  { id: "inprogress", label: "In Progress", colorClass: "bg-status-inprogress" },
-  { id: "completed", label: "Completed", colorClass: "bg-status-completed" },
-];
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import type { Assignee, Task, Status } from "@/lib/store";
+import { getAssignee } from "@/lib/store";
+import { PROJECTS } from "@/lib/projects";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   tasks: Task[];
+  teamMembers: Assignee[];
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onNew: () => void;
   onUpdateStatus: (id: string, status: Status) => void;
 }
 
-export function BoardPage({ tasks, onEdit, onDelete, onNew, onUpdateStatus }: Props) {
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-    const newStatus = result.destination.droppableId as Status;
-    onUpdateStatus(result.draggableId, newStatus);
-  };
+const progressMap: Record<Status, number> = {
+  todo: 24,
+  inprogress: 62,
+  completed: 100,
+};
+
+const projectIcons = [
+  "bg-violet-500",
+  "bg-violet-400",
+  "bg-indigo-500",
+  "bg-rose-400",
+  "bg-purple-500",
+  "bg-emerald-500",
+];
+
+export function BoardPage({ tasks, teamMembers, onNew }: Props) {
+  const navigate = useNavigate();
+
+  const projectCards = PROJECTS.map((project, index) => {
+    const projectTasks = tasks.filter((task) => task.projectId === project.id);
+    const team = project.team
+      .map((member) => getAssignee(member.memberId, teamMembers))
+      .filter(Boolean) as Assignee[];
+
+    const progress = projectTasks.length === 0
+      ? project.progress
+      : Math.round(projectTasks.reduce((sum, task) => sum + progressMap[task.status], 0) / projectTasks.length);
+
+    const openTasks = projectTasks.filter((task) => task.status !== "completed").length;
+
+    return {
+      ...project,
+      team,
+      progress,
+      openTasks,
+      accent: projectIcons[index % projectIcons.length],
+    };
+  });
 
   return (
-    <div className="flex flex-col h-full">
-      <TopNav title="Board" />
-      <div className="flex-1 overflow-auto p-6">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-muted-foreground">Kanban Board</p>
-          <Button onClick={onNew} size="sm" className="gap-1.5">
-            <Plus className="h-4 w-4" /> New Task
-          </Button>
-        </div>
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {columns.map((col) => {
-              const colTasks = tasks.filter((t) => t.status === col.id);
-              return (
-                <div key={col.id} className="bg-secondary/50 rounded-xl p-3 min-h-[300px]">
-                  <div className="flex items-center gap-2 mb-3 px-1">
-                    <span className={`h-2.5 w-2.5 rounded-full ${col.colorClass}`} />
-                    <span className="text-sm font-semibold">{col.label}</span>
-                    <span className="text-xs text-muted-foreground ml-auto">{colTasks.length}</span>
-                  </div>
-                  <Droppable droppableId={col.id}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={`space-y-2 min-h-[200px] rounded-lg transition-colors ${snapshot.isDraggingOver ? "bg-primary/5" : ""}`}
-                      >
-                        {colTasks.map((task, index) => (
-                          <Draggable key={task.id} draggableId={task.id} index={index}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                className={snapshot.isDragging ? "opacity-90" : ""}
-                              >
-                                <TaskCard task={task} onEdit={onEdit} onDelete={onDelete} compact />
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </div>
-              );
-            })}
+    <div className="flex h-full flex-col">
+      <TopNav title="Projects" />
+      <div className="flex-1 overflow-auto p-5 md:p-6">
+        <div className="rounded-[1.7rem] border border-border/80 bg-[#f7f7f8] p-4 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.18)] md:p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Projects overview</p>
+              <h2 className="text-xl font-semibold tracking-tight">Active delivery board</h2>
+            </div>
+            <Button onClick={onNew} className="rounded-xl bg-[#6d28d9] hover:bg-[#5b21b6] shadow-[0_14px_30px_-22px_rgba(109,40,217,0.55)]">
+              <Plus className="h-4 w-4" />
+              Add Task
+            </Button>
           </div>
-        </DragDropContext>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {projectCards.map((project) => (
+              <button
+                key={project.id}
+                type="button"
+                onClick={() => navigate(`/projects/${project.id}`)}
+                className="project-card group text-left"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className={`project-card-badge ${project.accent}`} />
+                    <div className="min-w-0">
+                      <h3 className="truncate text-lg font-semibold tracking-tight text-foreground">{project.name}</h3>
+                      <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{project.description}</p>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border/70 bg-[#fafafb] p-2 text-muted-foreground transition-colors group-hover:border-violet-200 group-hover:text-violet-700">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </div>
+                </div>
+
+                <div className="my-4 border-t border-dashed border-border/80" />
+
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex -space-x-2">
+                    {project.team.slice(0, 3).map((member) => (
+                      <Avatar key={member.id} className="h-8 w-8 border-2 border-white shadow-sm">
+                        <AvatarFallback className="text-[10px] font-semibold text-white" style={{ backgroundColor: member.color }}>
+                          {member.initials}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                    <CalendarDays className="h-3.5 w-3.5" />
+                    {project.openTasks === 0 ? "No task pending" : `${project.openTasks} task due soon`}
+                  </div>
+                </div>
+
+                <div className="mt-5">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <span className="text-sm font-medium text-foreground">Project Progress</span>
+                    <span className="text-xs font-semibold text-muted-foreground">{project.progress}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-[#e2e2e5]">
+                    <div className="h-full rounded-full bg-[#b58cf4] transition-all duration-300" style={{ width: `${project.progress}%` }} />
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

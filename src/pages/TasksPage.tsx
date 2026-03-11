@@ -3,20 +3,20 @@ import { TopNav } from "@/components/TopNav";
 import { TaskCard } from "@/components/TaskCard";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Task } from "@/lib/store";
-import { TEAM_MEMBERS, getAssignee } from "@/lib/store";
+import type { Assignee, Task } from "@/lib/store";
 import { AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { useMemo } from "react";
 
 interface Props {
   tasks: Task[];
+  teamMembers: Assignee[];
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onNew: () => void;
 }
 
-export function TasksPage({ tasks, onEdit, onDelete, onNew }: Props) {
+export function TasksPage({ tasks, teamMembers, onEdit, onDelete, onNew }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const filter = searchParams.get("filter") || "all";
   const assigneeFilter = searchParams.get("assignee") || "all";
@@ -70,7 +70,7 @@ export function TasksPage({ tasks, onEdit, onDelete, onNew }: Props) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Assignees</SelectItem>
-                {TEAM_MEMBERS.map((m) => (
+                {teamMembers.map((m) => (
                   <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -89,7 +89,7 @@ export function TasksPage({ tasks, onEdit, onDelete, onNew }: Props) {
         <div className="space-y-2">
           <AnimatePresence>
             {filteredTasks.map((task) => (
-              <TaskCard key={task.id} task={task} onEdit={onEdit} onDelete={onDelete} />
+              <TaskCard key={task.id} task={task} teamMembers={teamMembers} onEdit={onEdit} onDelete={onDelete} />
             ))}
           </AnimatePresence>
           {filteredTasks.length === 0 && (

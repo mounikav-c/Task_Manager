@@ -1,5 +1,5 @@
-import { Calendar, Pencil, Trash2 } from "lucide-react";
-import type { Task } from "@/lib/store";
+import { ArrowUpRight, Calendar, Pencil, Trash2 } from "lucide-react";
+import type { Assignee, Task } from "@/lib/store";
 import { getAssignee } from "@/lib/store";
 import { motion } from "framer-motion";
 
@@ -11,10 +11,11 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   compact?: boolean;
+  teamMembers: Assignee[];
 }
 
-export function TaskCard({ task, onEdit, onDelete, compact }: TaskCardProps) {
-  const assignee = getAssignee(task.assigneeId);
+export function TaskCard({ task, onEdit, onDelete, compact, teamMembers }: TaskCardProps) {
+  const assignee = getAssignee(task.assigneeId, teamMembers);
   const isCompleted = task.status === "completed";
 
   return (
@@ -27,16 +28,19 @@ export function TaskCard({ task, onEdit, onDelete, compact }: TaskCardProps) {
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <h3 className={`font-medium text-card-foreground ${compact ? "text-sm" : ""} ${isCompleted ? "text-card-foreground/80" : ""}`}>
-            {task.title}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className={`task-card-title font-medium text-card-foreground ${compact ? "text-sm" : ""} ${isCompleted ? "text-card-foreground/80" : ""}`}>
+              {task.title}
+            </h3>
+            <ArrowUpRight className="task-card-arrow h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          </div>
           {!compact && task.description && (
-            <p className={`text-sm mt-1 line-clamp-2 ${isCompleted ? "text-muted-foreground/90" : "text-muted-foreground"}`}>
+            <p className={`task-card-description text-sm mt-1 line-clamp-2 ${isCompleted ? "text-muted-foreground/90" : "text-muted-foreground"}`}>
               {task.description}
             </p>
           )}
         </div>
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+        <div className="task-card-actions flex gap-1 shrink-0">
           <button onClick={() => onEdit(task)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
             <Pencil className="h-3.5 w-3.5" />
           </button>

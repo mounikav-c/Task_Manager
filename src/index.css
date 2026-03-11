@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
+    --background: 220 10% 92%;
     --foreground: 224 30% 12%;
 
     --card: 0 0% 100%;
@@ -15,13 +15,13 @@
     --popover: 0 0% 100%;
     --popover-foreground: 224 30% 12%;
 
-    --primary: 162 63% 41%;
+    --primary: 267 84% 57%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;
+    --secondary: 220 14% 94%;
     --secondary-foreground: 224 30% 12%;
 
-    --muted: 220 14% 96%;
+    --muted: 220 14% 94%;
     --muted-foreground: 220 9% 46%;
 
     --accent: 220 14% 96%;
@@ -30,20 +30,20 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 162 63% 41%;
+    --border: 220 12% 85%;
+    --input: 220 12% 85%;
+    --ring: 267 84% 57%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 224 30% 8%;
-    --sidebar-foreground: 220 14% 70%;
-    --sidebar-primary: 162 63% 48%;
+    --sidebar-background: 220 12% 95%;
+    --sidebar-foreground: 220 10% 40%;
+    --sidebar-primary: 267 84% 57%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 224 25% 14%;
-    --sidebar-accent-foreground: 220 14% 90%;
-    --sidebar-border: 224 25% 16%;
-    --sidebar-ring: 162 63% 48%;
+    --sidebar-accent: 0 0% 100%;
+    --sidebar-accent-foreground: 224 30% 12%;
+    --sidebar-border: 220 12% 86%;
+    --sidebar-ring: 267 84% 57%;
 
     --priority-high: 0 72% 51%;
     --priority-medium: 38 92% 50%;
@@ -102,28 +102,247 @@
 
 @layer components {
   .task-card {
-    @apply bg-card rounded-xl border p-4 transition-all duration-200 cursor-pointer;
+    @apply bg-card rounded-xl border p-4 transition-all duration-200 cursor-pointer relative overflow-hidden;
     box-shadow: var(--shadow-card);
+  }
+
+  .task-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, hsl(var(--primary) / 0.06), transparent 35%);
+    opacity: 0;
+    transition: opacity 200ms ease;
+    pointer-events: none;
   }
 
   .task-card:hover {
     box-shadow: var(--shadow-card-hover);
-    @apply -translate-y-0.5;
+    @apply -translate-y-0.5 border-primary/25;
+  }
+
+  .task-card:hover::before {
+    opacity: 1;
+  }
+
+  .task-card:hover .task-card-title {
+    @apply text-foreground;
+  }
+
+  .task-card:hover .task-card-description {
+    @apply text-foreground/75;
+  }
+
+  .task-card-actions {
+    @apply opacity-0 translate-x-1 transition-all duration-200;
+  }
+
+  .group:hover .task-card-actions,
+  .group:focus-within .task-card-actions {
+    @apply opacity-100 translate-x-0;
+  }
+
+  .task-card-arrow {
+    @apply opacity-0 -translate-x-1 transition-all duration-200;
+  }
+
+  .group:hover .task-card-arrow,
+  .group:focus-within .task-card-arrow {
+    @apply opacity-100 translate-x-0 text-foreground;
   }
 
   .task-card-completed {
-    border-color: hsl(var(--status-completed) / 0.22);
-    background: linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--status-completed) / 0.04) 100%);
+    border-color: hsl(var(--border));
+    background: hsl(var(--card));
   }
 
   .stat-card {
-    @apply bg-card rounded-xl border p-6 transition-all duration-200 cursor-pointer;
+    @apply bg-card rounded-xl border p-6 transition-all duration-200 cursor-pointer relative overflow-hidden;
     box-shadow: var(--shadow-card);
   }
 
+  .stat-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 3px;
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--status-inprogress)));
+    transform: scaleX(0.18);
+    transform-origin: left;
+    transition: transform 220ms ease;
+    pointer-events: none;
+  }
+
+  .stat-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top right, hsl(var(--primary) / 0.12), transparent 24%),
+      linear-gradient(180deg, transparent, hsl(var(--secondary) / 0.55));
+    opacity: 0;
+    transition: opacity 200ms ease;
+    pointer-events: none;
+  }
+
   .stat-card:hover {
-    box-shadow: var(--shadow-card-hover);
-    @apply -translate-y-0.5;
+    box-shadow: 0 16px 32px -18px rgb(0 0 0 / 0.22), 0 6px 16px -12px rgb(0 0 0 / 0.12);
+    @apply -translate-y-1 border-primary/25;
+  }
+
+  .stat-card:hover::before {
+    transform: scaleX(1);
+  }
+
+  .stat-card:hover::after {
+    opacity: 1;
+  }
+
+  .stat-card-icon-wrap {
+    @apply rounded-2xl border border-border/60 bg-secondary/80 p-3 transition-all duration-200;
+  }
+
+  .stat-card-hint {
+    @apply transition-all duration-200;
+  }
+
+  .stat-card:hover .stat-card-label {
+    @apply text-foreground;
+  }
+
+  .stat-card-value {
+    @apply transition-all duration-200;
+  }
+
+  .stat-card:hover .stat-card-icon-wrap {
+    @apply bg-background border-primary/20;
+    transform: translateY(-2px) scale(1.04);
+  }
+
+  .stat-card:hover .stat-card-value {
+    @apply text-foreground;
+    transform: translateY(-1px);
+  }
+
+  .stat-card:hover .stat-card-hint {
+    @apply text-foreground/75;
+    transform: translateY(1px);
+  }
+
+  .sidebar-workspace-card {
+    @apply flex items-center gap-3 rounded-[1.35rem] border border-sidebar-border/80 bg-white/85 p-3 shadow-[0_14px_32px_-28px_rgba(15,23,42,0.4)];
+  }
+
+  .sidebar-nav-link {
+    color: hsl(var(--sidebar-foreground));
+  }
+
+  .sidebar-nav-link:hover {
+    background: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-accent-foreground));
+  }
+
+  .project-card {
+    @apply rounded-[1.4rem] border border-border/70 bg-white p-4 transition-all duration-200;
+    box-shadow: 0 18px 36px -34px rgb(15 23 42 / 0.36);
+  }
+
+  .project-card:hover {
+    @apply -translate-y-1 border-violet-200;
+    box-shadow: 0 24px 40px -34px rgb(109 40 217 / 0.22);
+  }
+
+  .project-card-badge {
+    @apply h-10 w-10 shrink-0 rounded-xl shadow-[0_16px_24px_-18px_rgba(15,23,42,0.45)];
+  }
+
+  .dashboard-panel {
+    @apply rounded-[1.5rem] border border-border/80 bg-[#f7f7f8] p-4 md:p-5;
+    box-shadow: 0 16px 34px -32px rgb(15 23 42 / 0.24);
+  }
+
+  .dashboard-action-card {
+    @apply flex items-start gap-3 rounded-[1.35rem] border border-border/80 bg-[#f7f7f8] p-4 transition-all duration-200;
+    box-shadow: 0 14px 30px -30px rgb(15 23 42 / 0.22);
+  }
+
+  .dashboard-action-card:hover {
+    @apply -translate-y-0.5 border-primary/20 bg-white;
+  }
+
+  .dashboard-action-icon {
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl;
+  }
+
+  .dashboard-task-row {
+    @apply flex w-full items-center justify-between gap-4 rounded-[1.15rem] border border-transparent bg-white px-4 py-3 transition-all duration-200;
+  }
+
+  .dashboard-task-row:hover {
+    @apply border-primary/20;
+    box-shadow: 0 14px 26px -24px rgb(15 23 42 / 0.22);
+  }
+
+  .dashboard-task-eye {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-[#fafafb] text-muted-foreground transition-colors duration-200;
+  }
+
+  .dashboard-task-row:hover .dashboard-task-eye {
+    @apply border-primary/20 text-primary;
+  }
+
+  .dashboard-project-card {
+    @apply rounded-[1.2rem] border border-border/75 bg-white p-4 transition-all duration-200;
+  }
+
+  .dashboard-project-card:hover {
+    @apply border-primary/20;
+    box-shadow: 0 14px 28px -26px rgb(15 23 42 / 0.22);
+  }
+
+  .dashboard-person-card {
+    @apply rounded-[1.2rem] border border-border/75 bg-white px-4 py-5 transition-all duration-200;
+  }
+
+  .dashboard-person-card:hover {
+    @apply border-primary/20;
+    box-shadow: 0 14px 28px -26px rgb(15 23 42 / 0.22);
+  }
+
+  .dashboard-activity-row {
+    @apply flex items-start gap-3 rounded-[1.2rem] border border-border/75 bg-white px-4 py-3;
+  }
+
+  .project-details-stat {
+    @apply rounded-[1.15rem] border border-border/75 bg-white px-4 py-3;
+  }
+
+  .project-onboarding-banner {
+    @apply rounded-[1.2rem] border border-primary/15 bg-white px-4 py-4;
+    box-shadow: 0 14px 28px -30px rgb(109 40 217 / 0.18);
+  }
+
+  .project-details-label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground;
+  }
+
+  .project-details-copy {
+    @apply mt-1 text-sm text-foreground;
+  }
+
+  .project-task-detail-card {
+    @apply rounded-[1.2rem] border border-border/75 bg-white p-4 transition-all duration-200;
+  }
+
+  .project-task-detail-card:hover {
+    @apply border-primary/20;
+    box-shadow: 0 14px 28px -26px rgb(15 23 42 / 0.22);
+  }
+
+  .project-example-task-card {
+    @apply rounded-[1rem] border border-border/75 bg-[#f7f7f9] px-4 py-4;
   }
 
   .priority-high {

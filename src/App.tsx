@@ -2,29 +2,36 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { TasksPage } from "@/pages/TasksPage";
 import { BoardPage } from "@/pages/BoardPage";
+import { MembersPage } from "@/pages/MembersPage";
+import { ProjectDetailsPage } from "@/pages/ProjectDetailsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { TaskDialog } from "@/components/TaskDialog";
+import { MemberDialog } from "@/components/MemberDialog";
 import { useTaskStore, type Task, type Status } from "@/lib/store";
 import { useState, useCallback } from "react";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
-  const { tasks, addTask, updateTask, deleteTask } = useTaskStore();
+  const { tasks, teamMembers, addTask, updateTask, deleteTask, addTeamMember } = useTaskStore();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [initialProjectId, setInitialProjectId] = useState<string | undefined>(undefined);
 
-  const handleNew = useCallback(() => {
+  const handleNew = useCallback((projectId?: string) => {
     setEditingTask(null);
+    setInitialProjectId(projectId);
     setDialogOpen(true);
   }, []);
 
   const handleEdit = useCallback((task: Task) => {
     setEditingTask(task);
+    setInitialProjectId(undefined);
     setDialogOpen(true);
   }, []);
 
@@ -46,27 +53,44 @@ const App = () => {
     [updateTask]
   );
 
+  const handleAddMember = useCallback((name: string) => {
+    addTeamMember(name);
+  }, [addTeamMember]);
+
   return (
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
         <SidebarProvider>
-          <div className="min-h-screen flex w-full">
-            <AppSidebar />
-            <div className="flex-1 flex flex-col min-w-0">
+          <div className="app-shell min-h-screen flex w-full bg-[#e7e7e8] p-3 md:p-5">
+            <AppSidebar onAddProject={handleNew} onAddMember={() => setMemberDialogOpen(true)} />
+            <SidebarInset className="app-shell-main min-w-0 overflow-hidden rounded-[2rem] border border-white/60 bg-[#f3f3f4] shadow-[0_24px_70px_-58px_rgba(15,23,42,0.4)]">
               <Routes>
-                <Route path="/" element={<DashboardPage tasks={tasks} onEdit={handleEdit} onDelete={deleteTask} />} />
-                <Route path="/tasks" element={<TasksPage tasks={tasks} onEdit={handleEdit} onDelete={deleteTask} onNew={handleNew} />} />
-                <Route path="/board" element={<BoardPage tasks={tasks} onEdit={handleEdit} onDelete={deleteTask} onNew={handleNew} onUpdateStatus={handleUpdateStatus} />} />
+                <Route path="/" element={<DashboardPage tasks={tasks} teamMembers={teamMembers} onEdit={handleEdit} onDelete={deleteTask} onNew={handleNew} onAddMember={() => setMemberDialogOpen(true)} />} />
+                <Route path="/tasks" element={<TasksPage tasks={tasks} teamMembers={teamMembers} onEdit={handleEdit} onDelete={deleteTask} onNew={handleNew} />} />
+                <Route path="/board" element={<BoardPage tasks={tasks} teamMembers={teamMembers} onEdit={handleEdit} onDelete={deleteTask} onNew={handleNew} onUpdateStatus={handleUpdateStatus} />} />
+                <Route path="/projects/:projectId" element={<ProjectDetailsPage tasks={tasks} teamMembers={teamMembers} onEdit={handleEdit} onNew={handleNew} />} />
+                <Route path="/members" element={<MembersPage tasks={tasks} teamMembers={teamMembers} onAddMember={() => setMemberDialogOpen(true)} />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </div>
+            </SidebarInset>
           </div>
         </SidebarProvider>
       </BrowserRouter>
-      <TaskDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onSave={handleSave} task={editingTask} />
+      <TaskDialog
+        open={dialogOpen}
+        onClose={() => {
+          setDialogOpen(false);
+          setInitialProjectId(undefined);
+        }}
+        onSave={handleSave}
+        task={editingTask}
+        teamMembers={teamMembers}
+        initialProjectId={initialProjectId}
+      />
+      <MemberDialog open={memberDialogOpen} onClose={() => setMemberDialogOpen(false)} onSave={handleAddMember} />
     </TooltipProvider>
   );
 };
