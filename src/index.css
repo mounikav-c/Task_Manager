@@ -286,17 +286,17 @@
   }
 
   .dashboard-panel {
-    @apply rounded-[1.5rem] border border-border/80 bg-[#f7f7f8] p-4 md:p-5;
-    box-shadow: 0 16px 34px -32px rgb(15 23 42 / 0.24);
+    @apply rounded-[1.5rem] border border-border/80 bg-secondary p-4 md:p-5;
+    box-shadow: var(--shadow-card);
   }
 
   .dashboard-action-card {
-    @apply flex items-start gap-3 rounded-[1.35rem] border border-border/80 bg-[#f7f7f8] p-4 transition-all duration-200;
-    box-shadow: 0 14px 30px -30px rgb(15 23 42 / 0.22);
+    @apply flex items-start gap-3 rounded-[1.35rem] border border-border/80 bg-secondary p-4 transition-all duration-200;
+    box-shadow: var(--shadow-card);
   }
 
   .dashboard-action-card:hover {
-    @apply -translate-y-0.5 border-primary/20 bg-white;
+    @apply -translate-y-0.5 border-primary/20 bg-card;
   }
 
   .dashboard-action-icon {
