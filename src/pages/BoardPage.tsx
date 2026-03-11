@@ -65,7 +65,7 @@ export function BoardPage({ tasks, teamMembers, onNew }: Props) {
               <p className="text-sm font-medium text-muted-foreground">Projects overview</p>
               <h2 className="text-xl font-semibold tracking-tight">Active delivery board</h2>
             </div>
-            <Button onClick={onNew} className="rounded-xl bg-[#6d28d9] hover:bg-[#5b21b6] shadow-[0_14px_30px_-22px_rgba(109,40,217,0.55)]">
+            <Button onClick={onNew} className="rounded-xl bg-primary hover:bg-primary/90 shadow-[0_14px_30px_-22px_rgba(139,92,246,0.55)]">
               <Plus className="h-4 w-4" />
               Add Task
             </Button>
