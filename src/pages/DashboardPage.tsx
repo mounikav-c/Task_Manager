@@ -182,7 +182,7 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
                   <h2 className="text-lg font-semibold">Recent Activity</h2>
                   <p className="text-sm text-muted-foreground">Latest work updates in the workspace.</p>
                 </div>
-                <Button variant="outline" size="sm" className="rounded-xl border-border/70 bg-white" onClick={() => navigate("/tasks")}>
+                <Button variant="outline" size="sm" className="rounded-xl border-border/70 bg-card" onClick={() => navigate("/tasks")}>
                   View All
                 </Button>
               </div>
