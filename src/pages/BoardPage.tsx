@@ -59,13 +59,13 @@ export function BoardPage({ tasks, teamMembers, onNew }: Props) {
     <div className="flex h-full flex-col">
       <TopNav title="Projects" />
       <div className="flex-1 overflow-auto p-5 md:p-6">
-        <div className="rounded-[1.7rem] border border-border/80 bg-[#f7f7f8] p-4 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.18)] md:p-5">
+        <div className="rounded-[1.7rem] border border-border/80 bg-secondary p-4 shadow-[0_18px_40px_-34px_rgba(0,0,0,0.25)] md:p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Projects overview</p>
               <h2 className="text-xl font-semibold tracking-tight">Active delivery board</h2>
             </div>
-            <Button onClick={onNew} className="rounded-xl bg-[#6d28d9] hover:bg-[#5b21b6] shadow-[0_14px_30px_-22px_rgba(109,40,217,0.55)]">
+            <Button onClick={onNew} className="rounded-xl bg-primary hover:bg-primary/90 shadow-[0_14px_30px_-22px_rgba(139,92,246,0.55)]">
               <Plus className="h-4 w-4" />
               Add Task
             </Button>
@@ -87,7 +87,7 @@ export function BoardPage({ tasks, teamMembers, onNew }: Props) {
                       <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{project.description}</p>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border/70 bg-[#fafafb] p-2 text-muted-foreground transition-colors group-hover:border-violet-200 group-hover:text-violet-700">
+                  <div className="rounded-xl border border-border/70 bg-secondary p-2 text-muted-foreground transition-colors group-hover:border-primary/30 group-hover:text-primary">
                     <MoreHorizontal className="h-4 w-4" />
                   </div>
                 </div>
@@ -97,7 +97,7 @@ export function BoardPage({ tasks, teamMembers, onNew }: Props) {
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex -space-x-2">
                     {project.team.slice(0, 3).map((member) => (
-                      <Avatar key={member.id} className="h-8 w-8 border-2 border-white shadow-sm">
+                      <Avatar key={member.id} className="h-8 w-8 border-2 border-card shadow-sm">
                         <AvatarFallback className="text-[10px] font-semibold text-white" style={{ backgroundColor: member.color }}>
                           {member.initials}
                         </AvatarFallback>
@@ -116,8 +116,8 @@ export function BoardPage({ tasks, teamMembers, onNew }: Props) {
                     <span className="text-sm font-medium text-foreground">Project Progress</span>
                     <span className="text-xs font-semibold text-muted-foreground">{project.progress}%</span>
                   </div>
-                  <div className="h-2 rounded-full bg-[#e2e2e5]">
-                    <div className="h-full rounded-full bg-[#b58cf4] transition-all duration-300" style={{ width: `${project.progress}%` }} />
+                  <div className="h-2 rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary/70 transition-all duration-300" style={{ width: `${project.progress}%` }} />
                   </div>
                 </div>
               </button>

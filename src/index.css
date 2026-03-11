@@ -60,33 +60,36 @@
   }
 
   .dark {
-    --background: 224 30% 6%;
+    --background: 228 20% 10%;
     --foreground: 220 14% 90%;
-    --card: 224 30% 10%;
+    --card: 228 22% 13%;
     --card-foreground: 220 14% 90%;
-    --popover: 224 30% 10%;
+    --popover: 228 22% 13%;
     --popover-foreground: 220 14% 90%;
-    --primary: 162 63% 48%;
+    --primary: 267 84% 62%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 224 25% 14%;
+    --secondary: 228 18% 16%;
     --secondary-foreground: 220 14% 90%;
-    --muted: 224 25% 14%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 224 25% 14%;
+    --muted: 228 18% 16%;
+    --muted-foreground: 220 9% 55%;
+    --accent: 228 18% 18%;
     --accent-foreground: 220 14% 90%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 224 25% 16%;
-    --input: 224 25% 16%;
-    --ring: 162 63% 48%;
-    --sidebar-background: 224 30% 5%;
-    --sidebar-foreground: 220 14% 60%;
-    --sidebar-primary: 162 63% 48%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 228 18% 18%;
+    --input: 228 18% 18%;
+    --ring: 267 84% 62%;
+    --sidebar-background: 228 24% 8%;
+    --sidebar-foreground: 220 14% 55%;
+    --sidebar-primary: 267 84% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 224 25% 10%;
+    --sidebar-accent: 228 22% 14%;
     --sidebar-accent-foreground: 220 14% 90%;
-    --sidebar-border: 224 25% 12%;
-    --sidebar-ring: 162 63% 48%;
+    --sidebar-border: 228 18% 14%;
+    --sidebar-ring: 267 84% 62%;
+
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.15);
+    --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
   }
 }
 
@@ -256,7 +259,7 @@
   }
 
   .sidebar-workspace-card {
-    @apply flex items-center gap-3 rounded-[1.35rem] border border-sidebar-border/80 bg-white/85 p-3 shadow-[0_14px_32px_-28px_rgba(15,23,42,0.4)];
+    @apply flex items-center gap-3 rounded-[1.35rem] border border-sidebar-border/80 bg-card p-3 shadow-[0_14px_32px_-28px_rgba(0,0,0,0.4)];
   }
 
   .sidebar-nav-link {
@@ -269,13 +272,13 @@
   }
 
   .project-card {
-    @apply rounded-[1.4rem] border border-border/70 bg-white p-4 transition-all duration-200;
-    box-shadow: 0 18px 36px -34px rgb(15 23 42 / 0.36);
+    @apply rounded-[1.4rem] border border-border/70 bg-card p-4 transition-all duration-200;
+    box-shadow: var(--shadow-card);
   }
 
   .project-card:hover {
-    @apply -translate-y-1 border-violet-200;
-    box-shadow: 0 24px 40px -34px rgb(109 40 217 / 0.22);
+    @apply -translate-y-1 border-primary/30;
+    box-shadow: var(--shadow-card-hover);
   }
 
   .project-card-badge {
@@ -283,17 +286,17 @@
   }
 
   .dashboard-panel {
-    @apply rounded-[1.5rem] border border-border/80 bg-[#f7f7f8] p-4 md:p-5;
-    box-shadow: 0 16px 34px -32px rgb(15 23 42 / 0.24);
+    @apply rounded-[1.5rem] border border-border/80 bg-secondary p-4 md:p-5;
+    box-shadow: var(--shadow-card);
   }
 
   .dashboard-action-card {
-    @apply flex items-start gap-3 rounded-[1.35rem] border border-border/80 bg-[#f7f7f8] p-4 transition-all duration-200;
-    box-shadow: 0 14px 30px -30px rgb(15 23 42 / 0.22);
+    @apply flex items-start gap-3 rounded-[1.35rem] border border-border/80 bg-secondary p-4 transition-all duration-200;
+    box-shadow: var(--shadow-card);
   }
 
   .dashboard-action-card:hover {
-    @apply -translate-y-0.5 border-primary/20 bg-white;
+    @apply -translate-y-0.5 border-primary/20 bg-card;
   }
 
   .dashboard-action-icon {
@@ -301,16 +304,16 @@
   }
 
   .dashboard-task-row {
-    @apply flex w-full items-center justify-between gap-4 rounded-[1.15rem] border border-transparent bg-white px-4 py-3 transition-all duration-200;
+    @apply flex w-full items-center justify-between gap-4 rounded-[1.15rem] border border-transparent bg-card px-4 py-3 transition-all duration-200;
   }
 
   .dashboard-task-row:hover {
     @apply border-primary/20;
-    box-shadow: 0 14px 26px -24px rgb(15 23 42 / 0.22);
+    box-shadow: var(--shadow-card-hover);
   }
 
   .dashboard-task-eye {
-    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-[#fafafb] text-muted-foreground transition-colors duration-200;
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-secondary text-muted-foreground transition-colors duration-200;
   }
 
   .dashboard-task-row:hover .dashboard-task-eye {
@@ -318,34 +321,34 @@
   }
 
   .dashboard-project-card {
-    @apply rounded-[1.2rem] border border-border/75 bg-white p-4 transition-all duration-200;
+    @apply rounded-[1.2rem] border border-border/75 bg-card p-4 transition-all duration-200;
   }
 
   .dashboard-project-card:hover {
     @apply border-primary/20;
-    box-shadow: 0 14px 28px -26px rgb(15 23 42 / 0.22);
+    box-shadow: var(--shadow-card-hover);
   }
 
   .dashboard-person-card {
-    @apply rounded-[1.2rem] border border-border/75 bg-white px-4 py-5 transition-all duration-200;
+    @apply rounded-[1.2rem] border border-border/75 bg-card px-4 py-5 transition-all duration-200;
   }
 
   .dashboard-person-card:hover {
     @apply border-primary/20;
-    box-shadow: 0 14px 28px -26px rgb(15 23 42 / 0.22);
+    box-shadow: var(--shadow-card-hover);
   }
 
   .dashboard-activity-row {
-    @apply flex items-start gap-3 rounded-[1.2rem] border border-border/75 bg-white px-4 py-3;
+    @apply flex items-start gap-3 rounded-[1.2rem] border border-border/75 bg-card px-4 py-3;
   }
 
   .project-details-stat {
-    @apply rounded-[1.15rem] border border-border/75 bg-white px-4 py-3;
+    @apply rounded-[1.15rem] border border-border/75 bg-card px-4 py-3;
   }
 
   .project-onboarding-banner {
-    @apply rounded-[1.2rem] border border-primary/15 bg-white px-4 py-4;
-    box-shadow: 0 14px 28px -30px rgb(109 40 217 / 0.18);
+    @apply rounded-[1.2rem] border border-primary/15 bg-card px-4 py-4;
+    box-shadow: var(--shadow-card);
   }
 
   .project-details-kicker {
@@ -365,16 +368,16 @@
   }
 
   .project-task-detail-card {
-    @apply rounded-[1.2rem] border border-border/75 bg-white p-4 transition-all duration-200;
+    @apply rounded-[1.2rem] border border-border/75 bg-card p-4 transition-all duration-200;
   }
 
   .project-task-detail-card:hover {
     @apply border-primary/20;
-    box-shadow: 0 14px 28px -26px rgb(15 23 42 / 0.22);
+    box-shadow: var(--shadow-card-hover);
   }
 
   .project-example-task-card {
-    @apply rounded-[1rem] border border-border/75 bg-[#f7f7f9] px-4 py-4;
+    @apply rounded-[1rem] border border-border/75 bg-secondary px-4 py-4;
   }
 
   .priority-high {

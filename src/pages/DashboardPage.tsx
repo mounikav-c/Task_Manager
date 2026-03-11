@@ -30,25 +30,25 @@ const quickActions = [
     title: "Create Project",
     description: "Create a project for your tasks",
     icon: FolderPlus,
-    tone: "bg-emerald-100 text-emerald-600",
+    tone: "bg-emerald-500/15 text-emerald-400",
   },
   {
     title: "Create Task",
     description: "Create task for your project",
     icon: Plus,
-    tone: "bg-sky-100 text-sky-600",
+    tone: "bg-sky-500/15 text-sky-400",
   },
   {
     title: "Invite to Team",
     description: "Invite people to your team",
     icon: Users,
-    tone: "bg-fuchsia-100 text-fuchsia-600",
+    tone: "bg-fuchsia-500/15 text-fuchsia-400",
   },
   {
     title: "Schedule Meeting",
     description: "Schedule a meeting for project",
     icon: Video,
-    tone: "bg-amber-100 text-amber-600",
+    tone: "bg-amber-500/15 text-amber-400",
   },
 ];
 
@@ -116,7 +116,7 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
                   <h2 className="text-lg font-semibold">Assigned Tasks</h2>
                   <p className="text-sm text-muted-foreground">What needs attention first.</p>
                 </div>
-                <Button variant="outline" size="sm" className="rounded-xl border-border/70 bg-white">
+                <Button variant="outline" size="sm" className="rounded-xl border-border/70 bg-card">
                   Nearest Due Date
                 </Button>
               </div>
@@ -164,7 +164,7 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
                     onClick={() => navigate("/board")}
                     className="dashboard-project-card text-left"
                   >
-                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-white text-base font-semibold text-foreground">
+                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-secondary text-base font-semibold text-foreground">
                       {project.projectName[0]}
                     </div>
                     <p className="text-base font-medium text-foreground">{project.projectName}</p>
@@ -182,7 +182,7 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
                   <h2 className="text-lg font-semibold">Recent Activity</h2>
                   <p className="text-sm text-muted-foreground">Latest work updates in the workspace.</p>
                 </div>
-                <Button variant="outline" size="sm" className="rounded-xl border-border/70 bg-white" onClick={() => navigate("/tasks")}>
+                <Button variant="outline" size="sm" className="rounded-xl border-border/70 bg-card" onClick={() => navigate("/tasks")}>
                   View All
                 </Button>
               </div>
@@ -190,7 +190,7 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
               <div className="space-y-3">
                 {recentActivity.map((task) => (
                   <div key={task.id} className="dashboard-activity-row">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
                       <CheckCheck className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
@@ -220,7 +220,7 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
                     onClick={() => navigate("/members")}
                     className="dashboard-person-card text-center"
                   >
-                    <Avatar className="mx-auto h-14 w-14 border border-white shadow-sm">
+                    <Avatar className="mx-auto h-14 w-14 border border-border shadow-sm">
                       <AvatarFallback className="text-sm font-semibold text-white" style={{ backgroundColor: member.color }}>
                         {member.initials}
                       </AvatarFallback>

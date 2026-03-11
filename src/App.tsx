@@ -70,9 +70,9 @@ const App = () => {
       <Sonner />
       <BrowserRouter>
         <SidebarProvider>
-          <div className="app-shell min-h-screen flex w-full bg-[#e7e7e8] p-3 md:p-5">
+          <div className="app-shell min-h-screen flex w-full bg-background p-3 md:p-5">
             <AppSidebar onAddProject={handleNew} onAddMember={() => setMemberDialogOpen(true)} onLogout={handleLogout} />
-            <SidebarInset className="app-shell-main min-w-0 overflow-hidden rounded-[2rem] border border-white/60 bg-[#f3f3f4] shadow-[0_24px_70px_-58px_rgba(15,23,42,0.4)]">
+            <SidebarInset className="app-shell-main min-w-0 overflow-hidden rounded-[2rem] border border-border/40 bg-card shadow-[0_24px_70px_-58px_rgba(0,0,0,0.5)]">
               <Routes>
                 <Route path="/" element={<DashboardPage tasks={tasks} teamMembers={teamMembers} onEdit={handleEdit} onDelete={deleteTask} onAddProject={handleNew} onNew={handleNew} onAddMember={() => setMemberDialogOpen(true)} />} />
                 <Route path="/tasks" element={<TasksPage tasks={tasks} teamMembers={teamMembers} onEdit={handleEdit} onDelete={deleteTask} onNew={handleNew} />} />

@@ -76,7 +76,7 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
                       to={item.url}
                       end={item.url === "/"}
                       className="sidebar-nav-link flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition-colors"
-                      activeClassName="bg-white text-violet-700 shadow-[0_10px_24px_-22px_rgba(139,92,246,0.55)]"
+                      activeClassName="bg-sidebar-accent text-primary shadow-[0_10px_24px_-22px_rgba(139,92,246,0.55)]"
                     >
                       <item.icon className="h-4.5 w-4.5 shrink-0" />
                       {!collapsed && <span>{item.title}</span>}
@@ -100,7 +100,7 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
                     <NavLink
                       to={item.url}
                       className="sidebar-nav-link flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition-colors"
-                      activeClassName="bg-white text-violet-700 shadow-[0_10px_24px_-22px_rgba(139,92,246,0.55)]"
+                      activeClassName="bg-sidebar-accent text-primary shadow-[0_10px_24px_-22px_rgba(139,92,246,0.55)]"
                     >
                       <item.icon className="h-4.5 w-4.5 shrink-0" />
                       {!collapsed && <span>{item.title}</span>}
@@ -115,7 +115,7 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
 
       {!collapsed && (
         <SidebarFooter className="px-3 pb-4 pt-2">
-          <div className="rounded-[1.35rem] border border-sidebar-border/70 bg-white/90 p-3 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.18)]">
+          <div className="rounded-[1.35rem] border border-sidebar-border/70 bg-card p-3 shadow-[0_12px_28px_-24px_rgba(0,0,0,0.3)]">
             <Button onClick={onAddProject} className="h-11 w-full justify-start rounded-xl bg-[#6d28d9] hover:bg-[#5b21b6] shadow-[0_14px_24px_-18px_rgba(109,40,217,0.55)]">
               + Add Project
             </Button>
@@ -123,7 +123,7 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
               + Add Member
             </Button>
           </div>
-          <Button onClick={onLogout} variant="ghost" className="h-11 justify-start rounded-2xl border border-red-200/70 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600">
+          <Button onClick={onLogout} variant="ghost" className="h-11 justify-start rounded-2xl border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive">
             <LogOut className="h-4 w-4" />
             Log Out
           </Button>

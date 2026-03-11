@@ -8,9 +8,9 @@ const statusLabel = { todo: "Todo", inprogress: "In Progress", completed: "Compl
 const fallbackPriority: keyof typeof priorityLabel = "medium";
 const fallbackStatus: keyof typeof statusLabel = "todo";
 const priorityBadgeClass: Record<keyof typeof priorityLabel, string> = {
-  high: "border-rose-200 bg-rose-50 text-rose-700",
-  medium: "border-amber-200 bg-amber-50 text-amber-700",
-  low: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  high: "border-rose-500/30 bg-rose-500/15 text-rose-400",
+  medium: "border-amber-500/30 bg-amber-500/15 text-amber-400",
+  low: "border-emerald-500/30 bg-emerald-500/15 text-emerald-400",
 };
 
 interface TaskCardProps {

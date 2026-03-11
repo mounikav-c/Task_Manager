@@ -31,8 +31,8 @@ export function TopNav({ title }: TopNavProps) {
           <Bell className="h-4 w-4" />
           <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
         </button>
-        <Avatar className="h-10 w-10 ring-2 ring-white shadow-sm">
-          <AvatarFallback className="bg-gradient-to-br from-orange-200 to-rose-200 text-slate-700 text-xs font-semibold">
+        <Avatar className="h-10 w-10 ring-2 ring-border shadow-sm">
+          <AvatarFallback className="bg-gradient-to-br from-primary/40 to-primary/20 text-foreground text-xs font-semibold">
             JD
           </AvatarFallback>
         </Avatar>
