@@ -61,21 +61,21 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
                 </div>
 
                 <div className="mt-4 grid grid-cols-3 gap-2">
-                  <div className="rounded-xl bg-[#f6f6f8] px-3 py-2">
+                  <div className="rounded-xl bg-secondary px-3 py-2">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <BriefcaseBusiness className="h-3.5 w-3.5" />
                       Total
                     </div>
                     <p className="mt-2 text-xl font-semibold">{member.assignedTasks.length}</p>
                   </div>
-                  <div className="rounded-xl bg-[#f6f6f8] px-3 py-2">
+                  <div className="rounded-xl bg-secondary px-3 py-2">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <CircleDot className="h-3.5 w-3.5 text-[#b58cf4]" />
+                      <CircleDot className="h-3.5 w-3.5 text-primary" />
                       Active
                     </div>
                     <p className="mt-2 text-xl font-semibold">{member.activeCount}</p>
                   </div>
-                  <div className="rounded-xl bg-[#f6f6f8] px-3 py-2">
+                  <div className="rounded-xl bg-secondary px-3 py-2">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <UserRound className="h-3.5 w-3.5 text-emerald-500" />
                       Done
