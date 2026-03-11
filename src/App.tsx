@@ -10,6 +10,7 @@ import { BoardPage } from "@/pages/BoardPage";
 import { MembersPage } from "@/pages/MembersPage";
 import { ProjectDetailsPage } from "@/pages/ProjectDetailsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { HelpPage } from "@/pages/HelpPage";
 import { TaskDialog } from "@/components/TaskDialog";
 import { MemberDialog } from "@/components/MemberDialog";
 import { useTaskStore, type Task, type Status } from "@/lib/store";
@@ -80,6 +81,7 @@ const App = () => {
                 <Route path="/projects/:projectId" element={<ProjectDetailsPage tasks={tasks} teamMembers={teamMembers} onEdit={handleEdit} onNew={handleNew} />} />
                 <Route path="/members" element={<MembersPage tasks={tasks} teamMembers={teamMembers} onAddMember={() => setMemberDialogOpen(true)} />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/help" element={<HelpPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </SidebarInset>

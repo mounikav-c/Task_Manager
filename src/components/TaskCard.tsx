@@ -2,6 +2,7 @@ import { ArrowUpRight, Calendar, Pencil, Trash2 } from "lucide-react";
 import type { Assignee, Task } from "@/lib/store";
 import { getAssignee } from "@/lib/store";
 import { motion } from "framer-motion";
+import type { KeyboardEvent } from "react";
 
 const priorityLabel = { low: "Low", medium: "Medium", high: "High" } as const;
 const statusLabel = { todo: "Todo", inprogress: "In Progress", completed: "Completed" } as const;
@@ -30,6 +31,12 @@ export function TaskCard({ task, onEdit, onDelete, compact, teamMembers }: TaskC
   const statusKey = (String(task.status).toLowerCase() in statusLabel
     ? String(task.status).toLowerCase()
     : fallbackStatus) as keyof typeof statusLabel;
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onEdit(task);
+    }
+  };
 
   return (
     <motion.div
@@ -37,12 +44,16 @@ export function TaskCard({ task, onEdit, onDelete, compact, teamMembers }: TaskC
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      className={`task-card task-card-urgency-${priorityKey} group ${isCompleted ? "task-card-completed opacity-70" : ""}`}
+      role="button"
+      tabIndex={0}
+      onClick={() => onEdit(task)}
+      onKeyDown={handleCardKeyDown}
+      className={`task-card task-card-urgency-${priorityKey} group ${isCompleted ? "task-card-completed" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className={`task-card-title font-medium text-card-foreground ${compact ? "text-sm" : ""} ${isCompleted ? "text-card-foreground/70 line-through" : ""}`}>
+            <h3 className={`task-card-title font-medium text-card-foreground ${compact ? "text-sm" : ""}`}>
               {task.title}
             </h3>
             <ArrowUpRight className="task-card-arrow h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -54,10 +65,10 @@ export function TaskCard({ task, onEdit, onDelete, compact, teamMembers }: TaskC
           )}
         </div>
         <div className="task-card-actions flex gap-0.5 shrink-0">
-          <button onClick={() => onEdit(task)} className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={(event) => { event.stopPropagation(); onEdit(task); }} className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
             <Pencil className="h-3.5 w-3.5" />
           </button>
-          <button onClick={() => onDelete(task.id)} className="p-1.5 rounded-md hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-colors">
+          <button onClick={(event) => { event.stopPropagation(); onDelete(task.id); }} className="p-1.5 rounded-md hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-colors">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>

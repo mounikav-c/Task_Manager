@@ -32,6 +32,8 @@ export interface Task {
 
 const STORAGE_KEY = "taskflow-tasks";
 const MEMBERS_STORAGE_KEY = "taskflow-team-members";
+const TASK_SEED_VERSION_KEY = "taskflow-seed-version";
+const TASK_SEED_VERSION = "v2";
 const MEMBER_COLORS = [
   "hsl(267 84% 57%)",
   "hsl(162 63% 41%)",
@@ -46,15 +48,26 @@ function generateId() {
 }
 
 function loadTasks(): Task[] {
+  const now = new Date();
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
-      return JSON.parse(data).map((task: Task, index: number) => ({
+      const parsed = JSON.parse(data).map((task: Task, index: number) => ({
         ...task,
         projectId: task.projectId ?? getDefaultProjectId(index),
       }));
+
+      if (localStorage.getItem(TASK_SEED_VERSION_KEY) !== TASK_SEED_VERSION) {
+        const enriched = topUpSampleTasks(parsed, now);
+        saveTasks(enriched);
+        localStorage.setItem(TASK_SEED_VERSION_KEY, TASK_SEED_VERSION);
+        return enriched;
+      }
+
+      return parsed;
     }
   } catch {}
+  localStorage.setItem(TASK_SEED_VERSION_KEY, TASK_SEED_VERSION);
   return getDefaultTasks();
 }
 
@@ -83,7 +96,35 @@ function getDefaultTasks(): Task[] {
     { id: generateId(), title: "Add drag and drop to Kanban", description: "Implement DnD functionality for the board view", status: "todo", priority: "medium", dueDate: new Date(now.getTime() + 86400000 * 7).toISOString().split("T")[0], createdAt: new Date(now.getTime() - 86400000).toISOString(), projectId: "72ipo", assigneeId: "4" },
     { id: generateId(), title: "Write API documentation", description: "Document all REST endpoints with examples", status: "todo", priority: "low", dueDate: new Date(now.getTime() + 86400000 * 10).toISOString().split("T")[0], createdAt: now.toISOString(), projectId: "monashee-insights", assigneeId: "5" },
     { id: generateId(), title: "Set up CI/CD pipeline", description: "Configure automated testing and deployment", status: "todo", priority: "high", dueDate: new Date(now.getTime() - 86400000 * 3).toISOString().split("T")[0], createdAt: now.toISOString(), projectId: "real-estate", assigneeId: "1" },
+    { id: generateId(), title: "Create onboarding checklist", description: "Draft first-week checklist for new team members", status: "completed", priority: "low", dueDate: new Date(now.getTime() - 86400000 * 6).toISOString().split("T")[0], createdAt: new Date(now.getTime() - 86400000 * 8).toISOString(), projectId: "72ipo", assigneeId: "4" },
+    { id: generateId(), title: "Refine mobile nav interactions", description: "Improve tap targets and transitions on smaller screens", status: "inprogress", priority: "medium", dueDate: new Date(now.getTime() + 86400000 * 5).toISOString().split("T")[0], createdAt: new Date(now.getTime() - 86400000 * 2).toISOString(), projectId: "real-estate", assigneeId: "5" },
+    { id: generateId(), title: "Prepare sprint planning board", description: "Organize backlog items and sprint goals for kickoff", status: "todo", priority: "medium", dueDate: new Date(now.getTime() + 86400000 * 6).toISOString().split("T")[0], createdAt: new Date(now.getTime() - 86400000).toISOString(), projectId: "monashee-insights", assigneeId: "3" },
+    { id: generateId(), title: "Audit accessibility contrast", description: "Review key screens for WCAG color contrast compliance", status: "todo", priority: "high", dueDate: new Date(now.getTime() + 86400000 * 9).toISOString().split("T")[0], createdAt: now.toISOString(), projectId: "72ipo", assigneeId: "2" },
+    { id: generateId(), title: "Finalize release notes", description: "Compile delivered features and known issues for release", status: "inprogress", priority: "high", dueDate: new Date(now.getTime() + 86400000 * 3).toISOString().split("T")[0], createdAt: new Date(now.getTime() - 86400000).toISOString(), projectId: "monashee-insights", assigneeId: "1" },
+    { id: generateId(), title: "Set up customer feedback form", description: "Create and connect a feedback intake form for beta users", status: "todo", priority: "low", dueDate: new Date(now.getTime() + 86400000 * 12).toISOString().split("T")[0], createdAt: now.toISOString(), projectId: "real-estate", assigneeId: "4" },
   ];
+}
+
+function topUpSampleTasks(existingTasks: Task[], now: Date): Task[] {
+  const existingTitles = new Set(existingTasks.map((task) => task.title.toLowerCase()));
+  const supplemental: Omit<Task, "id" | "createdAt">[] = [
+    { title: "Create onboarding checklist", description: "Draft first-week checklist for new team members", status: "completed", priority: "low", dueDate: new Date(now.getTime() - 86400000 * 6).toISOString().split("T")[0], projectId: "72ipo", assigneeId: "4" },
+    { title: "Refine mobile nav interactions", description: "Improve tap targets and transitions on smaller screens", status: "inprogress", priority: "medium", dueDate: new Date(now.getTime() + 86400000 * 5).toISOString().split("T")[0], projectId: "real-estate", assigneeId: "5" },
+    { title: "Prepare sprint planning board", description: "Organize backlog items and sprint goals for kickoff", status: "todo", priority: "medium", dueDate: new Date(now.getTime() + 86400000 * 6).toISOString().split("T")[0], projectId: "monashee-insights", assigneeId: "3" },
+    { title: "Audit accessibility contrast", description: "Review key screens for WCAG color contrast compliance", status: "todo", priority: "high", dueDate: new Date(now.getTime() + 86400000 * 9).toISOString().split("T")[0], projectId: "72ipo", assigneeId: "2" },
+    { title: "Finalize release notes", description: "Compile delivered features and known issues for release", status: "inprogress", priority: "high", dueDate: new Date(now.getTime() + 86400000 * 3).toISOString().split("T")[0], projectId: "monashee-insights", assigneeId: "1" },
+    { title: "Set up customer feedback form", description: "Create and connect a feedback intake form for beta users", status: "todo", priority: "low", dueDate: new Date(now.getTime() + 86400000 * 12).toISOString().split("T")[0], projectId: "real-estate", assigneeId: "4" },
+  ];
+
+  const additions = supplemental
+    .filter((task) => !existingTitles.has(task.title.toLowerCase()))
+    .map((task, index) => ({
+      ...task,
+      id: generateId(),
+      createdAt: new Date(now.getTime() - 86400000 * (index + 1)).toISOString(),
+    }));
+
+  return [...existingTasks, ...additions];
 }
 
 function getDefaultProjectId(index: number) {

@@ -25,7 +25,7 @@ const mainItems = [
 
 const generalItems = [
   { title: "Settings", url: "/settings", icon: Settings },
-  { title: "Help", url: "/settings", icon: HelpCircle },
+  { title: "Help", url: "/help", icon: HelpCircle },
 ];
 
 interface AppSidebarProps {

@@ -32,7 +32,7 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-medium text-muted-foreground">Team directory</p>
-              <h2 className="text-lg font-semibold tracking-tight">People and current workload</h2>
+              <h2 className="text-lg font-semibold tracking-tight">Team Members</h2>
             </div>
             <Button onClick={onAddMember} className="rounded-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20 text-sm h-9">
               <Plus className="h-4 w-4" />
@@ -40,7 +40,7 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
             {members.map((member) => (
               <div key={member.id} className="rounded-xl border border-border/60 bg-card p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
                 <div className="flex items-start justify-between gap-3">
