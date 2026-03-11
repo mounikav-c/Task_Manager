@@ -42,7 +42,7 @@ const quickActions = [
     title: "Invite to Team",
     description: "Invite people to your team",
     icon: Users,
-    tone: "bg-fuchsia-100 text-fuchsia-600",
+    tone: "bg-fuchsia-500/15 text-fuchsia-400",
   },
   {
     title: "Schedule Meeting",
