@@ -42,7 +42,7 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {members.map((member) => (
-              <div key={member.id} className="rounded-[1.35rem] border border-border/75 bg-white p-4 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.24)]">
+              <div key={member.id} className="rounded-[1.35rem] border border-border/75 bg-card p-4 shadow-[0_16px_34px_-30px_rgba(0,0,0,0.3)]">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <Avatar className="h-12 w-12 border border-white shadow-sm">
