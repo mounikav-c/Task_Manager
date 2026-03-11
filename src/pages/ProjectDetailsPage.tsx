@@ -65,22 +65,22 @@ export function ProjectDetailsPage({ tasks, teamMembers, onEdit, onNew }: Props)
 
             <div className="flex flex-col gap-5 rounded-[1.4rem] border border-border/70 bg-white px-6 py-6 shadow-[0_18px_40px_-38px_rgba(15,23,42,0.35)] lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Project Details</p>
-                <h1 className="mt-2 text-[2.15rem] font-semibold tracking-tight text-foreground">{project.name}</h1>
+                <p className="project-details-kicker">Project Details</p>
+                <h1 className="mt-2 text-[2.1rem] font-semibold tracking-tight text-foreground sm:text-[2.25rem]">{project.name}</h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">{project.description}</p>
               </div>
               <div className="grid w-full gap-3 sm:grid-cols-3 lg:max-w-[520px]">
                 <div className="rounded-2xl bg-[#f7f7f9] px-4 py-4">
                   <span className="project-details-label">Start Date</span>
-                  <p className="mt-2 text-base font-semibold text-foreground">{new Date(project.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                  <p className="project-details-value">{new Date(project.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
                 </div>
                 <div className="rounded-2xl bg-[#f7f7f9] px-4 py-4">
                   <span className="project-details-label">Deadline</span>
-                  <p className="mt-2 text-base font-semibold text-foreground">{new Date(project.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                  <p className="project-details-value">{new Date(project.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
                 </div>
                 <div className="rounded-2xl bg-[#f7f7f9] px-4 py-4">
                   <span className="project-details-label">Owner</span>
-                  <p className="mt-2 text-base font-semibold text-foreground">{owner?.name ?? "Unassigned"}</p>
+                  <p className="project-details-value">{owner?.name ?? "Unassigned"}</p>
                 </div>
               </div>
             </div>
@@ -120,19 +120,19 @@ export function ProjectDetailsPage({ tasks, teamMembers, onEdit, onNew }: Props)
                 <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <div className="rounded-2xl border border-border/60 bg-[#fbfbfc] px-4 py-4">
                     <span className="project-details-label">Start Date</span>
-                    <p className="mt-2 text-base font-semibold text-foreground">{new Date(project.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                    <p className="project-details-value">{new Date(project.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
                   </div>
                   <div className="rounded-2xl border border-border/60 bg-[#fbfbfc] px-4 py-4">
                     <span className="project-details-label">Deadline</span>
-                    <p className="mt-2 text-base font-semibold text-foreground">{new Date(project.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                    <p className="project-details-value">{new Date(project.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
                   </div>
                   <div className="rounded-2xl border border-border/60 bg-[#fbfbfc] px-4 py-4">
                     <span className="project-details-label">Owner</span>
-                    <p className="mt-2 text-base font-semibold text-foreground">{owner?.name ?? "Unassigned"}</p>
+                    <p className="project-details-value">{owner?.name ?? "Unassigned"}</p>
                   </div>
                   <div className="rounded-2xl border border-border/60 bg-[#fbfbfc] px-4 py-4">
                     <span className="project-details-label">Open Tasks</span>
-                    <p className="mt-2 text-base font-semibold text-foreground">{projectTasks.length}</p>
+                    <p className="project-details-value">{projectTasks.length}</p>
                   </div>
                 </div>
               </div>

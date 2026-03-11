@@ -324,8 +324,16 @@
     box-shadow: 0 14px 28px -30px rgb(109 40 217 / 0.18);
   }
 
+  .project-details-kicker {
+    @apply text-xs font-semibold tracking-[0.08em] text-muted-foreground;
+  }
+
   .project-details-label {
-    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground;
+    @apply text-xs font-medium tracking-[0.03em] text-muted-foreground;
+  }
+
+  .project-details-value {
+    @apply mt-2 text-base font-semibold leading-tight text-foreground;
   }
 
   .project-details-copy {
