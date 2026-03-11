@@ -190,7 +190,7 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
               <div className="space-y-3">
                 {recentActivity.map((task) => (
                   <div key={task.id} className="dashboard-activity-row">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
                       <CheckCheck className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
