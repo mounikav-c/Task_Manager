@@ -59,7 +59,7 @@ export function BoardPage({ tasks, teamMembers, onNew }: Props) {
     <div className="flex h-full flex-col">
       <TopNav title="Projects" />
       <div className="flex-1 overflow-auto p-5 md:p-6">
-        <div className="rounded-[1.7rem] border border-border/80 bg-[#f7f7f8] p-4 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.18)] md:p-5">
+        <div className="rounded-[1.7rem] border border-border/80 bg-secondary p-4 shadow-[0_18px_40px_-34px_rgba(0,0,0,0.25)] md:p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Projects overview</p>
