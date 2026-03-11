@@ -115,7 +115,7 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
 
       {!collapsed && (
         <SidebarFooter className="px-3 pb-4 pt-2">
-          <div className="rounded-[1.35rem] border border-sidebar-border/70 bg-white/90 p-3 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.18)]">
+          <div className="rounded-[1.35rem] border border-sidebar-border/70 bg-card p-3 shadow-[0_12px_28px_-24px_rgba(0,0,0,0.3)]">
             <Button onClick={onAddProject} className="h-11 w-full justify-start rounded-xl bg-[#6d28d9] hover:bg-[#5b21b6] shadow-[0_14px_24px_-18px_rgba(109,40,217,0.55)]">
               + Add Project
             </Button>
