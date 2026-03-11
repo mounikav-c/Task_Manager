@@ -156,6 +156,30 @@
     background: hsl(var(--card));
   }
 
+  .task-card-urgency-high {
+    box-shadow: inset 4px 0 0 hsl(var(--priority-high)), var(--shadow-card);
+  }
+
+  .task-card-urgency-medium {
+    box-shadow: inset 4px 0 0 hsl(var(--priority-medium)), var(--shadow-card);
+  }
+
+  .task-card-urgency-low {
+    box-shadow: inset 4px 0 0 hsl(var(--priority-low)), var(--shadow-card);
+  }
+
+  .task-card-urgency-high:hover {
+    box-shadow: inset 4px 0 0 hsl(var(--priority-high)), var(--shadow-card-hover);
+  }
+
+  .task-card-urgency-medium:hover {
+    box-shadow: inset 4px 0 0 hsl(var(--priority-medium)), var(--shadow-card-hover);
+  }
+
+  .task-card-urgency-low:hover {
+    box-shadow: inset 4px 0 0 hsl(var(--priority-low)), var(--shadow-card-hover);
+  }
+
   .stat-card {
     @apply bg-card rounded-xl border p-6 transition-all duration-200 cursor-pointer relative overflow-hidden;
     box-shadow: var(--shadow-card);
@@ -354,32 +378,43 @@
   }
 
   .priority-high {
-    color: hsl(var(--priority-high));
-    background-color: hsl(var(--priority-high) / 0.1);
+    color: hsl(0 0% 100%);
+    background-color: hsl(var(--priority-high) / 0.9);
+    border-color: hsl(var(--priority-high) / 0.95);
   }
 
   .priority-medium {
-    color: hsl(var(--priority-medium));
-    background-color: hsl(var(--priority-medium) / 0.1);
+    color: hsl(32 95% 15%);
+    background-color: hsl(var(--priority-medium) / 0.32);
+    border-color: hsl(var(--priority-medium) / 0.5);
   }
 
   .priority-low {
-    color: hsl(var(--priority-low));
-    background-color: hsl(var(--priority-low) / 0.1);
+    color: hsl(157 71% 18%);
+    background-color: hsl(var(--priority-low) / 0.26);
+    border-color: hsl(var(--priority-low) / 0.45);
   }
 
   .status-todo {
     color: hsl(var(--status-todo));
-    background-color: hsl(var(--status-todo) / 0.1);
+    background-color: hsl(var(--status-todo) / 0.14);
+    border-color: hsl(var(--status-todo) / 0.26);
   }
 
   .status-inprogress {
     color: hsl(var(--status-inprogress));
-    background-color: hsl(var(--status-inprogress) / 0.1);
+    background-color: hsl(var(--status-inprogress) / 0.14);
+    border-color: hsl(var(--status-inprogress) / 0.28);
   }
 
   .status-completed {
     color: hsl(var(--status-completed));
-    background-color: hsl(var(--status-completed) / 0.1);
+    background-color: hsl(var(--status-completed) / 0.14);
+    border-color: hsl(var(--status-completed) / 0.28);
+  }
+
+  .priority-pill,
+  .status-pill {
+    @apply inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold leading-none;
   }
 }

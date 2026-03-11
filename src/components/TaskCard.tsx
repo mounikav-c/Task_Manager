@@ -5,6 +5,13 @@ import { motion } from "framer-motion";
 
 const priorityLabel = { low: "Low", medium: "Medium", high: "High" } as const;
 const statusLabel = { todo: "Todo", inprogress: "In Progress", completed: "Completed" } as const;
+const fallbackPriority: keyof typeof priorityLabel = "medium";
+const fallbackStatus: keyof typeof statusLabel = "todo";
+const priorityBadgeClass: Record<keyof typeof priorityLabel, string> = {
+  high: "border-rose-200 bg-rose-50 text-rose-700",
+  medium: "border-amber-200 bg-amber-50 text-amber-700",
+  low: "border-emerald-200 bg-emerald-50 text-emerald-700",
+};
 
 interface TaskCardProps {
   task: Task;
@@ -17,6 +24,12 @@ interface TaskCardProps {
 export function TaskCard({ task, onEdit, onDelete, compact, teamMembers }: TaskCardProps) {
   const assignee = getAssignee(task.assigneeId, teamMembers);
   const isCompleted = task.status === "completed";
+  const priorityKey = (String(task.priority).toLowerCase() in priorityLabel
+    ? String(task.priority).toLowerCase()
+    : fallbackPriority) as keyof typeof priorityLabel;
+  const statusKey = (String(task.status).toLowerCase() in statusLabel
+    ? String(task.status).toLowerCase()
+    : fallbackStatus) as keyof typeof statusLabel;
 
   return (
     <motion.div
@@ -24,7 +37,7 @@ export function TaskCard({ task, onEdit, onDelete, compact, teamMembers }: TaskC
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      className={`task-card group ${isCompleted ? "task-card-completed" : ""}`}
+      className={`task-card task-card-urgency-${priorityKey} group ${isCompleted ? "task-card-completed" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
@@ -50,11 +63,11 @@ export function TaskCard({ task, onEdit, onDelete, compact, teamMembers }: TaskC
         </div>
       </div>
       <div className="flex items-center gap-2 mt-3 flex-wrap">
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full priority-${task.priority}`}>
-          {priorityLabel[task.priority]}
+        <span className={`priority-pill ${priorityBadgeClass[priorityKey]}`}>
+          {priorityLabel[priorityKey]}
         </span>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full status-${task.status}`}>
-          {statusLabel[task.status]}
+        <span className={`status-pill status-${statusKey}`}>
+          {statusLabel[statusKey]}
         </span>
         {assignee && (
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
