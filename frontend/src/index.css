@@ -5,6 +5,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @layer base {
+  html {
+    font-size: clamp(16px, 0.35vw + 15px, 17px);
+  }
+
   :root {
     --background: 220 10% 92%;
     --foreground: 224 30% 12%;
