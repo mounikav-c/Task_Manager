@@ -1,13 +1,16 @@
-import { AlertTriangle, Clock3, ListChecks, Plus, X } from "lucide-react";
+import { CalendarDays, LayoutGrid, List, Plus, Users, X } from "lucide-react";
+import { useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import { TopNav } from "@/components/TopNav";
 import { TaskCard } from "@/components/TaskCard";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Assignee, Status, Task } from "@/lib/store";
+import { getAssignee } from "@/lib/store";
 import { getProjectById, PROJECTS } from "@/lib/projects";
-import { AnimatePresence } from "framer-motion";
-import { useSearchParams } from "react-router-dom";
-import { useMemo } from "react";
 
 interface Props {
   tasks: Task[];
@@ -16,6 +19,46 @@ interface Props {
   onDelete: (id: string) => void;
   onNew: () => void;
 }
+
+const boardColumns: Array<{
+  key: Status;
+  title: string;
+  accent: string;
+  hint: string;
+  columnClass: string;
+  addClass: string;
+}> = [
+  {
+    key: "todo",
+    title: "TO DO",
+    accent: "border-slate-400/40 bg-white text-slate-700",
+    hint: "Ready to start",
+    columnClass: "bg-[#f4f1f1]",
+    addClass: "text-slate-500 hover:text-slate-700",
+  },
+  {
+    key: "inprogress",
+    title: "IN PROGRESS",
+    accent: "border-blue-500/30 bg-blue-500 text-white",
+    hint: "Work happening now",
+    columnClass: "bg-[#eef2fb]",
+    addClass: "text-blue-600 hover:text-blue-700",
+  },
+  {
+    key: "completed",
+    title: "COMPLETE",
+    accent: "border-emerald-500/30 bg-emerald-600 text-white",
+    hint: "Recently finished",
+    columnClass: "bg-[#eef6f1]",
+    addClass: "text-emerald-600 hover:text-emerald-700",
+  },
+];
+
+const boardCardAccent: Record<Task["priority"], string> = {
+  high: "border-l-rose-400",
+  medium: "border-l-amber-400",
+  low: "border-l-emerald-400",
+};
 
 export function TasksPage({ tasks, teamMembers, onEdit, onDelete, onNew }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -29,12 +72,12 @@ export function TasksPage({ tasks, teamMembers, onEdit, onDelete, onNew }: Props
   const filteredTasks = useMemo(() => {
     let result = tasks;
 
-    if (filter === "completed") result = result.filter((t) => t.status === "completed");
-    else if (filter === "pending") result = result.filter((t) => t.status === "todo" || t.status === "inprogress");
-    else if (filter === "overdue") result = result.filter((t) => t.dueDate < today && t.status !== "completed");
+    if (filter === "completed") result = result.filter((task) => task.status === "completed");
+    else if (filter === "pending") result = result.filter((task) => task.status !== "completed");
+    else if (filter === "overdue") result = result.filter((task) => task.dueDate < today && task.status !== "completed");
 
-    if (assigneeFilter !== "all") result = result.filter((t) => t.assigneeId === assigneeFilter);
-    if (projectFilter !== "all") result = result.filter((t) => t.projectId === projectFilter);
+    if (assigneeFilter !== "all") result = result.filter((task) => task.assigneeId === assigneeFilter);
+    if (projectFilter !== "all") result = result.filter((task) => task.projectId === projectFilter);
 
     return [...result].sort((a, b) => {
       const overdueDelta = Number(a.dueDate < today && a.status !== "completed") - Number(b.dueDate < today && b.status !== "completed");
@@ -50,37 +93,47 @@ export function TasksPage({ tasks, teamMembers, onEdit, onDelete, onNew }: Props
     });
   }, [tasks, filter, assigneeFilter, projectFilter, today]);
 
-  const summary = useMemo(() => {
-    const overdue = filteredTasks.filter((task) => task.dueDate < today && task.status !== "completed");
-    const dueSoon = filteredTasks.filter((task) => {
-      const distance = Math.ceil((new Date(task.dueDate).getTime() - new Date(today).getTime()) / 86400000);
-      return distance >= 0 && distance <= 3 && task.status !== "completed";
-    });
-    const inProgress = filteredTasks.filter((task) => task.status === "inprogress");
+  const groupedBoardTasks = useMemo(
+    () =>
+      boardColumns.map((column) => ({
+        ...column,
+        tasks: filteredTasks.filter((task) => task.status === column.key),
+      })),
+    [filteredTasks],
+  );
 
-    return { overdue, dueSoon, inProgress };
-  }, [filteredTasks, today]);
+  const workload = useMemo(() => {
+    const maxOpen = Math.max(
+      1,
+      ...teamMembers.map((member) => filteredTasks.filter((task) => task.assigneeId === member.id && task.status !== "completed").length),
+    );
 
-  const memberWorkload = useMemo(() => {
     return teamMembers
       .map((member) => {
         const assigned = filteredTasks.filter((task) => task.assigneeId === member.id);
-        const overdue = assigned.filter((task) => task.dueDate < today && task.status !== "completed").length;
-        const inProgress = assigned.filter((task) => task.status === "inprogress").length;
+        const open = assigned.filter((task) => task.status !== "completed");
+        const completed = assigned.filter((task) => task.status === "completed");
+        const overdue = open.filter((task) => task.dueDate < today).length;
 
         return {
           member,
           total: assigned.length,
-          overdue,
-          inProgress,
-          nextTask: assigned[0],
+          openCount: open.length,
+          completedCount: completed.length,
+          overdueCount: overdue,
+          nextTask: open[0],
+          loadWidth: `${Math.max(10, Math.round((open.length / maxOpen) * 100))}%`,
         };
       })
       .filter((entry) => entry.total > 0)
-      .sort((a, b) => b.overdue - a.overdue || b.inProgress - a.inProgress || b.total - a.total);
+      .sort((a, b) => b.overdueCount - a.overdueCount || b.openCount - a.openCount || b.total - a.total);
   }, [filteredTasks, teamMembers, today]);
 
-  const focusTasks = useMemo(() => filteredTasks.slice(0, 4), [filteredTasks]);
+  const summary = {
+    total: filteredTasks.length,
+    open: filteredTasks.filter((task) => task.status !== "completed").length,
+    overdue: filteredTasks.filter((task) => task.dueDate < today && task.status !== "completed").length,
+  };
 
   const setFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams);
@@ -90,99 +143,60 @@ export function TasksPage({ tasks, teamMembers, onEdit, onDelete, onNew }: Props
   };
 
   const hasFilters = filter !== "all" || assigneeFilter !== "all" || projectFilter !== "all";
-  const filterLabel = { all: "All", completed: "Completed", pending: "Pending", overdue: "Overdue" }[filter] || "All";
-  const summaryCards = [
-    {
-      label: "Visible Tasks",
-      value: filteredTasks.length,
-      note: projectFilter === "all" ? "Across every project" : getProjectById(projectFilter)?.name ?? "Project view",
-      icon: ListChecks,
-      tone: "text-primary",
-    },
-    {
-      label: "Overdue",
-      value: summary.overdue.length,
-      note: "Needs action first",
-      icon: AlertTriangle,
-      tone: "text-rose-400",
-    },
-    {
-      label: "Due Soon",
-      value: summary.dueSoon.length,
-      note: "Due in the next 3 days",
-      icon: Clock3,
-      tone: "text-amber-400",
-    },
-    {
-      label: "In Progress",
-      value: summary.inProgress.length,
-      note: "Currently being worked on",
-      icon: ListChecks,
-      tone: "text-emerald-400",
-    },
-  ];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       <TopNav title="Tasks" />
-      <div className="flex-1 overflow-auto p-6">
-        <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">Global Task Queue</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Track work across all projects by urgency, owner, and status.</p>
-          </div>
-          <Button onClick={onNew} size="sm" className="gap-1.5">
-            <Plus className="h-4 w-4" /> New Task
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 mb-4 xl:grid-cols-4">
-          {summaryCards.map((card) => (
-            <div key={card.label} className="stat-card">
-              <div className="relative flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">{card.label}</p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">{card.value}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{card.note}</p>
-                </div>
-                <div className={`stat-card-icon-wrap ${card.tone}`}>
-                  <card.icon className="h-5 w-5" />
-                </div>
-              </div>
+      <div className="flex-1 overflow-auto p-4 md:p-5">
+        <section className="mb-4 rounded-[1.25rem] border border-border/70 bg-card p-4 md:p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Action Center</p>
+              <h2 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">Tasks Across All Projects</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Board, list, and workload views in one place.</p>
             </div>
-          ))}
-        </div>
+            <Button onClick={onNew} size="sm" className="h-10 gap-1.5 rounded-xl px-4">
+              <Plus className="h-4 w-4" /> New Task
+            </Button>
+          </div>
 
-        <div className="dashboard-panel mb-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm text-muted-foreground">{filteredTasks.length} tasks</p>
+          <div className="mt-4 flex items-center gap-2 flex-wrap">
+            <div className="rounded-lg border border-border/60 bg-secondary px-3 py-2 text-xs text-muted-foreground">
+              {summary.total} total
+            </div>
+            <div className="rounded-lg border border-primary/15 bg-primary/8 px-3 py-2 text-xs text-primary">
+              {summary.open} open
+            </div>
+            <div className="rounded-lg border border-rose-500/20 bg-rose-500/8 px-3 py-2 text-xs text-rose-500">
+              {summary.overdue} overdue
+            </div>
 
             <Select value={filter} onValueChange={(v) => setFilter("filter", v)}>
-              <SelectTrigger className="w-[130px] h-8 text-xs">
+              <SelectTrigger className="h-9 w-[135px] rounded-lg text-xs bg-background">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Tasks</SelectItem>
+                <SelectItem value="pending">Open Work</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="overdue">Overdue</SelectItem>
               </SelectContent>
             </Select>
 
             <Select value={assigneeFilter} onValueChange={(v) => setFilter("assignee", v)}>
-              <SelectTrigger className="w-[150px] h-8 text-xs">
+              <SelectTrigger className="h-9 w-[150px] rounded-lg text-xs bg-background">
                 <SelectValue placeholder="Assignee" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Assignees</SelectItem>
-                {teamMembers.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                {teamMembers.map((member) => (
+                  <SelectItem key={member.id} value={member.id}>{member.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             <Select value={projectFilter} onValueChange={(v) => setFilter("project", v)}>
-              <SelectTrigger className="w-[170px] h-8 text-xs">
+              <SelectTrigger className="h-9 w-[170px] rounded-lg text-xs bg-background">
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
               <SelectContent>
@@ -194,121 +208,264 @@ export function TasksPage({ tasks, teamMembers, onEdit, onDelete, onNew }: Props
             </Select>
 
             {hasFilters && (
-              <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => setSearchParams({}, { replace: true })}>
+              <Button variant="ghost" size="sm" className="h-9 rounded-lg text-xs gap-1" onClick={() => setSearchParams({}, { replace: true })}>
                 <X className="h-3 w-3" /> Clear
               </Button>
             )}
           </div>
-        </div>
+        </section>
 
-        <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span className="rounded-full border border-border/70 bg-card px-2.5 py-1">View: {filterLabel}</span>
-          {projectFilter !== "all" && (
-            <span className="rounded-full border border-primary/20 bg-primary/8 px-2.5 py-1 text-primary">
-              Project: {getProjectById(projectFilter)?.name ?? "Unknown"}
-            </span>
-          )}
-        </div>
+        <Tabs defaultValue="board" className="space-y-4">
+          <TabsList className="h-10 rounded-[0.9rem] border border-border/70 bg-card p-1">
+            <TabsTrigger value="board" className="rounded-[0.8rem] px-4 gap-2">
+              <LayoutGrid className="h-4 w-4" />
+              Board
+            </TabsTrigger>
+            <TabsTrigger value="list" className="rounded-[0.8rem] px-4 gap-2">
+              <List className="h-4 w-4" />
+              List
+            </TabsTrigger>
+            <TabsTrigger value="workload" className="rounded-[0.8rem] px-4 gap-2">
+              <Users className="h-4 w-4" />
+              Workload
+            </TabsTrigger>
+          </TabsList>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.4fr_0.9fr]">
-          <section className="dashboard-panel">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-base font-semibold text-foreground">All Matching Tasks</h3>
-                <p className="text-xs text-muted-foreground">Sorted so overdue and active work appears first.</p>
-              </div>
+          <TabsContent value="board" className="mt-0">
+            <div className="grid items-start gap-4 xl:grid-cols-3">
+              {groupedBoardTasks.map((column) => (
+                <section
+                  key={column.key}
+                  className={`self-start rounded-[1rem] p-3 ${column.columnClass}`}
+                >
+                  <div className="mb-3 px-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`rounded-md border px-2.5 py-1 text-[11px] font-semibold leading-none ${column.accent}`}>
+                          {column.title}
+                        </span>
+                        <span className="text-sm font-semibold text-foreground/80">{column.tasks.length}</span>
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">{column.hint}</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <AnimatePresence initial={false}>
+                      {column.tasks.map((task) => {
+                        const assignee = getAssignee(task.assigneeId, teamMembers);
+                        return (
+                          <button
+                            key={task.id}
+                            type="button"
+                            onClick={() => onEdit(task)}
+                            className={`w-full rounded-[0.85rem] border border-[#d9d4d4] border-l-[3px] ${boardCardAccent[task.priority]} bg-white px-3 py-3 text-left transition-colors hover:border-[#c9c1c1]`}
+                          >
+                            <h4 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{task.title}</h4>
+
+                            <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                              <div className="flex min-w-0 items-center gap-2">
+                                {assignee ? (
+                                  <>
+                                    <span
+                                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white"
+                                      style={{ backgroundColor: assignee.color }}
+                                    >
+                                      {assignee.initials}
+                                    </span>
+                                    <span className="truncate">{assignee.name}</span>
+                                  </>
+                                ) : (
+                                  <span>Unassigned</span>
+                                )}
+                              </div>
+                              <span className={`ml-auto shrink-0 ${task.dueDate < today && task.status !== "completed" ? "text-rose-500 font-medium" : "text-slate-500"}`}>
+                                {new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </AnimatePresence>
+                    {column.tasks.length === 0 && (
+                      <div className="rounded-[0.85rem] border border-dashed border-[#d8d2d2] bg-white/70 px-4 py-8 text-center">
+                        <p className="text-sm font-medium text-slate-700">No tasks</p>
+                        <p className="mt-1 text-xs text-slate-500">Nothing in this stage right now.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={onNew}
+                    className={`mt-3 w-full rounded-[0.8rem] px-3 py-2 text-left text-sm font-medium transition-colors ${column.addClass}`}
+                  >
+                    + Add Task
+                  </button>
+                </section>
+              ))}
             </div>
-            <div className="space-y-2">
-              <AnimatePresence initial={false}>
-                {filteredTasks.map((task) => (
-                  <TaskCard key={task.id} task={task} teamMembers={teamMembers} onEdit={onEdit} onDelete={onDelete} />
-                ))}
-              </AnimatePresence>
+          </TabsContent>
+
+          <TabsContent value="list" className="mt-0">
+            <section className="rounded-[1.2rem] border border-border/70 bg-card/80 p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+              <div className="mb-4">
+                <h3 className="text-base font-semibold text-foreground">List View</h3>
+                <p className="text-xs text-muted-foreground">A neat table for scanning owners, due dates, priorities, and status.</p>
+              </div>
+
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead>Task</TableHead>
+                    <TableHead>Project</TableHead>
+                    <TableHead>Assignee</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTasks.map((task) => {
+                    const assignee = getAssignee(task.assigneeId, teamMembers);
+                    return (
+                      <TableRow
+                        key={task.id}
+                        className="cursor-pointer"
+                        onClick={() => onEdit(task)}
+                      >
+                        <TableCell>
+                          <div className="min-w-[180px]">
+                            <p className="font-medium text-foreground">{task.title}</p>
+                            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{task.description}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {getProjectById(task.projectId)?.name ?? "Unassigned"}
+                        </TableCell>
+                        <TableCell>
+                          {assignee ? (
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold text-primary-foreground"
+                                style={{ backgroundColor: assignee.color }}
+                              >
+                                {assignee.initials}
+                              </span>
+                              <span className="text-sm text-foreground">{assignee.name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Unassigned</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className={`inline-flex items-center gap-1.5 text-sm ${task.dueDate < today && task.status !== "completed" ? "text-rose-400" : "text-muted-foreground"}`}>
+                            <CalendarDays className="h-3.5 w-3.5" />
+                            {new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`priority-pill priority-${task.priority}`}>
+                            {task.priority}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`status-pill status-${task.status}`}>
+                            {task.status === "inprogress" ? "In Progress" : task.status === "completed" ? "Completed" : "Todo"}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+
               {filteredTasks.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
+                <div className="py-12 text-center text-muted-foreground">
                   <p className="text-sm">No tasks match the current filters.</p>
                 </div>
               )}
-            </div>
-          </section>
-
-          <div className="space-y-4">
-            <section className="dashboard-panel">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-base font-semibold text-foreground">Focus Now</h3>
-                  <p className="text-xs text-muted-foreground">The first tasks to review across the workspace.</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                {focusTasks.map((task) => (
-                  <button
-                    key={task.id}
-                    type="button"
-                    onClick={() => onEdit(task)}
-                    className="dashboard-task-row text-left"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <span>{getProjectById(task.projectId)?.name ?? "Unassigned"}</span>
-                        <span>{task.status === "inprogress" ? "In progress" : task.status === "completed" ? "Completed" : "Todo"}</span>
-                      </div>
-                    </div>
-                    <div className={`dashboard-task-eye ${task.dueDate < today && task.status !== "completed" ? "border-rose-500/30 text-rose-400" : ""}`}>
-                      <Clock3 className="h-3.5 w-3.5" />
-                    </div>
-                  </button>
-                ))}
-                {focusTasks.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No tasks to highlight.</p>
-                )}
-              </div>
             </section>
+          </TabsContent>
 
-            <section className="dashboard-panel">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-base font-semibold text-foreground">Workload by Member</h3>
-                  <p className="text-xs text-muted-foreground">Use this to spot who owns the current work.</p>
-                </div>
+          <TabsContent value="workload" className="mt-0">
+            <section className="rounded-[1.2rem] border border-border/70 bg-card/80 p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+              <div className="mb-4">
+                <h3 className="text-base font-semibold text-foreground">Workload View</h3>
+                <p className="text-xs text-muted-foreground">See who has the most open work and where managers may need to rebalance tasks.</p>
               </div>
-              <div className="space-y-2">
-                {memberWorkload.map(({ member, total, overdue, inProgress, nextTask }) => (
+
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {workload.map((entry) => (
                   <button
-                    key={member.id}
+                    key={entry.member.id}
                     type="button"
-                    onClick={() => setFilter("assignee", member.id)}
-                    className="dashboard-project-card w-full text-left"
+                    onClick={() => setFilter("assignee", entry.member.id)}
+                    className="rounded-[1rem] border border-border/70 bg-secondary/45 p-4 text-left transition-colors hover:border-primary/20 hover:bg-secondary/65"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-foreground">{member.name}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {total} tasks, {inProgress} in progress{overdue > 0 ? `, ${overdue} overdue` : ""}
-                        </p>
-                        {nextTask && (
-                          <p className="mt-2 truncate text-xs text-muted-foreground">
-                            Next: {nextTask.title}
-                          </p>
-                        )}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-primary-foreground"
+                          style={{ backgroundColor: entry.member.color }}
+                        >
+                          {entry.member.initials}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-foreground">{entry.member.name}</p>
+                          <p className="text-xs text-muted-foreground">{entry.total} total tasks</p>
+                        </div>
                       </div>
-                      <span
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-primary-foreground"
-                        style={{ backgroundColor: member.color }}
-                      >
-                        {member.initials}
+                      {entry.overdueCount > 0 && (
+                        <span className="rounded-full border border-rose-500/20 bg-rose-500/10 px-2 py-1 text-[11px] font-semibold text-rose-300">
+                          {entry.overdueCount} overdue
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-4">
+                      <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Open load</span>
+                        <span>{entry.openCount}</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-primary to-primary/60"
+                          style={{ width: entry.loadWidth }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between text-xs">
+                      <span className="rounded-full border border-border/60 bg-card px-2.5 py-1 text-muted-foreground">
+                        {entry.completedCount} completed
                       </span>
+                      <span className="rounded-full border border-primary/15 bg-primary/8 px-2.5 py-1 text-primary">
+                        {entry.openCount} active
+                      </span>
+                    </div>
+
+                    <div className="mt-4 rounded-xl border border-border/60 bg-card/70 px-3 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Next Task</p>
+                      <p className="mt-2 truncate text-sm font-medium text-foreground">
+                        {entry.nextTask?.title ?? "No open tasks"}
+                      </p>
+                      <p className="mt-1 truncate text-xs text-muted-foreground">
+                        {entry.nextTask ? getProjectById(entry.nextTask.projectId)?.name ?? "Unassigned" : "Nothing pending"}
+                      </p>
                     </div>
                   </button>
                 ))}
-                {memberWorkload.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No assigned tasks in this view.</p>
-                )}
               </div>
+
+              {workload.length === 0 && (
+                <div className="py-12 text-center text-muted-foreground">
+                  <p className="text-sm">No workload data in this filtered view.</p>
+                </div>
+              )}
             </section>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

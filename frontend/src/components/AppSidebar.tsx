@@ -115,7 +115,7 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
 
       {!collapsed && (
         <SidebarFooter className="px-3 pb-4 pt-2">
-          <div className="rounded-xl border border-border/50 bg-card/80 p-2.5 space-y-1.5 backdrop-blur-sm">
+          <div className="rounded-xl border border-border/70 bg-white p-2.5 space-y-1.5">
             <Button onClick={onAddProject} className="h-10 w-full justify-start rounded-lg bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20 gap-2 text-sm">
               <Sparkles className="h-3.5 w-3.5" />
               New Project

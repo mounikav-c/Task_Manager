@@ -110,6 +110,41 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+
+  html.dark,
+  body.dark,
+  .dark {
+    color-scheme: light;
+    --background: 220 20% 98%;
+    --foreground: 224 30% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 30% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 30% 12%;
+    --primary: 267 84% 57%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 20% 96%;
+    --secondary-foreground: 224 30% 12%;
+    --muted: 220 16% 95%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 20% 97%;
+    --accent-foreground: 224 30% 12%;
+    --border: 220 14% 88%;
+    --input: 220 14% 88%;
+    --ring: 267 84% 57%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 224 20% 32%;
+    --sidebar-primary: 267 84% 57%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 97%;
+    --sidebar-accent-foreground: 224 30% 12%;
+    --sidebar-border: 220 14% 88%;
+    --sidebar-ring: 267 84% 57%;
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+    --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+    --glow-primary: 0 0 20px hsl(267 84% 57% / 0.12);
+    --glow-primary-strong: 0 0 30px hsl(267 84% 57% / 0.18);
+  }
 }
 
 @layer components {
