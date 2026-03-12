@@ -33,7 +33,7 @@ export interface Task {
 const STORAGE_KEY = "taskflow-tasks";
 const MEMBERS_STORAGE_KEY = "taskflow-team-members";
 const TASK_SEED_VERSION_KEY = "taskflow-seed-version";
-const TASK_SEED_VERSION = "v3";
+const TASK_SEED_VERSION = "v5";
 const MEMBER_COLORS = [
   "hsl(267 84% 57%)",
   "hsl(162 63% 41%)",
@@ -136,6 +136,20 @@ function getSeedTaskTemplates(now: Date): Array<Omit<Task, "id" | "createdAt" | 
     { title: "Add macro usage analytics", description: "Track template usage and response performance for support team leads", status: "inprogress", priority: "medium", dueInDays: 10, createdDaysAgo: 3, projectId: "lumen-support", assigneeId: "5" },
     { title: "Refresh help article layout", description: "Improve content readability and related-article discovery in the knowledge base", status: "completed", priority: "medium", dueInDays: -1, createdDaysAgo: 5, projectId: "lumen-support", assigneeId: "4" },
     { title: "Triage ticket queue filters", description: "Fix priority and SLA filters so agents can narrow queue views correctly", status: "todo", priority: "medium", dueInDays: 6, createdDaysAgo: 1, projectId: "lumen-support", assigneeId: "3" },
+    { title: "Restructure product comparison section", description: "Improve readability of plan comparison blocks and support stronger CTA placement", status: "inprogress", priority: "high", dueInDays: 8, createdDaysAgo: 2, projectId: "crm-website-design", assigneeId: "1" },
+    { title: "Refresh demo request flow", description: "Simplify the form layout and reduce friction in the final submission step", status: "todo", priority: "medium", dueInDays: 11, createdDaysAgo: 1, projectId: "crm-website-design", assigneeId: "4" },
+    { title: "Add payout exceptions panel", description: "Highlight failed or delayed payouts in a visible dashboard section", status: "todo", priority: "high", dueInDays: 9, createdDaysAgo: 1, projectId: "atlas-finops", assigneeId: "5" },
+    { title: "Improve reconciliation export format", description: "Align exported columns with the finance team review template", status: "inprogress", priority: "medium", dueInDays: 12, createdDaysAgo: 3, projectId: "atlas-finops", assigneeId: "3" },
+    { title: "Create interviewer load view", description: "Show scheduled interviews by interviewer to avoid overbooking", status: "inprogress", priority: "medium", dueInDays: 13, createdDaysAgo: 2, projectId: "northstar-hiring", assigneeId: "5" },
+    { title: "Add feedback reminder triggers", description: "Send reminders when interview feedback is missing past SLA", status: "todo", priority: "high", dueInDays: 14, createdDaysAgo: 0, projectId: "northstar-hiring", assigneeId: "3" },
+    { title: "Build assessment summary cards", description: "Show attempt count, score, and pending reviews in the admin view", status: "inprogress", priority: "high", dueInDays: 10, createdDaysAgo: 2, projectId: "greenleaf-academy", assigneeId: "1" },
+    { title: "Improve module completion banners", description: "Add clearer next-step prompts after learners finish a module", status: "todo", priority: "medium", dueInDays: 15, createdDaysAgo: 1, projectId: "greenleaf-academy", assigneeId: "4" },
+    { title: "Add delayed shipment queue", description: "Group delayed fulfillment items into a dedicated action view", status: "todo", priority: "high", dueInDays: 16, createdDaysAgo: 0, projectId: "supply-sync", assigneeId: "1" },
+    { title: "Map stockout escalation flow", description: "Define notification and owner rules for stockout scenarios", status: "inprogress", priority: "medium", dueInDays: 17, createdDaysAgo: 2, projectId: "supply-sync", assigneeId: "5" },
+    { title: "Create strategic milestones panel", description: "Show major initiative milestones with owner and status in one summary section", status: "inprogress", priority: "high", dueInDays: 18, createdDaysAgo: 2, projectId: "orbit-suite", assigneeId: "5" },
+    { title: "Add leadership digest filters", description: "Allow updates to be filtered by team, priority, and time range", status: "todo", priority: "medium", dueInDays: 20, createdDaysAgo: 1, projectId: "orbit-suite", assigneeId: "2" },
+    { title: "Build merchant onboarding checklist", description: "Create a guided setup checklist with document and KYC checkpoints", status: "todo", priority: "high", dueInDays: 19, createdDaysAgo: 1, projectId: "harbor-pay", assigneeId: "1" },
+    { title: "Add settlement issue summary", description: "Highlight stuck settlements and unresolved issues in the operations overview", status: "inprogress", priority: "medium", dueInDays: 21, createdDaysAgo: 2, projectId: "harbor-pay", assigneeId: "3" },
   ];
 }
 
@@ -156,7 +170,20 @@ function topUpSampleTasks(existingTasks: Task[], now: Date): Task[] {
 }
 
 function getDefaultProjectId(index: number) {
-  const projectIds = ["72ipo", "monashee-insights", "real-estate", "pulse-hq", "lumen-support"];
+  const projectIds = [
+    "72ipo",
+    "monashee-insights",
+    "real-estate",
+    "pulse-hq",
+    "lumen-support",
+    "crm-website-design",
+    "atlas-finops",
+    "northstar-hiring",
+    "greenleaf-academy",
+    "supply-sync",
+    "orbit-suite",
+    "harbor-pay",
+  ];
   return projectIds[index % projectIds.length];
 }
 

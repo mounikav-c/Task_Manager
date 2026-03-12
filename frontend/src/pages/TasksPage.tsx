@@ -289,11 +289,11 @@ export function TasksPage({ tasks, teamMembers, onEdit, onDelete, onNew }: Props
                             key={task.id}
                             type="button"
                             onClick={() => onEdit(task)}
-                            className={`w-full rounded-[0.85rem] border border-[#d9d4d4] border-l-[3px] ${boardCardAccent[task.priority]} bg-white px-3 py-3 text-left transition-colors hover:border-[#c9c1c1]`}
+                            className={`group w-full rounded-[0.85rem] border border-[#d9d4d4] border-l-[3px] ${boardCardAccent[task.priority]} bg-white px-3 py-3 text-left transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-[#bfb8b8] hover:shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]`}
                           >
-                            <h4 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{task.title}</h4>
+                            <h4 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-800 transition-colors duration-200 group-hover:text-primary">{task.title}</h4>
 
-                            <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                            <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5">
                               <div className="flex min-w-0 items-center gap-2">
                                 {assignee ? (
                                   <>
@@ -338,21 +338,20 @@ export function TasksPage({ tasks, teamMembers, onEdit, onDelete, onNew }: Props
           </TabsContent>
 
           <TabsContent value="list" className="mt-0">
-            <section className="rounded-[1.2rem] border border-border/70 bg-card/80 p-4" style={{ boxShadow: "var(--shadow-card)" }}>
-              <div className="mb-4">
+            <section className="rounded-[1.2rem] border border-border/70 bg-card/80 p-3" style={{ boxShadow: "var(--shadow-card)" }}>
+              <div className="mb-2">
                 <h3 className="text-base font-semibold text-foreground">List View</h3>
-                <p className="text-xs text-muted-foreground">A neat table for scanning owners, due dates, priorities, and status.</p>
               </div>
 
-              <Table>
+              <Table className="table-fixed">
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead>Task</TableHead>
-                    <TableHead>Project</TableHead>
-                    <TableHead>Assignee</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[38%]">Task</TableHead>
+                    <TableHead className="w-[16%]">Project</TableHead>
+                    <TableHead className="w-[18%]">Assignee</TableHead>
+                    <TableHead className="w-[12%] whitespace-nowrap">Due Date</TableHead>
+                    <TableHead className="w-[8%] whitespace-nowrap">Priority</TableHead>
+                    <TableHead className="w-[8%] whitespace-nowrap">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -361,19 +360,19 @@ export function TasksPage({ tasks, teamMembers, onEdit, onDelete, onNew }: Props
                     return (
                       <TableRow
                         key={task.id}
-                        className="cursor-pointer"
+                        className="group cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-20px_rgba(15,23,42,0.28)]"
                         onClick={() => onEdit(task)}
                       >
-                        <TableCell>
-                          <div className="min-w-[180px]">
-                            <p className="font-medium text-foreground">{task.title}</p>
+                        <TableCell className="pr-3">
+                          <div className="max-w-[360px]">
+                            <p className="font-medium text-foreground transition-colors duration-200 group-hover:text-primary">{task.title}</p>
                             <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{task.description}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="pr-3 text-sm text-muted-foreground">
                           {getProjectById(task.projectId)?.name ?? "Unassigned"}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="pr-3">
                           {assignee ? (
                             <div className="flex items-center gap-2">
                               <span
@@ -388,19 +387,19 @@ export function TasksPage({ tasks, teamMembers, onEdit, onDelete, onNew }: Props
                             <span className="text-sm text-muted-foreground">Unassigned</span>
                           )}
                         </TableCell>
-                        <TableCell>
-                          <div className={`inline-flex items-center gap-1.5 text-sm ${task.dueDate < today && task.status !== "completed" ? "text-rose-400" : "text-muted-foreground"}`}>
+                        <TableCell className="pr-3">
+                          <div className={`inline-flex items-center gap-1.5 whitespace-nowrap text-sm ${task.dueDate < today && task.status !== "completed" ? "text-rose-400" : "text-muted-foreground"}`}>
                             <CalendarDays className="h-3.5 w-3.5" />
                             {new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <span className={`priority-pill priority-${task.priority}`}>
+                        <TableCell className="pr-3">
+                          <span className={`priority-pill priority-${task.priority} whitespace-nowrap`}>
                             {task.priority}
                           </span>
                         </TableCell>
                         <TableCell>
-                          <span className={`status-pill status-${task.status}`}>
+                          <span className={`status-pill status-${task.status} whitespace-nowrap`}>
                             {task.status === "inprogress" ? "In Progress" : task.status === "completed" ? "Completed" : "Todo"}
                           </span>
                         </TableCell>

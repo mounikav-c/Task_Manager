@@ -1,4 +1,4 @@
-import { CalendarDays, MoreHorizontal, Plus } from "lucide-react";
+import { CalendarDays, Plus } from "lucide-react";
 import { TopNav } from "@/components/TopNav";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -79,16 +79,13 @@ export function BoardPage({ tasks, teamMembers, onNew }: Props) {
                 onClick={() => navigate(`/projects/${project.id}`)}
                 className="project-card group text-left"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
                   <div className="flex min-w-0 items-center gap-3">
                     <div className={`project-card-badge ${project.accent}`} />
                     <div className="min-w-0">
                       <h3 className="truncate text-base font-semibold tracking-tight text-foreground">{project.name}</h3>
                       <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{project.description}</p>
                     </div>
-                  </div>
-                  <div className="rounded-lg border border-border/50 bg-accent p-1.5 text-muted-foreground transition-all group-hover:border-primary/30 group-hover:text-primary">
-                    <MoreHorizontal className="h-4 w-4" />
                   </div>
                 </div>
 
