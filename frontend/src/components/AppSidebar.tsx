@@ -75,7 +75,7 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="sidebar-nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150"
+                      className="sidebar-nav-link flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-150"
                       activeClassName="bg-primary/15 text-primary border border-primary/20 shadow-[0_0_15px_-5px_hsl(var(--primary)/0.3)]"
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
@@ -99,7 +99,7 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
-                      className="sidebar-nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150"
+                      className="sidebar-nav-link flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-150"
                       activeClassName="bg-primary/15 text-primary border border-primary/20"
                     >
                       <item.icon className="h-4 w-4 shrink-0" />

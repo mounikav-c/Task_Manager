@@ -55,6 +55,11 @@ const quickActions = [
 export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew, onAddMember }: Props) {
   const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0];
+  const openTasksView = (filterValue?: string) => {
+    navigate(`/tasks${filterValue && filterValue !== "all" ? `?filter=${filterValue}` : ""}`, {
+      state: { fromPath: "/", fromLabel: "Dashboard" },
+    });
+  };
 
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter((t) => t.status === "completed").length;
@@ -108,7 +113,7 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                onClick={() => navigate(`/tasks${stat.filter !== "all" ? `?filter=${stat.filter}` : ""}`)}
+                onClick={() => openTasksView(stat.filter)}
                 className="stat-card text-left group"
               >
                 <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl`} />
@@ -226,7 +231,7 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
                   <h2 className="text-base font-semibold">Recent Activity</h2>
                   <p className="text-xs text-muted-foreground">Latest workspace updates.</p>
                 </div>
-                <Button variant="outline" size="sm" className="rounded-lg border-border/50 bg-card/80 text-xs h-8" onClick={() => navigate("/tasks")}>
+                <Button variant="outline" size="sm" className="rounded-lg border-border/50 bg-card/80 text-xs h-8" onClick={() => openTasksView("all")}>
                   View All
                 </Button>
               </div>
