@@ -1,14 +1,41 @@
 import { CalendarDays, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { TopNav } from "@/components/TopNav";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import type { Assignee, Task, Status } from "@/lib/store";
-import { getAssignee } from "@/lib/store";
-import { PROJECTS } from "@/lib/projects";
-import { useNavigate } from "react-router-dom";
+
+type Status = "todo" | "inprogress" | "completed";
+
+interface Assignee {
+  id: string;
+  name: string;
+  initials: string;
+  color: string;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: Status;
+  priority: "low" | "medium" | "high";
+  dueDate: string;
+  createdAt: string;
+  projectId?: string;
+  assigneeId?: string;
+}
+
+interface Project {
+  id: string;
+  name: string;
+  description: string;
+  status: "Planning" | "Active" | "At Risk" | "Completed";
+  progress: number;
+}
 
 interface Props {
   tasks: Task[];
+  projects: Project[];
   teamMembers: Assignee[];
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
@@ -31,13 +58,17 @@ const projectIcons = [
   "bg-emerald-500",
 ];
 
-export function BoardPage({ tasks, teamMembers, onNew }: Props) {
+function getAssignee(id: string | undefined, teamMembers: Assignee[]) {
+  return teamMembers.find((member) => member.id === id);
+}
+
+export function BoardPage({ tasks, projects, teamMembers, onNew }: Props) {
   const navigate = useNavigate();
 
-  const projectCards = PROJECTS.map((project, index) => {
+  const projectCards = projects.map((project, index) => {
     const projectTasks = tasks.filter((task) => task.projectId === project.id);
-    const team = project.team
-      .map((member) => getAssignee(member.memberId, teamMembers))
+    const team = Array.from(new Set(projectTasks.map((task) => task.assigneeId).filter(Boolean)))
+      .map((assigneeId) => getAssignee(assigneeId, teamMembers))
       .filter(Boolean) as Assignee[];
 
     const progress = projectTasks.length === 0

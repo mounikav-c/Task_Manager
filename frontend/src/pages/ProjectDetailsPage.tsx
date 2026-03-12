@@ -1,18 +1,50 @@
 import { useMemo } from "react";
-import { ArrowLeft, Plus, Users } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Users } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { TopNav } from "@/components/TopNav";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import type { Assignee, Status, Task } from "@/lib/store";
-import { getAssignee } from "@/lib/store";
-import { getProjectById } from "@/lib/projects";
+
+type Status = "todo" | "inprogress" | "completed";
+
+interface Assignee {
+  id: string;
+  name: string;
+  initials: string;
+  color: string;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: Status;
+  priority: "low" | "medium" | "high";
+  dueDate: string;
+  createdAt: string;
+  projectId?: string;
+  assigneeId?: string;
+}
+
+interface Project {
+  id: string;
+  name: string;
+  description: string;
+  summary: string;
+  status: "Planning" | "Active" | "At Risk" | "Completed";
+  progress: number;
+  startDate: string;
+  deadline: string;
+  ownerId?: string;
+}
 
 interface Props {
   tasks: Task[];
+  projects: Project[];
   teamMembers: Assignee[];
   onEdit: (task: Task) => void;
   onNew: (projectId?: string) => void;
+  onEditProject: (project: Project) => void;
 }
 
 const statusLabels: Record<Status, string> = {
@@ -21,10 +53,20 @@ const statusLabels: Record<Status, string> = {
   completed: "Completed",
 };
 
-export function ProjectDetailsPage({ tasks, teamMembers, onEdit, onNew }: Props) {
+function getAssignee(id: string | undefined, teamMembers: Assignee[]) {
+  return teamMembers.find((member) => member.id === id);
+}
+
+function formatDate(value: string) {
+  return value
+    ? new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : "Not set";
+}
+
+export function ProjectDetailsPage({ tasks, projects, teamMembers, onEdit, onNew, onEditProject }: Props) {
   const navigate = useNavigate();
   const { projectId } = useParams();
-  const project = getProjectById(projectId);
+  const project = projects.find((entry) => entry.id === projectId);
 
   const projectTasks = useMemo(
     () => tasks.filter((task) => task.projectId === projectId),
@@ -45,12 +87,9 @@ export function ProjectDetailsPage({ tasks, teamMembers, onEdit, onNew }: Props)
   }
 
   const owner = getAssignee(project.ownerId, teamMembers);
-  const team = project.team
-    .map((member) => ({
-      member: getAssignee(member.memberId, teamMembers),
-      role: member.role,
-    }))
-    .filter((entry) => entry.member);
+  const team = Array.from(new Set(projectTasks.map((task) => task.assigneeId).filter(Boolean)))
+    .map((memberId) => getAssignee(memberId, teamMembers))
+    .filter(Boolean) as Assignee[];
 
   return (
     <div className="flex h-full flex-col">
@@ -63,30 +102,38 @@ export function ProjectDetailsPage({ tasks, teamMembers, onEdit, onNew }: Props)
               Back to Projects
             </Button>
 
-            <div className="flex flex-col gap-5 rounded-xl border border-border/60 bg-card px-6 py-5 lg:flex-row lg:items-start lg:justify-between" style={{ boxShadow: 'var(--shadow-card)' }}>
+            <div className="flex flex-col gap-5 rounded-xl border border-border/60 bg-card px-6 py-5 lg:flex-row lg:items-start lg:justify-between" style={{ boxShadow: "var(--shadow-card)" }}>
               <div className="min-w-0">
                 <p className="project-details-kicker">Project Details</p>
                 <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">{project.name}</h1>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{project.description}</p>
               </div>
-              <div className="grid w-full gap-3 sm:grid-cols-3 lg:max-w-[480px]">
+              <div className="w-full lg:max-w-[520px]">
+                <div className="mb-3 flex justify-end">
+                  <Button variant="outline" className="h-9 rounded-lg text-sm" onClick={() => onEditProject(project)}>
+                    <Pencil className="h-4 w-4" />
+                    Edit Project
+                  </Button>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-lg bg-accent px-4 py-3">
                   <span className="project-details-label">Start Date</span>
-                  <p className="project-details-value text-sm">{new Date(project.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                  <p className="project-details-value text-sm">{formatDate(project.startDate)}</p>
                 </div>
                 <div className="rounded-lg bg-accent px-4 py-3">
                   <span className="project-details-label">Deadline</span>
-                  <p className="project-details-value text-sm">{new Date(project.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                  <p className="project-details-value text-sm">{formatDate(project.deadline)}</p>
                 </div>
                 <div className="rounded-lg bg-accent px-4 py-3">
                   <span className="project-details-label">Owner</span>
                   <p className="project-details-value text-sm">{owner?.name ?? "Unassigned"}</p>
                 </div>
+                </div>
               </div>
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-4">
-              <div className="rounded-xl border border-border/60 bg-card px-5 py-5" style={{ boxShadow: 'var(--shadow-card)' }}>
+              <div className="rounded-xl border border-border/60 bg-card px-5 py-5" style={{ boxShadow: "var(--shadow-card)" }}>
                 <h2 className="text-base font-semibold text-foreground">About This Project</h2>
                 <div className="mt-3 rounded-lg bg-accent px-4 py-3">
                   <span className="project-details-label">Project Explanation</span>
@@ -94,7 +141,7 @@ export function ProjectDetailsPage({ tasks, teamMembers, onEdit, onNew }: Props)
                 </div>
               </div>
 
-              <div className="rounded-xl border border-border/60 bg-card px-5 py-5" style={{ boxShadow: 'var(--shadow-card)' }}>
+              <div className="rounded-xl border border-border/60 bg-card px-5 py-5" style={{ boxShadow: "var(--shadow-card)" }}>
                 <div className="flex flex-col gap-4 border-b border-border/40 pb-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <h2 className="text-base font-semibold text-foreground">Project Overview</h2>
@@ -120,11 +167,11 @@ export function ProjectDetailsPage({ tasks, teamMembers, onEdit, onNew }: Props)
                 <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <div className="rounded-lg border border-border/50 bg-accent px-4 py-3">
                     <span className="project-details-label">Start Date</span>
-                    <p className="project-details-value text-sm">{new Date(project.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                    <p className="project-details-value text-sm">{formatDate(project.startDate)}</p>
                   </div>
                   <div className="rounded-lg border border-border/50 bg-accent px-4 py-3">
                     <span className="project-details-label">Deadline</span>
-                    <p className="project-details-value text-sm">{new Date(project.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                    <p className="project-details-value text-sm">{formatDate(project.deadline)}</p>
                   </div>
                   <div className="rounded-lg border border-border/50 bg-accent px-4 py-3">
                     <span className="project-details-label">Owner</span>
@@ -139,7 +186,7 @@ export function ProjectDetailsPage({ tasks, teamMembers, onEdit, onNew }: Props)
             </div>
           </div>
 
-          <section className="rounded-xl border border-border/60 bg-card p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <section className="rounded-xl border border-border/60 bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
             <div className="mb-4 flex items-center gap-2 border-b border-border/40 pb-3">
               <Users className="h-4 w-4 text-primary" />
               <div>
@@ -149,23 +196,23 @@ export function ProjectDetailsPage({ tasks, teamMembers, onEdit, onNew }: Props)
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {team.map((entry) => (
-                <div key={`${entry.member?.id}-${entry.role}`} className="flex items-center gap-3 rounded-lg bg-accent px-3 py-3">
+              {team.map((member) => (
+                <div key={member.id} className="flex items-center gap-3 rounded-lg bg-accent px-3 py-3">
                   <Avatar className="h-10 w-10 ring-1 ring-border/30">
-                    <AvatarFallback className="text-xs font-semibold text-primary-foreground" style={{ backgroundColor: entry.member?.color }}>
-                      {entry.member?.initials}
+                    <AvatarFallback className="text-xs font-semibold text-primary-foreground" style={{ backgroundColor: member.color }}>
+                      {member.initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-foreground">{entry.member?.name}</p>
-                    <p className="text-xs text-muted-foreground">{entry.role}</p>
+                    <p className="truncate text-sm font-semibold text-foreground">{member.name}</p>
+                    <p className="text-xs text-muted-foreground">Assigned member</p>
                   </div>
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="rounded-xl border border-border/60 bg-card p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <section className="rounded-xl border border-border/60 bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
             <div className="mb-4 flex flex-col gap-3 border-b border-border/40 pb-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-base font-semibold">Project Tasks</h2>

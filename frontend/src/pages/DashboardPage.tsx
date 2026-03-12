@@ -1,13 +1,37 @@
-import { CalendarDays, CheckCheck, FolderPlus, Plus, Users, Video, TrendingUp, Clock, AlertTriangle, ListChecks } from "lucide-react";
+import { CheckCheck, FolderPlus, Plus, Users, Video, Clock, AlertTriangle, ListChecks } from "lucide-react";
 import { TopNav } from "@/components/TopNav";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import type { Assignee, Task } from "@/lib/store";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
+interface Assignee {
+  id: string;
+  name: string;
+  initials: string;
+  color: string;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: "todo" | "inprogress" | "completed";
+  priority: "low" | "medium" | "high";
+  dueDate: string;
+  createdAt: string;
+  projectId?: string;
+  assigneeId?: string;
+}
+
+interface Project {
+  id: string;
+  name: string;
+}
+
 interface Props {
   tasks: Task[];
+  projects: Project[];
   teamMembers: Assignee[];
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
@@ -15,15 +39,6 @@ interface Props {
   onNew: () => void;
   onAddMember: () => void;
 }
-
-const projectNames = [
-  "72ipo",
-  "Monashee Insights",
-  "Real Estate",
-  "CRM Website Design",
-  "Delivery Website",
-  "Mobile App",
-];
 
 const quickActions = [
   {
@@ -52,9 +67,14 @@ const quickActions = [
   },
 ];
 
-export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew, onAddMember }: Props) {
+function getProjectName(projectId: string | undefined, projects: Project[]) {
+  return projects.find((project) => project.id === projectId)?.name ?? "Project task";
+}
+
+export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProject, onNew, onAddMember }: Props) {
   const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0];
+
   const openTasksView = (filterValue?: string) => {
     navigate(`/tasks${filterValue && filterValue !== "all" ? `?filter=${filterValue}` : ""}`, {
       state: { fromPath: "/", fromLabel: "Dashboard" },
@@ -62,9 +82,9 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
   };
 
   const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((t) => t.status === "completed").length;
-  const pendingTasks = tasks.filter((t) => t.status === "todo" || t.status === "inprogress").length;
-  const overdueTasks = tasks.filter((t) => t.dueDate < today && t.status !== "completed").length;
+  const completedTasks = tasks.filter((task) => task.status === "completed").length;
+  const pendingTasks = tasks.filter((task) => task.status === "todo" || task.status === "inprogress").length;
+  const overdueTasks = tasks.filter((task) => task.dueDate < today && task.status !== "completed").length;
 
   const statCards = [
     { label: "Total Tasks", value: totalTasks, icon: ListChecks, filter: "all", gradient: "from-primary/20 to-primary/5", iconColor: "text-primary" },
@@ -77,9 +97,9 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
     .slice(0, 5);
 
-  const projectCards = tasks.slice(0, 4).map((task, index) => ({
+  const projectCards = tasks.slice(0, 4).map((task) => ({
     ...task,
-    projectName: projectNames[index] ?? task.title,
+    projectName: getProjectName(task.projectId, projects),
     note:
       task.status === "completed"
         ? "No task pending"
@@ -104,7 +124,6 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
       <TopNav title="Dashboard" />
       <div className="flex-1 overflow-auto p-5 md:p-6">
         <div className="space-y-5">
-          {/* Stat Cards */}
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             {statCards.map((stat, index) => (
               <motion.button
@@ -130,7 +149,6 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
             ))}
           </div>
 
-          {/* Quick Actions */}
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             {quickActions.map((action, index) => (
               <motion.button
@@ -176,8 +194,8 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
                       <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <span>{projectNames[tasks.findIndex((item) => item.id === task.id)] ?? "Project task"}</span>
-                        <span className="text-border">•</span>
+                        <span>{getProjectName(task.projectId, projects)}</span>
+                        <span className="text-border">&bull;</span>
                         <span className={task.dueDate < today && task.status !== "completed" ? "text-rose-400 font-medium" : ""}>
                           {task.dueDate < today && task.status !== "completed"
                             ? "Overdue"
@@ -245,7 +263,7 @@ export function DashboardPage({ tasks, teamMembers, onEdit, onAddProject, onNew,
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        {task.status === "completed" ? "Task completed" : task.status === "inprogress" ? "Work in progress" : "Task created"} •{" "}
+                        {task.status === "completed" ? "Task completed" : task.status === "inprogress" ? "Work in progress" : "Task created"} &bull;{" "}
                         {new Date(task.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                       </p>
                     </div>

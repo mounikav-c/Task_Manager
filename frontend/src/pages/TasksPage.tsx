@@ -3,21 +3,52 @@ import { useMemo } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { TopNav } from "@/components/TopNav";
-import { TaskCard } from "@/components/TaskCard";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { Assignee, Status, Task } from "@/lib/store";
-import { getAssignee } from "@/lib/store";
-import { getProjectById, PROJECTS } from "@/lib/projects";
+
+type Status = "todo" | "inprogress" | "completed";
+
+interface Assignee {
+  id: string;
+  name: string;
+  initials: string;
+  color: string;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: Status;
+  priority: "low" | "medium" | "high";
+  dueDate: string;
+  createdAt: string;
+  projectId?: string;
+  assigneeId?: string;
+}
+
+interface Project {
+  id: string;
+  name: string;
+}
 
 interface Props {
   tasks: Task[];
+  projects: Project[];
   teamMembers: Assignee[];
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onNew: () => void;
+}
+
+function getAssignee(id: string | undefined, teamMembers: Assignee[]) {
+  return teamMembers.find((member) => member.id === id);
+}
+
+function getProjectById(projects: Project[], projectId?: string) {
+  return projects.find((project) => project.id === projectId);
 }
 
 const boardColumns: Array<{
@@ -60,7 +91,7 @@ const boardCardAccent: Record<Task["priority"], string> = {
   low: "border-l-emerald-400",
 };
 
-export function TasksPage({ tasks, teamMembers, onEdit, onDelete, onNew }: Props) {
+export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNew }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -231,7 +262,7 @@ export function TasksPage({ tasks, teamMembers, onEdit, onDelete, onNew }: Props
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Projects</SelectItem>
-                {PROJECTS.map((project) => (
+                {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -370,7 +401,7 @@ export function TasksPage({ tasks, teamMembers, onEdit, onDelete, onNew }: Props
                           </div>
                         </TableCell>
                         <TableCell className="pr-3 text-sm text-muted-foreground">
-                          {getProjectById(task.projectId)?.name ?? "Unassigned"}
+                          {getProjectById(projects, task.projectId)?.name ?? "Unassigned"}
                         </TableCell>
                         <TableCell className="pr-3">
                           {assignee ? (
@@ -480,7 +511,7 @@ export function TasksPage({ tasks, teamMembers, onEdit, onDelete, onNew }: Props
                         {entry.nextTask?.title ?? "No open tasks"}
                       </p>
                       <p className="mt-1 truncate text-xs text-muted-foreground">
-                        {entry.nextTask ? getProjectById(entry.nextTask.projectId)?.name ?? "Unassigned" : "Nothing pending"}
+                        {entry.nextTask ? getProjectById(projects, entry.nextTask.projectId)?.name ?? "Unassigned" : "Nothing pending"}
                       </p>
                     </div>
                   </button>

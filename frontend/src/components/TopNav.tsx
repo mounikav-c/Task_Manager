@@ -18,7 +18,10 @@ export function TopNav({ title }: TopNavProps) {
       <div className="hidden max-w-sm flex-1 items-center justify-end md:flex">
         <div className="relative w-full max-w-xs lg:max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input className="h-9 rounded-lg border-border/50 bg-accent/50 pl-9 pr-16 shadow-none text-sm placeholder:text-muted-foreground/60 focus:bg-accent focus:border-primary/30" placeholder="Search anything..." />
+          <Input
+            className="h-9 rounded-lg border-border/50 bg-accent/50 pl-9 pr-16 shadow-none text-sm placeholder:text-muted-foreground/60 focus:bg-accent focus:border-primary/30"
+            placeholder="Search anything..."
+          />
           <div className="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-0.5 rounded-md border border-border/50 bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/60">
             <Command className="h-2.5 w-2.5" />
             K

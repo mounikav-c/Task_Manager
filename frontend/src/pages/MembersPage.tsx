@@ -2,7 +2,25 @@ import { BriefcaseBusiness, CircleDot, Plus, UserRound } from "lucide-react";
 import { TopNav } from "@/components/TopNav";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import type { Assignee, Task } from "@/lib/store";
+
+interface Assignee {
+  id: string;
+  name: string;
+  initials: string;
+  color: string;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: "todo" | "inprogress" | "completed";
+  priority: "low" | "medium" | "high";
+  dueDate: string;
+  createdAt: string;
+  projectId?: string;
+  assigneeId?: string;
+}
 
 interface Props {
   tasks: Task[];
@@ -42,7 +60,7 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
 
           <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
             {members.map((member) => (
-              <div key={member.id} className="rounded-xl border border-border/60 bg-card p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
+              <div key={member.id} className="rounded-xl border border-border/60 bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <Avatar className="h-10 w-10 ring-1 ring-border/30">

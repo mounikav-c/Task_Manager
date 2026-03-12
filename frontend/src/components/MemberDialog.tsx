@@ -14,13 +14,17 @@ export function MemberDialog({ open, onClose, onSave }: MemberDialogProps) {
   const [name, setName] = useState("");
 
   useEffect(() => {
-    if (open) setName("");
+    if (open) {
+      setName("");
+    }
   }, [open]);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+
     if (!name.trim()) return;
-    onSave(name);
+
+    onSave(name.trim());
     onClose();
   };
 
@@ -30,6 +34,7 @@ export function MemberDialog({ open, onClose, onSave }: MemberDialogProps) {
         <DialogHeader>
           <DialogTitle>Add Member</DialogTitle>
         </DialogHeader>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="member-name">Full Name</Label>
@@ -40,8 +45,11 @@ export function MemberDialog({ open, onClose, onSave }: MemberDialogProps) {
               placeholder="Enter team member name"
             />
           </div>
+
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
             <Button type="submit">Add Member</Button>
           </div>
         </form>

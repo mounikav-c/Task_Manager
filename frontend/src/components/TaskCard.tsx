@@ -1,9 +1,25 @@
 import { ArrowUpRight, Calendar, Pencil, Trash2 } from "lucide-react";
-import type { Assignee, Task } from "@/lib/store";
-import { getAssignee } from "@/lib/store";
-import { getProjectById } from "@/lib/projects";
 import { motion } from "framer-motion";
 import type { KeyboardEvent } from "react";
+
+interface Assignee {
+  id: string;
+  name: string;
+  initials: string;
+  color: string;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: "todo" | "inprogress" | "completed";
+  priority: "low" | "medium" | "high";
+  dueDate: string;
+  createdAt: string;
+  projectId?: string;
+  assigneeId?: string;
+}
 
 const priorityLabel = { low: "Low", medium: "Medium", high: "High" } as const;
 const statusLabel = { todo: "Todo", inprogress: "In Progress", completed: "Completed" } as const;
@@ -23,9 +39,12 @@ interface TaskCardProps {
   teamMembers: Assignee[];
 }
 
+function getAssignee(id: string | undefined, teamMembers: Assignee[]) {
+  return teamMembers.find((member) => member.id === id);
+}
+
 export function TaskCard({ task, onEdit, onDelete, compact, teamMembers }: TaskCardProps) {
   const assignee = getAssignee(task.assigneeId, teamMembers);
-  const project = getProjectById(task.projectId);
   const isCompleted = task.status === "completed";
   const priorityKey = (String(task.priority).toLowerCase() in priorityLabel
     ? String(task.priority).toLowerCase()
@@ -33,6 +52,7 @@ export function TaskCard({ task, onEdit, onDelete, compact, teamMembers }: TaskC
   const statusKey = (String(task.status).toLowerCase() in statusLabel
     ? String(task.status).toLowerCase()
     : fallbackStatus) as keyof typeof statusLabel;
+
   const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
@@ -55,11 +75,6 @@ export function TaskCard({ task, onEdit, onDelete, compact, teamMembers }: TaskC
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            {project && (
-              <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/8 px-2.5 py-1 text-[11px] font-semibold text-primary">
-                {project.name}
-              </span>
-            )}
             <h3 className={`task-card-title font-medium text-card-foreground ${compact ? "text-sm" : ""}`}>
               {task.title}
             </h3>

@@ -5,8 +5,29 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import type { Assignee, Task, Status, Priority } from "@/lib/store";
-import { PROJECTS } from "@/lib/projects";
+import { api, type Project } from "@/lib/api";
+
+type Status = "todo" | "inprogress" | "completed";
+type Priority = "low" | "medium" | "high";
+
+interface Assignee {
+  id: string;
+  name: string;
+  initials: string;
+  color: string;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: Status;
+  priority: Priority;
+  dueDate: string;
+  createdAt: string;
+  projectId?: string;
+  assigneeId?: string;
+}
 
 interface TaskDialogProps {
   open: boolean;
@@ -18,6 +39,7 @@ interface TaskDialogProps {
 }
 
 export function TaskDialog({ open, onClose, onSave, task, teamMembers, initialProjectId }: TaskDialogProps) {
+  const [projects, setProjects] = useState<Project[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<Status>("todo");
@@ -27,24 +49,46 @@ export function TaskDialog({ open, onClose, onSave, task, teamMembers, initialPr
   const [assigneeId, setAssigneeId] = useState<string>("");
 
   useEffect(() => {
+    if (!open) return;
+
+    const loadProjects = async () => {
+      try {
+        const data = await api.getProjects();
+        setProjects(data);
+      } catch (error) {
+        console.error("Failed to load projects", error);
+      }
+    };
+
+    void loadProjects();
+  }, [open]);
+
+  useEffect(() => {
     if (task) {
       setTitle(task.title);
       setDescription(task.description);
       setStatus(task.status);
       setPriority(task.priority);
       setDueDate(task.dueDate);
-      setProjectId(task.projectId || PROJECTS[0].id);
+      setProjectId(task.projectId || "");
       setAssigneeId(task.assigneeId || "");
-    } else {
-      setTitle("");
-      setDescription("");
-      setStatus("todo");
-      setPriority("medium");
-      setDueDate(new Date().toISOString().split("T")[0]);
-      setProjectId(initialProjectId || PROJECTS[0].id);
-      setAssigneeId("");
+      return;
     }
+
+    setTitle("");
+    setDescription("");
+    setStatus("todo");
+    setPriority("medium");
+    setDueDate(new Date().toISOString().split("T")[0]);
+    setProjectId(initialProjectId || "");
+    setAssigneeId("");
   }, [task, open, initialProjectId]);
+
+  useEffect(() => {
+    if (!task && !projectId && projects.length > 0) {
+      setProjectId(initialProjectId || String(projects[0].id));
+    }
+  }, [projects, projectId, task, initialProjectId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,10 +140,10 @@ export function TaskDialog({ open, onClose, onSave, task, teamMembers, initialPr
             <div className="space-y-2">
               <Label>Project</Label>
               <Select value={projectId} onValueChange={setProjectId}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
                 <SelectContent>
-                  {PROJECTS.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={String(project.id)}>{project.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
