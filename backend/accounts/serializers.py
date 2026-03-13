@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Project, Task, TeamMember
+from .models import Meeting, Project, Task, TeamMember
 
 
 class TeamMemberSerializer(serializers.ModelSerializer):
@@ -51,6 +51,38 @@ class TaskSerializer(serializers.ModelSerializer):
             "project_name",
             "assignee",
             "assignee_name",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class MeetingSerializer(serializers.ModelSerializer):
+    project_name = serializers.CharField(source="project.name", read_only=True)
+    organizer_name = serializers.CharField(source="organizer.name", read_only=True)
+    attendee_details = TeamMemberSerializer(source="attendees", many=True, read_only=True)
+    attendees = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=TeamMember.objects.all(),
+        required=False,
+    )
+
+    class Meta:
+        model = Meeting
+        fields = [
+            "id",
+            "title",
+            "agenda",
+            "scheduled_for",
+            "duration_minutes",
+            "location",
+            "meeting_link",
+            "status",
+            "project",
+            "project_name",
+            "organizer",
+            "organizer_name",
+            "attendees",
+            "attendee_details",
             "created_at",
             "updated_at",
         ]

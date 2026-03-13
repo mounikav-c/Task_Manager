@@ -43,6 +43,25 @@ export interface Task {
   updated_at: string;
 }
 
+export interface Meeting {
+  id: number;
+  title: string;
+  agenda: string;
+  scheduled_for: string;
+  duration_minutes: number;
+  location: string;
+  meeting_link: string;
+  status: "scheduled" | "completed" | "cancelled";
+  project: number | null;
+  project_name?: string;
+  organizer: number | null;
+  organizer_name?: string;
+  attendees: number[];
+  attendee_details?: TeamMember[];
+  created_at: string;
+  updated_at: string;
+}
+
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     headers: {
@@ -67,6 +86,7 @@ export const api = {
   getMembers: () => request<TeamMember[]>("/members/"),
   getProjects: () => request<Project[]>("/projects/"),
   getTasks: () => request<Task[]>("/tasks/"),
+  getMeetings: () => request<Meeting[]>("/meetings/"),
 
   createMember: (data: { name: string; initials: string; color: string }) =>
     request<TeamMember>("/members/", {
@@ -103,6 +123,23 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  createMeeting: (data: {
+    title: string;
+    agenda: string;
+    scheduled_for: string;
+    duration_minutes: number;
+    location: string;
+    meeting_link: string;
+    status: "scheduled" | "completed" | "cancelled";
+    project: number | null;
+    organizer: number | null;
+    attendees: number[];
+  }) =>
+    request<Meeting>("/meetings/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
   updateProject: (
     id: number,
     data: Partial<{
@@ -134,6 +171,26 @@ export const api = {
     }>,
   ) =>
     request<Task>(`/tasks/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  updateMeeting: (
+    id: number,
+    data: Partial<{
+      title: string;
+      agenda: string;
+      scheduled_for: string;
+      duration_minutes: number;
+      location: string;
+      meeting_link: string;
+      status: "scheduled" | "completed" | "cancelled";
+      project: number | null;
+      organizer: number | null;
+      attendees: number[];
+    }>,
+  ) =>
+    request<Meeting>(`/meetings/${id}/`, {
       method: "PATCH",
       body: JSON.stringify(data),
     }),

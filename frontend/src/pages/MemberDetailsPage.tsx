@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, BriefcaseBusiness, CalendarDays, CircleDot, FolderKanban, UserRound } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { TopNav } from "@/components/TopNav";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -67,9 +67,12 @@ function formatDate(value: string) {
 
 export function MemberDetailsPage({ tasks, projects, teamMembers, onEdit }: Props) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { memberId } = useParams();
   const member = teamMembers.find((entry) => entry.id === memberId);
   const [taskFilter, setTaskFilter] = useState<TaskFilter>("all");
+  const backPath = location.state?.fromPath ?? "/members";
+  const backLabel = location.state?.fromLabel ?? "Members";
 
   const memberTasks = useMemo(
     () => tasks.filter((task) => task.assigneeId === memberId),
@@ -119,10 +122,10 @@ export function MemberDetailsPage({ tasks, projects, teamMembers, onEdit }: Prop
             <Button
               variant="ghost"
               className="mb-2 h-8 rounded-lg px-2.5 text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => navigate("/members")}
+              onClick={() => navigate(backPath)}
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              Back to Members
+              Back to {backLabel}
             </Button>
 
             <section

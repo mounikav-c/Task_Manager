@@ -2,14 +2,12 @@ import { useMemo } from "react";
 import {
   ArrowLeft,
   CalendarDays,
-  FolderKanban,
   ListTodo,
   Pencil,
   Plus,
   UserRound,
-  Users,
 } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { TopNav } from "@/components/TopNav";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -99,8 +97,11 @@ function buildProjectOverview(project: Project) {
 
 export function ProjectDetailsPage({ tasks, projects, teamMembers, onEdit, onNew, onEditProject }: Props) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { projectId } = useParams();
   const project = projects.find((entry) => entry.id === projectId);
+  const backPath = location.state?.fromPath ?? "/board";
+  const backLabel = location.state?.fromLabel ?? "Projects";
 
   const projectTasks = useMemo(
     () => tasks.filter((task) => task.projectId === projectId),
@@ -148,10 +149,10 @@ export function ProjectDetailsPage({ tasks, projects, teamMembers, onEdit, onNew
             <Button
               variant="ghost"
               className="mb-2 h-8 rounded-lg px-2.5 text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => navigate("/board")}
+              onClick={() => navigate(backPath)}
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              Back to Projects
+              Back to {backLabel}
             </Button>
 
             <section

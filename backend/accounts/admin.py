@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Project, Task, TeamMember
+from .models import Meeting, Project, Task, TeamMember
 
 
 @admin.register(TeamMember)
@@ -22,3 +22,11 @@ class TaskAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "status", "priority", "project", "assignee", "due_date")
     search_fields = ("title", "description")
     list_filter = ("status", "priority", "project")
+
+
+@admin.register(Meeting)
+class MeetingAdmin(admin.ModelAdmin):
+    list_display = ("id", "title", "scheduled_for", "status", "project", "organizer")
+    search_fields = ("title", "agenda", "location")
+    list_filter = ("status", "project")
+    filter_horizontal = ("attendees",)

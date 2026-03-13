@@ -338,20 +338,20 @@
 
   /* ─── Dashboard Panels ─── */
   .dashboard-panel {
-    @apply rounded-[1.5rem] border border-border/80 bg-secondary/60 p-4 md:p-5;
-    box-shadow: var(--shadow-card);
-    backdrop-filter: blur(8px);
+    @apply rounded-[1.5rem] border border-white/45 bg-white/60 p-4 md:p-5;
+    box-shadow: 0 18px 40px -34px rgba(15, 23, 42, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(16px);
   }
 
   .dashboard-action-card {
-    @apply flex items-start gap-3 rounded-[1.35rem] border border-border/80 bg-card/80 p-4 transition-all duration-200;
-    box-shadow: var(--shadow-card);
-    backdrop-filter: blur(6px);
+    @apply flex items-start gap-3 rounded-[1.35rem] border border-white/45 bg-white/60 p-4 transition-all duration-300;
+    box-shadow: 0 16px 32px -30px rgba(15, 23, 42, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(12px);
   }
 
   .dashboard-action-card:hover {
-    @apply -translate-y-0.5 border-primary/25 bg-card;
-    box-shadow: var(--shadow-card-hover), var(--glow-primary);
+    @apply -translate-y-1 border-primary/20 bg-white/80;
+    box-shadow: 0 24px 40px -34px rgba(15, 23, 42, 0.28), var(--glow-primary);
   }
 
   .dashboard-action-icon {
@@ -359,13 +359,14 @@
   }
 
   .dashboard-task-row {
-    @apply flex w-full items-center justify-between gap-4 rounded-[1.15rem] border border-border/40 bg-card/70 px-4 py-3 transition-all duration-200;
-    backdrop-filter: blur(4px);
+    @apply flex w-full items-center justify-between gap-4 rounded-[1.15rem] border border-white/45 bg-white/55 px-4 py-3 transition-all duration-300;
+    box-shadow: 0 12px 28px -30px rgba(15, 23, 42, 0.22);
+    backdrop-filter: blur(10px);
   }
 
   .dashboard-task-row:hover {
-    @apply border-primary/25 bg-card;
-    box-shadow: var(--shadow-card-hover), var(--glow-primary);
+    @apply -translate-y-0.5 border-primary/20 bg-white/80;
+    box-shadow: 0 20px 36px -32px rgba(15, 23, 42, 0.28), var(--glow-primary);
   }
 
   .dashboard-task-eye {
@@ -378,28 +379,31 @@
   }
 
   .dashboard-project-card {
-    @apply rounded-[1.2rem] border border-border/60 bg-card/80 p-4 transition-all duration-200;
-    backdrop-filter: blur(4px);
+    @apply rounded-[1.2rem] border border-white/45 bg-white/60 p-4 transition-all duration-300;
+    box-shadow: 0 14px 28px -30px rgba(15, 23, 42, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(12px);
   }
 
   .dashboard-project-card:hover {
-    @apply border-primary/25 bg-card;
-    box-shadow: var(--shadow-card-hover), var(--glow-primary);
+    @apply -translate-y-1 border-primary/20 bg-white/80;
+    box-shadow: 0 22px 40px -34px rgba(15, 23, 42, 0.28), var(--glow-primary);
   }
 
   .dashboard-person-card {
-    @apply rounded-[1.2rem] border border-border/60 bg-card/80 px-4 py-5 transition-all duration-200;
-    backdrop-filter: blur(4px);
+    @apply rounded-[1.2rem] border border-white/45 bg-white/60 px-4 py-5 transition-all duration-300;
+    box-shadow: 0 14px 28px -30px rgba(15, 23, 42, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(12px);
   }
 
   .dashboard-person-card:hover {
-    @apply border-primary/25 bg-card;
-    box-shadow: var(--shadow-card-hover), var(--glow-primary);
+    @apply -translate-y-1 border-primary/20 bg-white/80;
+    box-shadow: 0 22px 40px -34px rgba(15, 23, 42, 0.28), var(--glow-primary);
   }
 
   .dashboard-activity-row {
-    @apply flex items-start gap-3 rounded-[1.2rem] border border-border/50 bg-card/70 px-4 py-3;
-    backdrop-filter: blur(4px);
+    @apply flex items-start gap-3 rounded-[1.2rem] border border-white/45 bg-white/55 px-4 py-3;
+    box-shadow: 0 12px 28px -30px rgba(15, 23, 42, 0.22);
+    backdrop-filter: blur(10px);
   }
 
   /* ─── Project Details ─── */

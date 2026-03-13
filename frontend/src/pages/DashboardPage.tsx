@@ -38,6 +38,7 @@ interface Props {
   onAddProject: () => void;
   onNew: () => void;
   onAddMember: () => void;
+  onScheduleMeeting: () => void;
 }
 
 const quickActions = [
@@ -71,7 +72,15 @@ function getProjectName(projectId: string | undefined, projects: Project[]) {
   return projects.find((project) => project.id === projectId)?.name ?? "Project task";
 }
 
-export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProject, onNew, onAddMember }: Props) {
+function getProgressRing(progress: number) {
+  const radius = 16;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = circumference - (progress / 100) * circumference;
+
+  return { radius, circumference, dashOffset };
+}
+
+export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProject, onNew, onAddMember, onScheduleMeeting }: Props) {
   const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0];
 
@@ -101,6 +110,13 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
     const projectTasks = tasks.filter((task) => task.projectId === project.id);
     const pendingCount = projectTasks.filter((task) => task.status !== "completed").length;
     const inProgressCount = projectTasks.filter((task) => task.status === "inprogress").length;
+    const completedCount = projectTasks.filter((task) => task.status === "completed").length;
+    const progress = projectTasks.length === 0 ? 0 : Math.round((completedCount / projectTasks.length) * 100);
+    const statusTag = pendingCount === 0
+      ? { label: "On Track", tone: "bg-emerald-500/12 text-emerald-500 border-emerald-500/20" }
+      : inProgressCount > 0
+        ? { label: "In Progress", tone: "bg-amber-500/12 text-amber-500 border-amber-500/20" }
+        : { label: "Starting", tone: "bg-sky-500/12 text-sky-500 border-sky-500/20" };
 
     let note = "No tasks yet";
     if (pendingCount === 1) {
@@ -117,6 +133,8 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
       id: project.id,
       projectName: project.name,
       note,
+      progress,
+      statusTag,
     };
   });
 
@@ -127,13 +145,19 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
       const right = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
       return left - right;
     })
-    .slice(0, 4);
+    .slice(0, 4)
+    .map((task) => ({
+      ...task,
+      statusTag: task.dueDate && task.dueDate < today
+        ? { label: "Overdue", tone: "bg-rose-500/12 text-rose-500 border-rose-500/20" }
+        : { label: "On Track", tone: "bg-emerald-500/12 text-emerald-500 border-emerald-500/20" },
+    }));
 
   const actionHandlers = [
     () => onAddProject(),
     () => onNew(),
     () => onAddMember(),
-    () => navigate("/members"),
+    () => onScheduleMeeting(),
   ];
 
   return (
@@ -238,18 +262,58 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
                   <button
                     key={project.id}
                     type="button"
-                    onClick={() => navigate(`/projects/${project.id}`)}
+                    onClick={() =>
+                      navigate(`/projects/${project.id}`, {
+                        state: { fromPath: "/", fromLabel: "Dashboard" },
+                      })
+                    }
                     className="dashboard-project-card text-left"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/50 bg-accent text-sm font-semibold text-foreground">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/50 bg-white/65 text-sm font-semibold text-foreground">
                         {project.projectName[0]}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">{project.projectName}</p>
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{project.note}</p>
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${project.statusTag.tone}`}>
+                            {project.statusTag.label}
+                          </span>
+                          <span className="truncate text-xs text-muted-foreground">{project.note}</span>
+                        </div>
                       </div>
-                      <span className="shrink-0 text-[11px] font-medium text-muted-foreground">Open</span>
+                      <div className="shrink-0">
+                        {(() => {
+                          const ring = getProgressRing(project.progress);
+                          const gradientId = `project-ring-${project.id}`;
+
+                          return (
+                            <div className="relative flex h-10 w-10 items-center justify-center">
+                              <svg className="h-10 w-10 -rotate-90" viewBox="0 0 40 40">
+                                <circle cx="20" cy="20" r={ring.radius} fill="none" stroke="rgba(148,163,184,0.18)" strokeWidth="4" />
+                                <circle
+                                  cx="20"
+                                  cy="20"
+                                  r={ring.radius}
+                                  fill="none"
+                                  stroke={`url(#${gradientId})`}
+                                  strokeWidth="4"
+                                  strokeLinecap="round"
+                                  strokeDasharray={ring.circumference}
+                                  strokeDashoffset={ring.dashOffset}
+                                />
+                                <defs>
+                                  <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#8b5cf6" />
+                                    <stop offset="100%" stopColor="#d946ef" />
+                                  </linearGradient>
+                                </defs>
+                              </svg>
+                              <span className="absolute text-[10px] font-semibold text-foreground">{project.progress}%</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </div>
                   </button>
                 ))}
@@ -279,16 +343,14 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        {getProjectName(task.projectId, projects)} &bull;{" "}
-                        <span className={task.dueDate && task.dueDate < today ? "font-medium text-rose-400" : ""}>
-                          {task.dueDate
-                            ? task.dueDate < today
-                              ? "Overdue"
-                              : `Due ${new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
-                            : "No due date"}
-                        </span>
+                        {getProjectName(task.projectId, projects)} &bull; {task.dueDate
+                          ? `Due ${new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+                          : "No due date"}
                       </p>
                     </div>
+                    <span className={`ml-auto shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${task.statusTag.tone}`}>
+                      {task.statusTag.label}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -305,7 +367,11 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
                   <button
                     key={member.id}
                     type="button"
-                    onClick={() => navigate(`/members/${member.id}`)}
+                    onClick={() =>
+                      navigate(`/members/${member.id}`, {
+                        state: { fromPath: "/", fromLabel: "Dashboard" },
+                      })
+                    }
                     className="dashboard-person-card text-center"
                   >
                     <Avatar className="mx-auto h-12 w-12 ring-1 ring-border/30">

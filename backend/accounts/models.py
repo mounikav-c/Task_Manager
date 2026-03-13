@@ -98,3 +98,44 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Meeting(models.Model):
+    STATUS_CHOICES = [
+        ("scheduled", "Scheduled"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    title = models.CharField(max_length=180)
+    agenda = models.TextField(blank=True)
+    scheduled_for = models.DateTimeField()
+    duration_minutes = models.PositiveIntegerField(default=30)
+    location = models.CharField(max_length=180, blank=True)
+    meeting_link = models.URLField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="scheduled")
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="meetings",
+    )
+    organizer = models.ForeignKey(
+        TeamMember,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="organized_meetings",
+    )
+    attendees = models.ManyToManyField(TeamMember, blank=True, related_name="meetings")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["scheduled_for", "title"]
+
+    def __str__(self):
+        return self.title

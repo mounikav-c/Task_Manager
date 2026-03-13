@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { TasksPage } from "@/pages/TasksPage";
 import { BoardPage } from "@/pages/BoardPage";
+import { MeetingsPage } from "@/pages/MeetingsPage";
 import { MembersPage } from "@/pages/MembersPage";
 import { MemberDetailsPage } from "@/pages/MemberDetailsPage";
 import { ProjectDetailsPage } from "@/pages/ProjectDetailsPage";
@@ -17,8 +18,9 @@ import { HelpPage } from "@/pages/HelpPage";
 import { TaskDialog } from "@/components/TaskDialog";
 import { MemberDialog } from "@/components/MemberDialog";
 import { ProjectDialog } from "@/components/ProjectDialog";
+import { MeetingDialog } from "@/components/MeetingDialog";
 import NotFound from "./pages/NotFound";
-import { api, type Project as ApiProject, type Task as ApiTask, type TeamMember as ApiTeamMember } from "@/lib/api";
+import { api, type Meeting as ApiMeeting, type Project as ApiProject, type Task as ApiTask, type TeamMember as ApiTeamMember } from "@/lib/api";
 import { toast } from "@/components/ui/sonner";
 
 type Priority = "low" | "medium" | "high";
@@ -53,6 +55,20 @@ type Project = {
   startDate: string;
   deadline: string;
   ownerId?: string;
+};
+
+type Meeting = {
+  id: string;
+  title: string;
+  agenda: string;
+  scheduledFor: string;
+  durationMinutes: number;
+  location: string;
+  meetingLink: string;
+  status: "scheduled" | "completed" | "cancelled";
+  projectId?: string;
+  organizerId?: string;
+  attendeeIds: string[];
 };
 
 function mapMember(member: ApiTeamMember): Assignee {
@@ -92,6 +108,22 @@ function mapProject(project: ApiProject): Project {
   };
 }
 
+function mapMeeting(meeting: ApiMeeting): Meeting {
+  return {
+    id: String(meeting.id),
+    title: meeting.title,
+    agenda: meeting.agenda,
+    scheduledFor: meeting.scheduled_for,
+    durationMinutes: meeting.duration_minutes,
+    location: meeting.location,
+    meetingLink: meeting.meeting_link,
+    status: meeting.status,
+    projectId: meeting.project ? String(meeting.project) : undefined,
+    organizerId: meeting.organizer ? String(meeting.organizer) : undefined,
+    attendeeIds: meeting.attendees.map(String),
+  };
+}
+
 const MEMBER_COLORS = [
   "hsl(267 84% 57%)",
   "hsl(162 63% 41%)",
@@ -114,17 +146,21 @@ const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [teamMembers, setTeamMembers] = useState<Assignee[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [meetingDialogOpen, setMeetingDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
   const [initialProjectId, setInitialProjectId] = useState<string | undefined>(undefined);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isSavingTask, setIsSavingTask] = useState(false);
   const [isSavingMember, setIsSavingMember] = useState(false);
   const [isSavingProject, setIsSavingProject] = useState(false);
+  const [isSavingMeeting, setIsSavingMeeting] = useState(false);
 
   const loadData = useCallback(async (options?: { silent?: boolean }) => {
     if (!options?.silent) {
@@ -132,15 +168,17 @@ const App = () => {
     }
 
     try {
-      const [tasksData, membersData, projectsData] = await Promise.all([
+      const [tasksData, membersData, projectsData, meetingsData] = await Promise.all([
         api.getTasks(),
         api.getMembers(),
         api.getProjects(),
+        api.getMeetings(),
       ]);
 
       setTasks(tasksData.map(mapTask));
       setTeamMembers(membersData.map(mapMember));
       setProjects(projectsData.map(mapProject));
+      setMeetings(meetingsData.map(mapMeeting));
     } catch (error) {
       console.error("Failed to load API data", error);
       setLoadError("Could not load workspace data. Check that the Django server is running.");
@@ -170,6 +208,16 @@ const App = () => {
   const handleEditProject = useCallback((project: Project) => {
     setEditingProject(project);
     setProjectDialogOpen(true);
+  }, []);
+
+  const handleNewMeeting = useCallback(() => {
+    setEditingMeeting(null);
+    setMeetingDialogOpen(true);
+  }, []);
+
+  const handleEditMeeting = useCallback((meeting: Meeting) => {
+    setEditingMeeting(meeting);
+    setMeetingDialogOpen(true);
   }, []);
 
   const handleEdit = useCallback((task: Task) => {
@@ -280,6 +328,41 @@ const App = () => {
     [editingProject, loadData],
   );
 
+  const handleSaveMeeting = useCallback(
+    async (meeting: Omit<Meeting, "id">) => {
+      setIsSavingMeeting(true);
+      try {
+        const payload = {
+          title: meeting.title,
+          agenda: meeting.agenda,
+          scheduled_for: meeting.scheduledFor,
+          duration_minutes: meeting.durationMinutes,
+          location: meeting.location,
+          meeting_link: meeting.meetingLink,
+          status: meeting.status,
+          project: meeting.projectId ? Number(meeting.projectId) : null,
+          organizer: meeting.organizerId ? Number(meeting.organizerId) : null,
+          attendees: meeting.attendeeIds.map(Number),
+        };
+
+        if (editingMeeting) {
+          await api.updateMeeting(Number(editingMeeting.id), payload);
+        } else {
+          await api.createMeeting(payload);
+        }
+
+        await loadData({ silent: true });
+        toast.success(editingMeeting ? "Meeting updated" : "Meeting scheduled");
+      } catch (error) {
+        console.error("Failed to save meeting", error);
+        toast.error(editingMeeting ? "Could not update meeting" : "Could not schedule meeting");
+      } finally {
+        setIsSavingMeeting(false);
+      }
+    },
+    [editingMeeting, loadData],
+  );
+
   const handleUpdateStatus = useCallback(
     async (id: string, status: Status) => {
       try {
@@ -355,6 +438,7 @@ const App = () => {
                         onAddProject={handleNewProject}
                         onNew={handleNew}
                         onAddMember={() => setMemberDialogOpen(true)}
+                        onScheduleMeeting={handleNewMeeting}
                       />
                     }
                   />
@@ -382,6 +466,18 @@ const App = () => {
                         onDelete={handleDeleteTask}
                         onNew={handleNew}
                         onUpdateStatus={handleUpdateStatus}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/meetings"
+                    element={
+                      <MeetingsPage
+                        meetings={meetings}
+                        projects={projects}
+                        teamMembers={teamMembers}
+                        onAddMeeting={handleNewMeeting}
+                        onEditMeeting={handleEditMeeting}
                       />
                     }
                   />
@@ -453,6 +549,17 @@ const App = () => {
         onSave={handleAddProject}
         teamMembers={teamMembers}
         project={editingProject}
+      />
+      <MeetingDialog
+        open={meetingDialogOpen && !isSavingMeeting}
+        onClose={() => {
+          setMeetingDialogOpen(false);
+          setEditingMeeting(null);
+        }}
+        onSave={handleSaveMeeting}
+        teamMembers={teamMembers}
+        projects={projects}
+        meeting={editingMeeting}
       />
     </TooltipProvider>
   );

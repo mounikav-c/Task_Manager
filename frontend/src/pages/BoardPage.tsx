@@ -106,7 +106,11 @@ export function BoardPage({ tasks, projects, teamMembers, onNew }: Props) {
               <button
                 key={project.id}
                 type="button"
-                onClick={() => navigate(`/projects/${project.id}`)}
+                onClick={() =>
+                  navigate(`/projects/${project.id}`, {
+                    state: { fromPath: "/board", fromLabel: "Projects" },
+                  })
+                }
                 className="project-card group text-left"
               >
                 <div className="flex items-start gap-3">

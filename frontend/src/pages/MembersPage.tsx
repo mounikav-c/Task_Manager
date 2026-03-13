@@ -69,7 +69,11 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.28, delay: index * 0.04 }}
                 whileHover={{ y: -4 }}
-                onClick={() => navigate(`/members/${member.id}`)}
+                onClick={() =>
+                  navigate(`/members/${member.id}`, {
+                    state: { fromPath: "/members", fromLabel: "Members" },
+                  })
+                }
                 className="flex h-full flex-col rounded-xl border border-border/60 bg-card p-4 text-left transition-all duration-200 hover:border-primary/20 hover:shadow-[0_18px_35px_-28px_rgba(15,23,42,0.28)]"
                 style={{ boxShadow: "var(--shadow-card)" }}
               >
