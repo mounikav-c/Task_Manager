@@ -1,5 +1,14 @@
 import { useMemo } from "react";
-import { ArrowLeft, Pencil, Plus, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  FolderKanban,
+  ListTodo,
+  Pencil,
+  Plus,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { TopNav } from "@/components/TopNav";
 import { Button } from "@/components/ui/button";
@@ -47,10 +56,23 @@ interface Props {
   onEditProject: (project: Project) => void;
 }
 
-const statusLabels: Record<Status, string> = {
+const taskStatusLabels: Record<Status, string> = {
   todo: "Todo",
   inprogress: "In Progress",
   completed: "Completed",
+};
+
+const projectStatusTone: Record<Project["status"], string> = {
+  Planning: "border-slate-300 bg-slate-100 text-slate-700",
+  Active: "border-emerald-300 bg-emerald-50 text-emerald-700",
+  "At Risk": "border-amber-300 bg-amber-50 text-amber-700",
+  Completed: "border-violet-300 bg-violet-50 text-violet-700",
+};
+
+const priorityLabels: Record<Task["priority"], string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
 };
 
 function getAssignee(id: string | undefined, teamMembers: Assignee[]) {
@@ -61,6 +83,18 @@ function formatDate(value: string) {
   return value
     ? new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : "Not set";
+}
+
+function buildProjectOverview(project: Project) {
+  const summary = project.summary.trim().replace(/\s+/g, " ");
+  const description = project.description.trim().replace(/\s+/g, " ");
+
+  return [
+    summary || `${project.name} is an active project in this workspace.`,
+    description && description !== summary
+      ? description
+      : "This page gives a clear view of the project goal, ownership, timeline, and current work.",
+  ];
 }
 
 export function ProjectDetailsPage({ tasks, projects, teamMembers, onEdit, onNew, onEditProject }: Props) {
@@ -87,176 +121,190 @@ export function ProjectDetailsPage({ tasks, projects, teamMembers, onEdit, onNew
   }
 
   const owner = getAssignee(project.ownerId, teamMembers);
+  const activeTasks = projectTasks.filter((task) => task.status !== "completed");
   const team = Array.from(new Set(projectTasks.map((task) => task.assigneeId).filter(Boolean)))
     .map((memberId) => getAssignee(memberId, teamMembers))
     .filter(Boolean) as Assignee[];
+  const overviewLines = buildProjectOverview(project);
+  const sortedTasks = [...projectTasks].sort((a, b) => {
+    const left = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+    const right = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+    return left - right;
+  });
+
+  const statCards = [
+    { label: "Start Date", value: formatDate(project.startDate), icon: CalendarDays },
+    { label: "Deadline", value: formatDate(project.deadline), icon: CalendarDays },
+    { label: "Owner", value: owner?.name ?? "Unassigned", icon: UserRound },
+    { label: "Open Tasks", value: String(activeTasks.length), icon: ListTodo },
+  ];
 
   return (
     <div className="flex h-full flex-col">
       <TopNav title={project.name} />
-      <div className="flex-1 overflow-auto p-5 md:p-6">
-        <div className="mx-auto max-w-6xl space-y-5">
-          <div className="px-1">
-            <Button variant="ghost" className="mb-4 h-8 rounded-lg px-3 text-xs text-muted-foreground hover:text-foreground" onClick={() => navigate("/board")}>
+      <div className="flex-1 overflow-auto p-3 md:p-4">
+        <div className="mx-auto flex min-h-full max-w-[108rem] flex-col gap-3">
+          <div>
+            <Button
+              variant="ghost"
+              className="mb-2 h-8 rounded-lg px-2.5 text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => navigate("/board")}
+            >
               <ArrowLeft className="h-3.5 w-3.5" />
               Back to Projects
             </Button>
 
-            <div className="flex flex-col gap-5 rounded-xl border border-border/60 bg-card px-6 py-5 lg:flex-row lg:items-start lg:justify-between" style={{ boxShadow: "var(--shadow-card)" }}>
-              <div className="min-w-0">
-                <p className="project-details-kicker">Project Details</p>
-                <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">{project.name}</h1>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{project.description}</p>
-              </div>
-              <div className="w-full lg:max-w-[520px]">
-                <div className="mb-3 flex justify-end">
-                  <Button variant="outline" className="h-9 rounded-lg text-sm" onClick={() => onEditProject(project)}>
-                    <Pencil className="h-4 w-4" />
-                    Edit Project
-                  </Button>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-lg bg-accent px-4 py-3">
-                  <span className="project-details-label">Start Date</span>
-                  <p className="project-details-value text-sm">{formatDate(project.startDate)}</p>
-                </div>
-                <div className="rounded-lg bg-accent px-4 py-3">
-                  <span className="project-details-label">Deadline</span>
-                  <p className="project-details-value text-sm">{formatDate(project.deadline)}</p>
-                </div>
-                <div className="rounded-lg bg-accent px-4 py-3">
-                  <span className="project-details-label">Owner</span>
-                  <p className="project-details-value text-sm">{owner?.name ?? "Unassigned"}</p>
-                </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-1 gap-4">
-              <div className="rounded-xl border border-border/60 bg-card px-5 py-5" style={{ boxShadow: "var(--shadow-card)" }}>
-                <h2 className="text-base font-semibold text-foreground">About This Project</h2>
-                <div className="mt-3 rounded-lg bg-accent px-4 py-3">
-                  <span className="project-details-label">Project Explanation</span>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{project.summary}</p>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border/60 bg-card px-5 py-5" style={{ boxShadow: "var(--shadow-card)" }}>
-                <div className="flex flex-col gap-4 border-b border-border/40 pb-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <h2 className="text-base font-semibold text-foreground">Project Overview</h2>
-                    <p className="mt-1 text-xs text-muted-foreground">Important details in one place.</p>
-                  </div>
-                  <div className="w-full max-w-sm">
-                    <div className="mb-2 flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Status</span>
-                      <span className="inline-flex items-center rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
-                        {project.status}
-                      </span>
-                    </div>
-                    <div className="mb-2 flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-semibold text-foreground">{project.progress}%</span>
-                    </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                      <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary/60" style={{ width: `${project.progress}%` }} />
-                    </div>
+            <section
+              className="rounded-[1.15rem] border border-border/70 bg-card px-4 py-3.5 transition-shadow duration-200 hover:shadow-[0_18px_40px_-30px_rgba(15,23,42,0.32)]"
+              style={{ boxShadow: "0 10px 30px -28px rgba(15,23,42,0.28)" }}
+            >
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="text-[1.9rem] font-bold tracking-tight text-foreground">{project.name}</h1>
+                    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${projectStatusTone[project.status]}`}>
+                      {project.status}
+                    </span>
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  <div className="rounded-lg border border-border/50 bg-accent px-4 py-3">
-                    <span className="project-details-label">Start Date</span>
-                    <p className="project-details-value text-sm">{formatDate(project.startDate)}</p>
-                  </div>
-                  <div className="rounded-lg border border-border/50 bg-accent px-4 py-3">
-                    <span className="project-details-label">Deadline</span>
-                    <p className="project-details-value text-sm">{formatDate(project.deadline)}</p>
-                  </div>
-                  <div className="rounded-lg border border-border/50 bg-accent px-4 py-3">
-                    <span className="project-details-label">Owner</span>
-                    <p className="project-details-value text-sm">{owner?.name ?? "Unassigned"}</p>
-                  </div>
-                  <div className="rounded-lg border border-border/50 bg-accent px-4 py-3">
-                    <span className="project-details-label">Open Tasks</span>
-                    <p className="project-details-value text-sm">{projectTasks.length}</p>
-                  </div>
-                </div>
+                <Button
+                  variant="outline"
+                  className="h-10 rounded-xl border-border/70 bg-white px-4 text-sm font-medium transition-all duration-200 hover:border-primary/25 hover:bg-primary/5"
+                  onClick={() => onEditProject(project)}
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit Project
+                </Button>
               </div>
-            </div>
+
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                {statCards.map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="rounded-xl border border-border/60 bg-accent/45 px-3 py-2.5 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-primary/20 hover:bg-accent/70"
+                    style={{ boxShadow: "0 8px 20px -24px rgba(15,23,42,0.25)" }}
+                  >
+                    <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      <stat.icon className="h-3.5 w-3.5 text-primary" />
+                      {stat.label}
+                    </div>
+                    <p className="mt-1.5 text-sm font-semibold text-foreground">{stat.value}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
           </div>
 
-          <section className="rounded-xl border border-border/60 bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
-            <div className="mb-4 flex items-center gap-2 border-b border-border/40 pb-3">
-              <Users className="h-4 w-4 text-primary" />
-              <div>
-                <h2 className="text-base font-semibold">Team Members</h2>
-                <p className="text-xs text-muted-foreground">People working on this project.</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {team.map((member) => (
-                <div key={member.id} className="flex items-center gap-3 rounded-lg bg-accent px-3 py-3">
-                  <Avatar className="h-10 w-10 ring-1 ring-border/30">
-                    <AvatarFallback className="text-xs font-semibold text-primary-foreground" style={{ backgroundColor: member.color }}>
-                      {member.initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-foreground">{member.name}</p>
-                    <p className="text-xs text-muted-foreground">Assigned member</p>
-                  </div>
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]">
+            <section
+              className="rounded-[1.15rem] border border-border/60 bg-card px-4 py-3.5 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-30px_rgba(15,23,42,0.28)]"
+              style={{ boxShadow: "var(--shadow-card)" }}
+            >
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">About This Project</h2>
+              <div className="mt-2 rounded-xl bg-accent/45 px-4 py-3">
+                <div className="space-y-1.5 text-sm leading-6 text-foreground/82">
+                  {overviewLines.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-xl border border-border/60 bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
-            <div className="mb-4 flex flex-col gap-3 border-b border-border/40 pb-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-base font-semibold">Project Tasks</h2>
-                <p className="text-xs text-muted-foreground">All tasks related to this project.</p>
               </div>
-              <Button className="h-9 rounded-lg text-sm bg-gradient-to-r from-primary to-primary/80" onClick={() => onNew(project.id)}>
+            </section>
+
+            <section
+              className="rounded-[1.15rem] border border-border/60 bg-card px-4 py-3.5 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-30px_rgba(15,23,42,0.28)]"
+              style={{ boxShadow: "var(--shadow-card)" }}
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold tracking-tight text-foreground">Progress</h2>
+                <span className="text-sm font-semibold text-foreground">{project.progress}%</span>
+              </div>
+              <div className="mt-2.5 h-3 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-primary via-fuchsia-500/90 to-violet-400 transition-[width] duration-1000"
+                  style={{
+                    width: `${project.progress}%`,
+                    transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+                  }}
+                />
+              </div>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {team.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No members assigned yet.</p>
+                ) : (
+                  team.map((member) => (
+                    <div
+                      key={member.id}
+                      className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-accent/45 px-2.5 py-1.5 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-primary/20 hover:bg-accent/70 hover:shadow-[0_12px_24px_-20px_rgba(15,23,42,0.3)]"
+                    >
+                      <Avatar className="h-7 w-7 ring-1 ring-border/30">
+                        <AvatarFallback className="text-[10px] font-semibold text-primary-foreground" style={{ backgroundColor: member.color }}>
+                          {member.initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium text-foreground">{member.name}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+          </div>
+
+          <section
+            className="flex-1 rounded-[1.15rem] border border-border/60 bg-card p-3.5 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-30px_rgba(15,23,42,0.28)]"
+            style={{ boxShadow: "var(--shadow-card)" }}
+          >
+            <div className="mb-2.5 flex flex-col gap-2 border-b border-border/40 pb-2 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">Project Tasks</h2>
+              <Button
+                className="h-10 rounded-xl bg-gradient-to-r from-primary via-fuchsia-500/95 to-violet-500 px-4 text-sm font-medium text-primary-foreground shadow-[0_18px_35px_-20px_hsl(var(--primary)/0.85)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_24px_40px_-22px_hsl(var(--primary)/0.9)] hover:brightness-105"
+                onClick={() => onNew(project.id)}
+              >
                 <Plus className="h-4 w-4" />
                 Add Task
               </Button>
             </div>
 
             {projectTasks.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border/50 bg-accent/50 px-5 py-8 text-center">
+              <div className="rounded-xl border border-dashed border-border/50 bg-accent/40 px-5 py-8 text-center">
                 <p className="text-sm font-medium text-foreground">No tasks added yet.</p>
                 <p className="mt-1 text-xs text-muted-foreground">Use Add Task to create the first task.</p>
               </div>
             ) : (
-              <div className="overflow-hidden rounded-lg border border-border/50">
-                <div className="hidden grid-cols-[1.6fr_1fr_0.8fr_1fr_1fr] gap-4 border-b border-border/40 bg-accent px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground md:grid">
-                  <span>Task</span>
-                  <span>Assigned</span>
-                  <span>Priority</span>
-                  <span>Status</span>
-                  <span>Due Date</span>
-                </div>
-                {projectTasks.map((task) => {
+              <div className="grid gap-2">
+                {sortedTasks.map((task) => {
                   const assignee = getAssignee(task.assigneeId, teamMembers);
+
                   return (
                     <button
                       key={task.id}
                       type="button"
                       onClick={() => onEdit(task)}
-                      className="grid w-full gap-3 border-b border-border/40 px-5 py-3 text-left transition-colors hover:bg-accent/50 last:border-b-0 md:grid-cols-[1.6fr_1fr_0.8fr_1fr_1fr] md:items-center"
+                      className="rounded-xl border border-border/60 bg-accent/35 px-3.5 py-2.5 text-left transition-all duration-300 ease-out hover:-translate-y-1 hover:border-primary/20 hover:bg-accent/65 hover:shadow-[0_18px_30px_-26px_rgba(15,23,42,0.35)]"
                     >
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-foreground">{task.title}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground md:hidden">{assignee?.name ?? "Unassigned"}</p>
+                      <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="truncate text-[15px] font-semibold text-foreground">{task.title}</p>
+                            <span className={`status-pill status-${task.status}`}>{taskStatusLabels[task.status]}</span>
+                            <span className={`priority-pill priority-${task.priority}`}>{priorityLabels[task.priority]}</span>
+                          </div>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-3 text-[13px] text-muted-foreground">
+                            <span>{assignee?.name ?? "Unassigned"}</span>
+                            <span className="text-border">&bull;</span>
+                            <span>{task.dueDate ? formatDate(task.dueDate) : "No due date"}</span>
+                          </div>
+                          {task.description && (
+                            <p className="mt-1 line-clamp-2 text-[11px] leading-[1.125rem] text-muted-foreground">
+                              {task.description}
+                            </p>
+                          )}
+                        </div>
+
+                        <span className={`status-pill status-${task.status} shrink-0`}>
+                          {taskStatusLabels[task.status]}
+                        </span>
                       </div>
-                      <div className="hidden text-sm text-foreground md:block">{assignee?.name ?? "Unassigned"}</div>
-                      <div>
-                        <span className={`inline-flex rounded-md px-2.5 py-0.5 text-xs font-medium priority-${task.priority}`}>{task.priority}</span>
-                      </div>
-                      <div className="text-sm text-foreground">{statusLabels[task.status]}</div>
-                      <div className="text-sm text-muted-foreground">{new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</div>
                     </button>
                   );
                 })}

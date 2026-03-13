@@ -10,6 +10,7 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { TasksPage } from "@/pages/TasksPage";
 import { BoardPage } from "@/pages/BoardPage";
 import { MembersPage } from "@/pages/MembersPage";
+import { MemberDetailsPage } from "@/pages/MemberDetailsPage";
 import { ProjectDetailsPage } from "@/pages/ProjectDetailsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { HelpPage } from "@/pages/HelpPage";
@@ -334,13 +335,13 @@ const App = () => {
       ) : (
         <BrowserRouter>
           <SidebarProvider>
-            <div className="app-shell min-h-screen flex w-full bg-[#f6f7fb] p-2 md:p-4">
+            <div className="app-shell flex min-h-screen w-full bg-[#f6f7fb] p-2 md:p-4">
               <AppSidebar
                 onAddProject={handleNewProject}
                 onAddMember={() => setMemberDialogOpen(true)}
                 onLogout={handleLogout}
               />
-              <SidebarInset className="app-shell-main min-w-0 overflow-hidden rounded-[1.5rem] border border-border/70 bg-white shadow-[0_20px_50px_-40px_rgba(15,23,42,0.18)]">
+              <SidebarInset className="app-shell-main min-w-0 flex-1 overflow-x-auto rounded-[1.5rem] border border-border/70 bg-white shadow-[0_20px_50px_-40px_rgba(15,23,42,0.18)]">
                 <Routes>
                   <Route
                     path="/"
@@ -404,6 +405,17 @@ const App = () => {
                         tasks={tasks}
                         teamMembers={teamMembers}
                         onAddMember={() => setMemberDialogOpen(true)}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/members/:memberId"
+                    element={
+                      <MemberDetailsPage
+                        tasks={tasks}
+                        projects={projects}
+                        teamMembers={teamMembers}
+                        onEdit={handleEdit}
                       />
                     }
                   />

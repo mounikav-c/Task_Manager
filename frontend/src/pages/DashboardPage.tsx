@@ -97,16 +97,28 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
     .slice(0, 5);
 
-  const projectCards = tasks.slice(0, 4).map((task) => ({
-    ...task,
-    projectName: getProjectName(task.projectId, projects),
-    note:
-      task.status === "completed"
-        ? "No task pending"
-        : task.status === "inprogress"
-          ? `${Math.max(1, Math.ceil((new Date(task.dueDate).getTime() - Date.now()) / 86400000))} task due soon`
-          : "1 task to start",
-  }));
+  const projectCards = projects.slice(0, 4).map((project) => {
+    const projectTasks = tasks.filter((task) => task.projectId === project.id);
+    const pendingCount = projectTasks.filter((task) => task.status !== "completed").length;
+    const inProgressCount = projectTasks.filter((task) => task.status === "inprogress").length;
+
+    let note = "No tasks yet";
+    if (pendingCount === 1) {
+      note = "1 task to start";
+    } else if (pendingCount > 1) {
+      note = `${pendingCount} tasks open`;
+    }
+
+    if (inProgressCount > 0) {
+      note = inProgressCount === 1 ? "1 task in progress" : `${inProgressCount} tasks in progress`;
+    }
+
+    return {
+      id: project.id,
+      projectName: project.name,
+      note,
+    };
+  });
 
   const recentActivity = [...tasks]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -120,11 +132,11 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
   ];
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex min-h-full min-w-0 flex-col">
       <TopNav title="Dashboard" />
-      <div className="flex-1 overflow-auto p-5 md:p-6">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-5 md:p-6">
         <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
             {statCards.map((stat, index) => (
               <motion.button
                 key={stat.label}
@@ -149,7 +161,7 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
             {quickActions.map((action, index) => (
               <motion.button
                 key={action.title}
@@ -171,7 +183,7 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
             ))}
           </div>
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_0.95fr]">
+          <div className="grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.95fr)]">
             <section className="dashboard-panel">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
@@ -191,7 +203,7 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
                     onClick={() => onEdit(task)}
                     className="dashboard-task-row"
                   >
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1 text-left">
                       <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
                       <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <span>{getProjectName(task.projectId, projects)}</span>
@@ -223,7 +235,7 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
                   <button
                     key={project.id}
                     type="button"
-                    onClick={() => navigate("/board")}
+                    onClick={() => navigate(`/projects/${project.id}`)}
                     className="dashboard-project-card text-left"
                   >
                     <div className="flex items-center gap-3">
@@ -242,7 +254,7 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
             </section>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_0.95fr]">
+          <div className="grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.95fr)]">
             <section className="dashboard-panel">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
@@ -284,7 +296,7 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
                   <button
                     key={member.id}
                     type="button"
-                    onClick={() => navigate("/members")}
+                    onClick={() => navigate(`/members/${member.id}`)}
                     className="dashboard-person-card text-center"
                   >
                     <Avatar className="mx-auto h-12 w-12 ring-1 ring-border/30">

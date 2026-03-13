@@ -1,4 +1,4 @@
-import { CalendarDays, Plus } from "lucide-react";
+import { BarChart3, BriefcaseBusiness, CalendarDays, Globe, GraduationCap, Landmark, Plus, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TopNav } from "@/components/TopNav";
 import { Button } from "@/components/ui/button";
@@ -50,12 +50,12 @@ const progressMap: Record<Status, number> = {
 };
 
 const projectIcons = [
-  "bg-violet-500",
-  "bg-violet-400",
-  "bg-indigo-500",
-  "bg-rose-400",
-  "bg-purple-500",
-  "bg-emerald-500",
+  { icon: Globe, tone: "bg-violet-100 text-violet-600" },
+  { icon: BarChart3, tone: "bg-sky-100 text-sky-600" },
+  { icon: Landmark, tone: "bg-indigo-100 text-indigo-600" },
+  { icon: BriefcaseBusiness, tone: "bg-rose-100 text-rose-600" },
+  { icon: GraduationCap, tone: "bg-purple-100 text-purple-600" },
+  { icon: ShoppingBag, tone: "bg-emerald-100 text-emerald-600" },
 ];
 
 function getAssignee(id: string | undefined, teamMembers: Assignee[]) {
@@ -93,7 +93,6 @@ export function BoardPage({ tasks, projects, teamMembers, onNew }: Props) {
         <div className="dashboard-panel">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-medium text-muted-foreground">Projects overview</p>
               <h2 className="text-lg font-semibold tracking-tight">Active delivery board</h2>
             </div>
             <Button onClick={onNew} className="rounded-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20 text-sm h-9">
@@ -112,7 +111,9 @@ export function BoardPage({ tasks, projects, teamMembers, onNew }: Props) {
               >
                 <div className="flex items-start gap-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className={`project-card-badge ${project.accent}`} />
+                    <div className={`project-card-badge flex items-center justify-center ${project.accent.tone}`}>
+                      <project.accent.icon className="h-4.5 w-4.5" />
+                    </div>
                     <div className="min-w-0">
                       <h3 className="truncate text-base font-semibold tracking-tight text-foreground">{project.name}</h3>
                       <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{project.description}</p>
