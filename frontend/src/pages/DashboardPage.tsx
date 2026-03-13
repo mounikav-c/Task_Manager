@@ -120,8 +120,13 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
     };
   });
 
-  const recentActivity = [...tasks]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  const upcomingDeadlines = [...tasks]
+    .filter((task) => task.status !== "completed")
+    .sort((a, b) => {
+      const left = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+      const right = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+      return left - right;
+    })
     .slice(0, 4);
 
   const actionHandlers = [
@@ -188,7 +193,6 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                   <h2 className="text-base font-semibold">Assigned Tasks</h2>
-                  <p className="text-xs text-muted-foreground">What needs attention first.</p>
                 </div>
                 <Button variant="outline" size="sm" className="rounded-lg border-border/50 bg-card/80 text-xs h-8">
                   Nearest Due
@@ -227,7 +231,6 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                   <h2 className="text-base font-semibold">Projects</h2>
-                  <p className="text-xs text-muted-foreground">Active workstreams.</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-2">
@@ -258,28 +261,35 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
             <section className="dashboard-panel">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-base font-semibold">Recent Activity</h2>
-                  <p className="text-xs text-muted-foreground">Latest workspace updates.</p>
+                  <h2 className="text-base font-semibold">Upcoming Deadlines</h2>
                 </div>
-                <Button variant="outline" size="sm" className="rounded-lg border-border/50 bg-card/80 text-xs h-8" onClick={() => openTasksView("all")}>
-                  View All
+                <Button variant="outline" size="sm" className="rounded-lg border-border/50 bg-card/80 text-xs h-8" onClick={() => openTasksView("pending")}>
+                  Open Tasks
                 </Button>
               </div>
 
               <div className="space-y-2">
-                {recentActivity.map((task) => (
-                  <div key={task.id} className="dashboard-activity-row">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-400">
-                      <CheckCheck className="h-3.5 w-3.5" />
+                {upcomingDeadlines.map((task) => (
+                  <button key={task.id} type="button" onClick={() => onEdit(task)} className="dashboard-activity-row w-full text-left transition-all duration-200 hover:border-primary/25 hover:bg-card">
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                      task.dueDate && task.dueDate < today ? "bg-rose-500/15 text-rose-400" : "bg-amber-500/15 text-amber-400"
+                    }`}>
+                      <Clock className="h-3.5 w-3.5" />
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        {task.status === "completed" ? "Task completed" : task.status === "inprogress" ? "Work in progress" : "Task created"} &bull;{" "}
-                        {new Date(task.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        {getProjectName(task.projectId, projects)} &bull;{" "}
+                        <span className={task.dueDate && task.dueDate < today ? "font-medium text-rose-400" : ""}>
+                          {task.dueDate
+                            ? task.dueDate < today
+                              ? "Overdue"
+                              : `Due ${new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+                            : "No due date"}
+                        </span>
                       </p>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </section>
@@ -288,7 +298,6 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                   <h2 className="text-base font-semibold">People ({teamMembers.length})</h2>
-                  <p className="text-xs text-muted-foreground">Working across projects.</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
