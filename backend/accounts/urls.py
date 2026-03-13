@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import MeetingViewSet, ProjectViewSet, TaskViewSet, TeamMemberViewSet, health_check
+from .views import MeetingViewSet, ProjectViewSet, TaskViewSet, TeamMemberViewSet, auth_logout, auth_session, demo_login, health_check
 
 router = DefaultRouter()
 router.register("members", TeamMemberViewSet, basename="members")
@@ -11,5 +11,8 @@ router.register("meetings", MeetingViewSet, basename="meetings")
 
 urlpatterns = [
     path("health/", health_check, name="health-check"),
+    path("auth/session/", auth_session, name="auth-session"),
+    path("auth/demo-login/", demo_login, name="auth-demo-login"),
+    path("auth/logout/", auth_logout, name="auth-logout"),
     path("", include(router.urls)),
 ]

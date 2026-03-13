@@ -62,25 +62,25 @@ const boardColumns: Array<{
   {
     key: "todo",
     title: "TO DO",
-    accent: "border-slate-400/40 bg-white text-slate-700",
+    accent: "border-slate-300/50 bg-white/80 text-slate-700",
     hint: "Ready to start",
-    columnClass: "bg-[#f4f1f1]",
+    columnClass: "border border-white/55 bg-[linear-gradient(135deg,rgba(255,255,255,0.76),rgba(243,244,255,0.52))] shadow-[0_24px_60px_-48px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl",
     addClass: "text-slate-500 hover:text-slate-700",
   },
   {
     key: "inprogress",
     title: "IN PROGRESS",
-    accent: "border-blue-500/30 bg-blue-500 text-white",
+    accent: "border-indigo-300/40 bg-[linear-gradient(135deg,#4f46e5_0%,#5b21b6_100%)] text-white",
     hint: "Work happening now",
-    columnClass: "bg-[#eef2fb]",
-    addClass: "text-blue-600 hover:text-blue-700",
+    columnClass: "border border-white/55 bg-[linear-gradient(135deg,rgba(238,242,255,0.88),rgba(243,244,255,0.72))] shadow-[0_24px_60px_-48px_rgba(15,23,42,0.18),0_16px_34px_-28px_rgba(79,70,229,0.08),inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl",
+    addClass: "text-indigo-600 hover:text-indigo-700",
   },
   {
     key: "completed",
     title: "COMPLETE",
     accent: "border-emerald-500/30 bg-emerald-600 text-white",
     hint: "Recently finished",
-    columnClass: "bg-[#eef6f1]",
+    columnClass: "border border-white/55 bg-[linear-gradient(135deg,rgba(240,253,244,0.9),rgba(236,253,245,0.72))] shadow-[0_24px_60px_-48px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl",
     addClass: "text-emerald-600 hover:text-emerald-700",
   },
 ];
@@ -183,7 +183,7 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
     <div className="flex h-full flex-col">
       <TopNav title="Tasks" />
       <div className="flex-1 overflow-auto p-3 md:p-4">
-        <section className="mb-3 rounded-[1.15rem] border border-border/70 bg-card px-4 py-3 md:px-5 md:py-4" style={{ boxShadow: "var(--shadow-card)" }}>
+        <section className="mb-3 rounded-[1.15rem] border border-white/55 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(243,244,255,0.54))] px-4 py-3 md:px-5 md:py-4 backdrop-blur-xl" style={{ boxShadow: "0 24px 56px -46px rgba(15,23,42,0.18), 0 14px 32px -28px rgba(79,70,229,0.08), inset 0 1px 0 rgba(255,255,255,0.72)" }}>
           {fromPath && (
             <Button
               type="button"
@@ -197,8 +197,8 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
             </Button>
           )}
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <h2 className="text-[1.9rem] font-semibold tracking-tight text-foreground leading-none">Tasks</h2>
-            <Button onClick={onNew} size="sm" className="h-10 gap-1.5 rounded-xl px-4">
+            <h2 className="text-[1.9rem] font-extrabold tracking-tight text-foreground leading-none">Tasks</h2>
+            <Button onClick={onNew} size="sm" className="h-10 gap-1.5 rounded-xl bg-[linear-gradient(135deg,#4338ca_0%,#5b21b6_100%)] px-4 text-white shadow-[0_18px_35px_-20px_rgba(79,70,229,0.38)] hover:brightness-105">
               <Plus className="h-4 w-4" /> New Task
             </Button>
           </div>
@@ -213,8 +213,8 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
               onClick={() => setFilter("filter", filter === "pending" ? "all" : "pending")}
               className={`rounded-lg border px-3 py-2 text-xs transition-colors ${
                 filter === "pending"
-                  ? "border-primary/25 bg-primary/12 text-primary"
-                  : "border-primary/15 bg-primary/8 text-primary hover:bg-primary/12"
+                  ? "border-indigo-300/35 bg-indigo-500/10 text-indigo-700"
+                  : "border-indigo-300/20 bg-indigo-500/5 text-indigo-700 hover:bg-indigo-500/10"
               }`}
             >
               {summary.open} open
@@ -233,7 +233,7 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
             </button>
 
             <Select value={filter} onValueChange={(v) => setFilter("filter", v)}>
-              <SelectTrigger className="h-9 w-[135px] rounded-lg text-xs bg-background">
+              <SelectTrigger className="h-9 w-[135px] rounded-lg border-white/60 bg-white/70 text-xs">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -245,7 +245,7 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
             </Select>
 
             <Select value={assigneeFilter} onValueChange={(v) => setFilter("assignee", v)}>
-              <SelectTrigger className="h-9 w-[150px] rounded-lg text-xs bg-background">
+              <SelectTrigger className="h-9 w-[150px] rounded-lg border-white/60 bg-white/70 text-xs">
                 <SelectValue placeholder="Assignee" />
               </SelectTrigger>
               <SelectContent>
@@ -257,7 +257,7 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
             </Select>
 
             <Select value={projectFilter} onValueChange={(v) => setFilter("project", v)}>
-              <SelectTrigger className="h-9 w-[170px] rounded-lg text-xs bg-background">
+              <SelectTrigger className="h-9 w-[170px] rounded-lg border-white/60 bg-white/70 text-xs">
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
               <SelectContent>
@@ -277,7 +277,7 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
         </section>
 
         <Tabs defaultValue="board" className="space-y-3">
-          <TabsList className="h-10 rounded-[0.9rem] border border-border/70 bg-card p-1">
+          <TabsList className="h-10 rounded-[0.9rem] border border-white/55 bg-[linear-gradient(135deg,rgba(255,255,255,0.76),rgba(243,244,255,0.5))] p-1 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)]">
             <TabsTrigger value="board" className="rounded-[0.8rem] px-4 gap-2">
               <LayoutGrid className="h-4 w-4" />
               Board
@@ -320,7 +320,7 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
                             key={task.id}
                             type="button"
                             onClick={() => onEdit(task)}
-                            className={`group w-full rounded-[0.85rem] border border-[#d9d4d4] border-l-[3px] ${boardCardAccent[task.priority]} bg-white px-3 py-3 text-left transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-[#bfb8b8] hover:shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]`}
+                            className={`group w-full rounded-[0.85rem] border border-white/60 border-l-[3px] ${boardCardAccent[task.priority]} bg-[linear-gradient(135deg,rgba(255,255,255,0.86),rgba(248,250,252,0.76))] px-3 py-3 text-left transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-indigo-200/40 hover:shadow-[0_18px_30px_-22px_rgba(15,23,42,0.2),0_10px_24px_-22px_rgba(79,70,229,0.08)]`}
                           >
                             <h4 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-800 transition-colors duration-200 group-hover:text-primary">{task.title}</h4>
 
@@ -369,7 +369,7 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
           </TabsContent>
 
           <TabsContent value="list" className="mt-0">
-            <section className="rounded-[1.2rem] border border-border/70 bg-card/80 p-3" style={{ boxShadow: "var(--shadow-card)" }}>
+            <section className="rounded-[1.2rem] border border-white/55 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(243,244,255,0.52))] p-3 backdrop-blur-xl" style={{ boxShadow: "0 24px 56px -46px rgba(15,23,42,0.18), 0 14px 32px -28px rgba(79,70,229,0.08), inset 0 1px 0 rgba(255,255,255,0.72)" }}>
               <div className="mb-2">
                 <h3 className="text-base font-semibold text-foreground">List View</h3>
               </div>
@@ -449,7 +449,7 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
           </TabsContent>
 
           <TabsContent value="workload" className="mt-0">
-            <section className="rounded-[1.2rem] border border-border/70 bg-card/80 p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+            <section className="rounded-[1.2rem] border border-white/55 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(243,244,255,0.52))] p-4 backdrop-blur-xl" style={{ boxShadow: "0 24px 56px -46px rgba(15,23,42,0.18), 0 14px 32px -28px rgba(79,70,229,0.08), inset 0 1px 0 rgba(255,255,255,0.72)" }}>
               <div className="mb-4">
                 <h3 className="text-base font-semibold text-foreground">Workload View</h3>
                 <p className="text-xs text-muted-foreground">See who has the most open work and where managers may need to rebalance tasks.</p>

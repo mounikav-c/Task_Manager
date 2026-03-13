@@ -86,3 +86,21 @@ class MeetingSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+    def validate(self, attrs):
+        scheduled_for = attrs.get("scheduled_for", getattr(self.instance, "scheduled_for", None))
+        status = attrs.get("status", getattr(self.instance, "status", "scheduled"))
+
+        if scheduled_for and status == "scheduled":
+            conflicts = Meeting.objects.filter(scheduled_for=scheduled_for, status="scheduled")
+            if self.instance is not None:
+                conflicts = conflicts.exclude(pk=self.instance.pk)
+
+            if conflicts.exists():
+                raise serializers.ValidationError(
+                    {
+                        "scheduled_for": "Another scheduled meeting already exists at this time. Choose a different time."
+                    }
+                )
+
+        return attrs

@@ -62,8 +62,37 @@ export interface Meeting {
   updated_at: string;
 }
 
+export interface AuthSession {
+  authenticated: boolean;
+  user: {
+    id: number;
+    username: string;
+  } | null;
+}
+
+function getErrorMessage(payload: unknown, fallback: string) {
+  if (!payload || typeof payload !== "object") {
+    return fallback;
+  }
+
+  if ("detail" in payload && typeof payload.detail === "string") {
+    return payload.detail;
+  }
+
+  const values = Object.values(payload as Record<string, unknown>).flatMap((value) => {
+    if (Array.isArray(value)) {
+      return value.filter((item): item is string => typeof item === "string");
+    }
+
+    return typeof value === "string" ? [value] : [];
+  });
+
+  return values[0] ?? fallback;
+}
+
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...(options?.headers || {}),
@@ -72,7 +101,15 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
+    let payload: unknown;
+
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
+    }
+
+    throw new Error(getErrorMessage(payload, `API request failed: ${response.status}`));
   }
 
   if (response.status === 204) {
@@ -83,6 +120,15 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  getAuthSession: () => request<AuthSession>("/auth/session/"),
+  loginDemo: () =>
+    request<AuthSession>("/auth/demo-login/", {
+      method: "POST",
+    }),
+  logout: () =>
+    request<{ authenticated: boolean }>("/auth/logout/", {
+      method: "POST",
+    }),
   getMembers: () => request<TeamMember[]>("/members/"),
   getProjects: () => request<Project[]>("/projects/"),
   getTasks: () => request<Task[]>("/tasks/"),

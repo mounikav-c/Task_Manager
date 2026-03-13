@@ -19,7 +19,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 224 30% 12%;
 
-    --primary: 267 84% 57%;
+    --primary: 245 72% 56%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 14% 94%;
@@ -36,18 +36,18 @@
 
     --border: 220 12% 85%;
     --input: 220 12% 85%;
-    --ring: 267 84% 57%;
+    --ring: 245 72% 56%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 220 12% 95%;
     --sidebar-foreground: 220 10% 40%;
-    --sidebar-primary: 267 84% 57%;
+    --sidebar-primary: 245 72% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 100%;
     --sidebar-accent-foreground: 224 30% 12%;
     --sidebar-border: 220 12% 86%;
-    --sidebar-ring: 267 84% 57%;
+    --sidebar-ring: 245 72% 56%;
 
     --priority-high: 0 72% 51%;
     --priority-medium: 38 92% 50%;
@@ -60,8 +60,8 @@
     --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
     --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
 
-    --glow-primary: 0 0 20px hsl(267 84% 57% / 0.15);
-    --glow-primary-strong: 0 0 30px hsl(267 84% 57% / 0.25);
+    --glow-primary: 0 0 20px hsl(245 72% 56% / 0.15);
+    --glow-primary-strong: 0 0 30px hsl(245 72% 56% / 0.25);
 
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
@@ -73,7 +73,7 @@
     --card-foreground: 220 14% 92%;
     --popover: 230 18% 11%;
     --popover-foreground: 220 14% 92%;
-    --primary: 267 84% 62%;
+    --primary: 245 72% 60%;
     --primary-foreground: 0 0% 100%;
     --secondary: 230 16% 14%;
     --secondary-foreground: 220 14% 92%;
@@ -85,20 +85,20 @@
     --destructive-foreground: 0 0% 100%;
     --border: 230 14% 16%;
     --input: 230 14% 16%;
-    --ring: 267 84% 62%;
+    --ring: 245 72% 60%;
     --sidebar-background: 230 22% 6%;
     --sidebar-foreground: 220 14% 50%;
-    --sidebar-primary: 267 84% 62%;
+    --sidebar-primary: 245 72% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 230 18% 13%;
     --sidebar-accent-foreground: 220 14% 92%;
     --sidebar-border: 230 16% 12%;
-    --sidebar-ring: 267 84% 62%;
+    --sidebar-ring: 245 72% 60%;
 
     --shadow-card: 0 2px 8px 0 rgb(0 0 0 / 0.25), 0 1px 3px -1px rgb(0 0 0 / 0.2);
     --shadow-card-hover: 0 8px 24px 0 rgb(0 0 0 / 0.35), 0 4px 8px -2px rgb(0 0 0 / 0.25);
-    --glow-primary: 0 0 25px hsl(267 84% 62% / 0.12);
-    --glow-primary-strong: 0 0 40px hsl(267 84% 62% / 0.2);
+    --glow-primary: 0 0 25px hsl(245 72% 60% / 0.12);
+    --glow-primary-strong: 0 0 40px hsl(245 72% 60% / 0.2);
   }
 }
 
@@ -121,7 +121,7 @@
     --card-foreground: 224 30% 12%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 30% 12%;
-    --primary: 267 84% 57%;
+    --primary: 245 72% 56%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 20% 96%;
     --secondary-foreground: 224 30% 12%;
@@ -131,19 +131,19 @@
     --accent-foreground: 224 30% 12%;
     --border: 220 14% 88%;
     --input: 220 14% 88%;
-    --ring: 267 84% 57%;
+    --ring: 245 72% 56%;
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 224 20% 32%;
-    --sidebar-primary: 267 84% 57%;
+    --sidebar-primary: 245 72% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 20% 97%;
     --sidebar-accent-foreground: 224 30% 12%;
     --sidebar-border: 220 14% 88%;
-    --sidebar-ring: 267 84% 57%;
+    --sidebar-ring: 245 72% 56%;
     --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
     --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
-    --glow-primary: 0 0 20px hsl(267 84% 57% / 0.12);
-    --glow-primary-strong: 0 0 30px hsl(267 84% 57% / 0.18);
+    --glow-primary: 0 0 20px hsl(245 72% 56% / 0.12);
+    --glow-primary-strong: 0 0 30px hsl(245 72% 56% / 0.18);
   }
 }
 
@@ -306,19 +306,37 @@
 
   /* ─── Sidebar ─── */
   .sidebar-workspace-card {
-    @apply flex items-center gap-3 rounded-[1.35rem] border border-sidebar-border/80 bg-sidebar-accent p-3;
-    box-shadow: var(--shadow-card);
+    @apply flex items-center gap-3 rounded-[1.35rem] border border-white/55 p-3;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.76), rgba(245, 243, 255, 0.56));
+    box-shadow:
+      0 28px 60px -48px rgba(15, 23, 42, 0.28),
+      0 18px 40px -34px rgba(79, 70, 229, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(18px);
   }
 
   .sidebar-nav-link {
     color: hsl(var(--sidebar-foreground));
+    box-shadow: none;
   }
 
   .sidebar-nav-link:hover {
-    background: hsl(var(--primary) / 0.15);
-    color: hsl(var(--primary));
-    border-color: hsl(var(--primary) / 0.2);
-    box-shadow: 0 0 15px -5px hsl(var(--primary) / 0.3);
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.06), rgba(91, 33, 182, 0.02));
+    color: rgb(67 56 202);
+    border-color: rgba(129, 140, 248, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.08);
+  }
+
+  .sidebar-nav-link[aria-current="page"] {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.14), rgba(91, 33, 182, 0.06));
+    color: rgb(67 56 202);
+    border-color: rgba(129, 140, 248, 0.28);
+    box-shadow: 0 18px 30px -22px rgba(79, 70, 229, 0.24);
+  }
+
+  .sidebar-nav-link[aria-current="page"]:hover {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.16), rgba(91, 33, 182, 0.08));
+    border-color: rgba(129, 140, 248, 0.32);
   }
 
   /* ─── Project Cards ─── */

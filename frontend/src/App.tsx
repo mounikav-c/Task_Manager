@@ -15,6 +15,7 @@ import { MemberDetailsPage } from "@/pages/MemberDetailsPage";
 import { ProjectDetailsPage } from "@/pages/ProjectDetailsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { HelpPage } from "@/pages/HelpPage";
+import { LoginPage } from "@/pages/LoginPage";
 import { TaskDialog } from "@/components/TaskDialog";
 import { MemberDialog } from "@/components/MemberDialog";
 import { ProjectDialog } from "@/components/ProjectDialog";
@@ -133,6 +134,14 @@ const MEMBER_COLORS = [
   "hsl(12 80% 56%)",
 ];
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 function buildInitials(name: string) {
   return name
     .trim()
@@ -156,6 +165,8 @@ const App = () => {
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
   const [initialProjectId, setInitialProjectId] = useState<string | undefined>(undefined);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isSavingTask, setIsSavingTask] = useState(false);
   const [isSavingMember, setIsSavingMember] = useState(false);
@@ -191,7 +202,26 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    void loadData();
+    const initializeApp = async () => {
+      try {
+        const session = await api.getAuthSession();
+        setIsAuthenticated(session.authenticated);
+
+        if (session.authenticated) {
+          await loadData();
+        } else {
+          setIsInitialLoading(false);
+        }
+      } catch (error) {
+        console.error("Failed to initialize auth session", error);
+        setLoadError("Could not connect to the workspace session. Check that the Django server is running.");
+        setIsInitialLoading(false);
+      } finally {
+        setIsAuthLoading(false);
+      }
+    };
+
+    void initializeApp();
   }, [loadData]);
 
   const handleNew = useCallback((projectId?: string) => {
@@ -330,8 +360,25 @@ const App = () => {
 
   const handleSaveMeeting = useCallback(
     async (meeting: Omit<Meeting, "id">) => {
-      setIsSavingMeeting(true);
       try {
+        const hasConflict = meetings.some((existingMeeting) => {
+          if (editingMeeting && existingMeeting.id === editingMeeting.id) {
+            return false;
+          }
+
+          return (
+            existingMeeting.status === "scheduled" &&
+            meeting.status === "scheduled" &&
+            existingMeeting.scheduledFor === meeting.scheduledFor
+          );
+        });
+
+        if (hasConflict) {
+          throw new Error("Another scheduled meeting already exists at this time. Choose a different time.");
+        }
+
+        setIsSavingMeeting(true);
+
         const payload = {
           title: meeting.title,
           agenda: meeting.agenda,
@@ -355,12 +402,13 @@ const App = () => {
         toast.success(editingMeeting ? "Meeting updated" : "Meeting scheduled");
       } catch (error) {
         console.error("Failed to save meeting", error);
-        toast.error(editingMeeting ? "Could not update meeting" : "Could not schedule meeting");
+        toast.error(getErrorMessage(error, editingMeeting ? "Could not update meeting" : "Could not schedule meeting"));
+        throw error;
       } finally {
         setIsSavingMeeting(false);
       }
     },
-    [editingMeeting, loadData],
+    [editingMeeting, loadData, meetings],
   );
 
   const handleUpdateStatus = useCallback(
@@ -391,20 +439,60 @@ const App = () => {
   );
 
   const handleLogout = useCallback(() => {
-    sessionStorage.clear();
-    window.location.reload();
+    const logoutUser = async () => {
+      try {
+        await api.logout();
+        setIsAuthenticated(false);
+        setLoadError(null);
+        setDialogOpen(false);
+        setMemberDialogOpen(false);
+        setProjectDialogOpen(false);
+        setMeetingDialogOpen(false);
+        setEditingTask(null);
+        setEditingProject(null);
+        setEditingMeeting(null);
+        setInitialProjectId(undefined);
+        toast.success("Logged out");
+      } catch (error) {
+        console.error("Failed to log out", error);
+        toast.error("Could not log out");
+      }
+    };
+
+    void logoutUser();
   }, []);
+
+  const handleLogin = useCallback(() => {
+    const loginUser = async () => {
+      setIsAuthLoading(true);
+      try {
+        const session = await api.loginDemo();
+        setIsAuthenticated(session.authenticated);
+        await loadData();
+        toast.success("Welcome back");
+      } catch (error) {
+        console.error("Failed to log in", error);
+        toast.error("Could not sign in");
+      } finally {
+        setIsAuthLoading(false);
+      }
+    };
+
+    void loginUser();
+  }, [loadData]);
 
   return (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      {isInitialLoading ? (
+      {isAuthLoading || isInitialLoading ? (
         <div className="flex min-h-screen items-center justify-center bg-[#f6f7fb] p-6">
           <div className="w-full max-w-md rounded-[1.5rem] border border-border/70 bg-white p-8 text-center shadow-[0_20px_50px_-40px_rgba(15,23,42,0.18)]">
             <p className="text-sm font-medium text-muted-foreground">Loading workspace...</p>
           </div>
         </div>
+      ) : !isAuthenticated ? (
+        <LoginPage isLoading={isAuthLoading} onLogin={handleLogin} />
       ) : loadError ? (
         <div className="flex min-h-screen items-center justify-center bg-[#f6f7fb] p-6">
           <div className="w-full max-w-lg rounded-[1.5rem] border border-border/70 bg-white p-8 shadow-[0_20px_50px_-40px_rgba(15,23,42,0.18)]">
@@ -418,13 +506,13 @@ const App = () => {
       ) : (
         <BrowserRouter>
           <SidebarProvider>
-            <div className="app-shell flex min-h-screen w-full bg-[#f6f7fb] p-2 md:p-4">
+            <div className="app-shell flex min-h-screen w-full bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_28%),linear-gradient(180deg,#f5f6fb_0%,#eef2ff_100%)] p-2 md:p-4">
               <AppSidebar
                 onAddProject={handleNewProject}
                 onAddMember={() => setMemberDialogOpen(true)}
                 onLogout={handleLogout}
               />
-              <SidebarInset className="app-shell-main min-w-0 flex-1 overflow-x-auto rounded-[1.5rem] border border-border/70 bg-white shadow-[0_20px_50px_-40px_rgba(15,23,42,0.18)]">
+              <SidebarInset className="app-shell-main min-w-0 flex-1 overflow-x-auto rounded-[1.5rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.82),rgba(248,250,252,0.74))] shadow-[0_28px_70px_-50px_rgba(15,23,42,0.2),0_18px_40px_-34px_rgba(79,70,229,0.08),inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl">
                 <Routes>
                   <Route
                     path="/"
@@ -551,12 +639,16 @@ const App = () => {
         project={editingProject}
       />
       <MeetingDialog
-        open={meetingDialogOpen && !isSavingMeeting}
+        open={meetingDialogOpen}
         onClose={() => {
+          if (isSavingMeeting) {
+            return;
+          }
           setMeetingDialogOpen(false);
           setEditingMeeting(null);
         }}
         onSave={handleSaveMeeting}
+        isSaving={isSavingMeeting}
         teamMembers={teamMembers}
         projects={projects}
         meeting={editingMeeting}

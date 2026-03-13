@@ -50,12 +50,12 @@ const progressMap: Record<Status, number> = {
 };
 
 const projectIcons = [
-  { icon: Globe, tone: "bg-violet-100 text-violet-600" },
-  { icon: BarChart3, tone: "bg-sky-100 text-sky-600" },
-  { icon: Landmark, tone: "bg-indigo-100 text-indigo-600" },
-  { icon: BriefcaseBusiness, tone: "bg-rose-100 text-rose-600" },
-  { icon: GraduationCap, tone: "bg-purple-100 text-purple-600" },
-  { icon: ShoppingBag, tone: "bg-emerald-100 text-emerald-600" },
+  { icon: Globe, tone: "bg-indigo-100 text-indigo-700" },
+  { icon: BarChart3, tone: "bg-violet-100 text-violet-700" },
+  { icon: Landmark, tone: "bg-indigo-100 text-indigo-700" },
+  { icon: BriefcaseBusiness, tone: "bg-fuchsia-100 text-fuchsia-700" },
+  { icon: GraduationCap, tone: "bg-violet-100 text-violet-700" },
+  { icon: ShoppingBag, tone: "bg-indigo-100 text-indigo-700" },
 ];
 
 function getAssignee(id: string | undefined, teamMembers: Assignee[]) {
@@ -93,9 +93,9 @@ export function BoardPage({ tasks, projects, teamMembers, onNew }: Props) {
         <div className="dashboard-panel">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold tracking-tight">Active delivery board</h2>
+              <h2 className="text-lg font-extrabold tracking-tight">Active delivery board</h2>
             </div>
-            <Button onClick={onNew} className="rounded-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20 text-sm h-9">
+            <Button onClick={onNew} className="h-9 rounded-lg bg-[linear-gradient(135deg,#4338ca_0%,#5b21b6_100%)] text-sm text-white shadow-[0_18px_35px_-20px_rgba(79,70,229,0.38)] hover:brightness-105">
               <Plus className="h-4 w-4" />
               Add Task
             </Button>
@@ -139,7 +139,7 @@ export function BoardPage({ tasks, projects, teamMembers, onNew }: Props) {
                   </div>
 
                   <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                    <CalendarDays className="h-3 w-3" />
+                    <CalendarDays className="h-3 w-3 text-violet-500" />
                     {project.openTasks === 0 ? "No task pending" : `${project.openTasks} due soon`}
                   </div>
                 </div>

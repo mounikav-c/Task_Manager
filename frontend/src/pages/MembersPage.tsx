@@ -52,9 +52,9 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
         <div className="dashboard-panel">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold tracking-tight">Team Members</h2>
+              <h2 className="text-lg font-extrabold tracking-tight">Team Members</h2>
             </div>
-            <Button onClick={onAddMember} className="rounded-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20 text-sm h-9">
+            <Button onClick={onAddMember} className="h-9 rounded-lg bg-[linear-gradient(135deg,#4338ca_0%,#5b21b6_100%)] text-sm text-white shadow-[0_18px_35px_-20px_rgba(79,70,229,0.38)] hover:brightness-105">
               <Plus className="h-4 w-4" />
               Add Member
             </Button>
@@ -74,8 +74,8 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
                     state: { fromPath: "/members", fromLabel: "Members" },
                   })
                 }
-                className="flex h-full flex-col rounded-xl border border-border/60 bg-card p-4 text-left transition-all duration-200 hover:border-primary/20 hover:shadow-[0_18px_35px_-28px_rgba(15,23,42,0.28)]"
-                style={{ boxShadow: "var(--shadow-card)" }}
+                className="flex h-full flex-col rounded-xl border border-white/55 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(243,244,255,0.5))] p-4 text-left transition-all duration-200 hover:border-indigo-200/35 hover:shadow-[0_22px_40px_-30px_rgba(15,23,42,0.2),0_12px_24px_-24px_rgba(79,70,229,0.08)]"
+                style={{ boxShadow: "0 22px 46px -40px rgba(15,23,42,0.18), inset 0 1px 0 rgba(255,255,255,0.72)" }}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
@@ -89,27 +89,27 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
                       <p className="text-xs text-muted-foreground">Workspace member</p>
                     </div>
                   </div>
-                  <div className="rounded-md border border-border/50 bg-accent px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  <div className="rounded-md border border-indigo-200/25 bg-indigo-500/5 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                     {member.assignedTasks.length} assigned
                   </div>
                 </div>
 
                 <div className="mt-4 grid grid-cols-3 gap-2">
-                  <div className="rounded-lg bg-accent px-3 py-2">
+                  <div className="rounded-lg bg-white/70 px-3 py-2 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.08)]">
                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                      <BriefcaseBusiness className="h-3 w-3" />
+                      <BriefcaseBusiness className="h-3 w-3 text-violet-500" />
                       Total
                     </div>
                     <p className="mt-1 text-lg font-semibold">{member.assignedTasks.length}</p>
                   </div>
-                  <div className="rounded-lg bg-accent px-3 py-2">
+                  <div className="rounded-lg bg-white/70 px-3 py-2 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.08)]">
                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                       <CircleDot className="h-3 w-3 text-primary" />
                       Active
                     </div>
                     <p className="mt-1 text-lg font-semibold">{member.activeCount}</p>
                   </div>
-                  <div className="rounded-lg bg-accent px-3 py-2">
+                  <div className="rounded-lg bg-white/70 px-3 py-2 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.08)]">
                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                       <UserRound className="h-3 w-3 text-emerald-400" />
                       Done
@@ -122,7 +122,7 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
                   <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Assigned Tasks</p>
                   <div className="space-y-1.5">
                     {member.assignedTasks.slice(0, 3).map((task) => (
-                      <div key={task.id} className="rounded-lg border border-border/50 bg-accent/80 px-3 py-2">
+                      <div key={task.id} className="rounded-lg border border-white/55 bg-white/72 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
                         <p className="truncate text-xs font-medium text-foreground">{task.title}</p>
                         <p className="mt-0.5 text-[11px] text-muted-foreground">
                           {task.status === "completed" ? "Completed" : task.status === "inprogress" ? "In progress" : "Todo"}

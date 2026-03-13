@@ -43,13 +43,13 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
     <Sidebar collapsible="icon" variant="floating" className="p-3">
       <SidebarHeader className="px-3 pt-4 pb-3">
         <div className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-lg shadow-primary/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#4338ca_0%,#5b21b6_100%)] text-primary-foreground shadow-[0_20px_36px_-20px_rgba(79,70,229,0.42)]">
             <FolderKanban className="h-5 w-5" />
           </div>
           {!collapsed && (
             <div>
               <p className="text-[10px] uppercase tracking-[0.24em] text-sidebar-foreground/40 font-medium">Workspace</p>
-              <p className="text-lg leading-tight font-semibold tracking-tight text-sidebar-accent-foreground">TaskFlow</p>
+              <p className="bg-[linear-gradient(135deg,#312e81_0%,#4338ca_50%,#5b21b6_100%)] bg-clip-text text-lg leading-tight font-extrabold tracking-tight text-transparent">TaskFlow</p>
             </div>
           )}
         </div>
@@ -77,7 +77,7 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
                       to={item.url}
                       end={item.url === "/"}
                       className="sidebar-nav-link flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-150"
-                      activeClassName="bg-gradient-to-r from-primary/18 to-primary/8 text-primary border border-primary/20 shadow-[0_14px_28px_-18px_hsl(var(--primary)/0.5)]"
+                      activeClassName="text-indigo-700 border border-indigo-300/30 font-semibold"
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
                       {!collapsed && <span>{item.title}</span>}
@@ -101,7 +101,7 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
                     <NavLink
                       to={item.url}
                       className="sidebar-nav-link flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-150"
-                      activeClassName="bg-gradient-to-r from-primary/18 to-primary/8 text-primary border border-primary/20 shadow-[0_14px_28px_-18px_hsl(var(--primary)/0.5)]"
+                      activeClassName="text-indigo-700 border border-indigo-300/30 font-semibold"
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
                       {!collapsed && <span>{item.title}</span>}
@@ -116,8 +116,8 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
 
       {!collapsed && (
         <SidebarFooter className="px-3 pb-4 pt-2">
-          <div className="rounded-xl border border-border/70 bg-white p-2.5 space-y-1.5">
-            <Button onClick={onAddProject} className="h-10 w-full justify-start rounded-lg bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20 gap-2 text-sm">
+          <div className="rounded-xl border border-white/55 bg-[linear-gradient(135deg,rgba(255,255,255,0.74),rgba(245,243,255,0.52))] p-2.5 space-y-1.5 shadow-[0_26px_50px_-42px_rgba(15,23,42,0.26),inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl">
+            <Button onClick={onAddProject} className="h-10 w-full justify-start rounded-lg bg-[linear-gradient(135deg,#4338ca_0%,#5b21b6_100%)] text-primary-foreground hover:brightness-105 shadow-[0_18px_34px_-18px_rgba(79,70,229,0.36)] gap-2 text-sm">
               <Sparkles className="h-3.5 w-3.5" />
               New Project
             </Button>
