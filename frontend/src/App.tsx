@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +16,7 @@ import { ProjectDetailsPage } from "@/pages/ProjectDetailsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { HelpPage } from "@/pages/HelpPage";
 import { LoginPage } from "@/pages/LoginPage";
+import { SignupPage } from "@/pages/SignupPage";
 import { TaskDialog } from "@/components/TaskDialog";
 import { MemberDialog } from "@/components/MemberDialog";
 import { ProjectDialog } from "@/components/ProjectDialog";
@@ -23,6 +24,7 @@ import { MeetingDialog } from "@/components/MeetingDialog";
 import NotFound from "./pages/NotFound";
 import { api, type Meeting as ApiMeeting, type Project as ApiProject, type Task as ApiTask, type TeamMember as ApiTeamMember } from "@/lib/api";
 import { toast } from "@/components/ui/sonner";
+import { AuthUserProvider } from "@/contexts/AuthUserContext";
 
 type Priority = "low" | "medium" | "high";
 type Status = "todo" | "inprogress" | "completed";
@@ -151,6 +153,20 @@ function buildInitials(name: string) {
     .join("");
 }
 
+type GoogleAuthClient = {
+  accounts?: {
+    oauth2?: {
+      initTokenClient: (config: {
+        client_id: string;
+        scope: string;
+        callback: (response: { access_token?: string; error?: string; error_description?: string }) => void;
+      }) => {
+        requestAccessToken: (options?: { prompt?: "consent" | "none" | "select_account" }) => void;
+      };
+    };
+  };
+};
+
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [teamMembers, setTeamMembers] = useState<Assignee[]>([]);
@@ -167,11 +183,13 @@ const App = () => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authUser, setAuthUser] = useState<{ id: number; username: string } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isSavingTask, setIsSavingTask] = useState(false);
   const [isSavingMember, setIsSavingMember] = useState(false);
   const [isSavingProject, setIsSavingProject] = useState(false);
   const [isSavingMeeting, setIsSavingMeeting] = useState(false);
+  const googleAuthInProgressRef = useRef(false);
 
   const loadData = useCallback(async (options?: { silent?: boolean }) => {
     if (!options?.silent) {
@@ -206,6 +224,7 @@ const App = () => {
       try {
         const session = await api.getAuthSession();
         setIsAuthenticated(session.authenticated);
+        setAuthUser(session.user);
 
         if (session.authenticated) {
           await loadData();
@@ -443,6 +462,7 @@ const App = () => {
       try {
         await api.logout();
         setIsAuthenticated(false);
+        setAuthUser(null);
         setLoadError(null);
         setDialogOpen(false);
         setMemberDialogOpen(false);
@@ -468,6 +488,7 @@ const App = () => {
       try {
         const session = await api.loginDemo();
         setIsAuthenticated(session.authenticated);
+        setAuthUser(session.user);
         await loadData();
         toast.success("Welcome back");
       } catch (error) {
@@ -481,18 +502,75 @@ const App = () => {
     void loginUser();
   }, [loadData]);
 
+  const handleGoogleLogin = useCallback(() => {
+    if (googleAuthInProgressRef.current) {
+      toast.error("Google sign-in is already in progress");
+      return;
+    }
+
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+
+    if (!googleClientId) {
+      toast.error("Missing VITE_GOOGLE_CLIENT_ID in frontend .env");
+      return;
+    }
+
+    const google = (window as Window & { google?: GoogleAuthClient }).google;
+    if (!google?.accounts?.oauth2) {
+      toast.error("Google sign-in script is not loaded");
+      return;
+    }
+
+    googleAuthInProgressRef.current = true;
+
+    const tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: googleClientId,
+      scope: "openid email profile",
+      callback: (response) => {
+        const loginWithGoogleToken = async () => {
+          if (!response.access_token) {
+            googleAuthInProgressRef.current = false;
+            const message = response.error_description || response.error || "Google did not return access token";
+            console.error("Google token client error:", response);
+            toast.error(message);
+            return;
+          }
+
+          setIsAuthLoading(true);
+          try {
+            const session = await api.googleTokenLogin(response.access_token);
+            setIsAuthenticated(session.authenticated);
+            setAuthUser(session.user);
+            await loadData();
+            toast.success("Welcome back");
+          } catch (error) {
+            console.error("Failed Google sign in", error);
+            const message = error instanceof Error ? error.message : "Could not sign in with Google";
+            toast.error(message);
+          } finally {
+            googleAuthInProgressRef.current = false;
+            setIsAuthLoading(false);
+          }
+        };
+
+        void loginWithGoogleToken();
+      },
+    });
+
+    tokenClient.requestAccessToken({ prompt: "consent" });
+  }, [loadData]);
+
   return (
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+    <AuthUserProvider user={authUser} onLogout={handleLogout}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
       {isAuthLoading || isInitialLoading ? (
         <div className="flex min-h-screen items-center justify-center bg-[#f6f7fb] p-6">
           <div className="w-full max-w-md rounded-[1.5rem] border border-border/70 bg-white p-8 text-center shadow-[0_20px_50px_-40px_rgba(15,23,42,0.18)]">
             <p className="text-sm font-medium text-muted-foreground">Loading workspace...</p>
           </div>
         </div>
-      ) : !isAuthenticated ? (
-        <LoginPage isLoading={isAuthLoading} onLogin={handleLogin} />
       ) : loadError ? (
         <div className="flex min-h-screen items-center justify-center bg-[#f6f7fb] p-6">
           <div className="w-full max-w-lg rounded-[1.5rem] border border-border/70 bg-white p-8 shadow-[0_20px_50px_-40px_rgba(15,23,42,0.18)]">
@@ -505,111 +583,127 @@ const App = () => {
         </div>
       ) : (
         <BrowserRouter>
-          <SidebarProvider>
-            <div className="app-shell flex min-h-screen w-full bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_28%),linear-gradient(180deg,#f5f6fb_0%,#eef2ff_100%)] p-2 md:p-4">
-              <AppSidebar
-                onAddProject={handleNewProject}
-                onAddMember={() => setMemberDialogOpen(true)}
-                onLogout={handleLogout}
+          {!isAuthenticated ? (
+            <Routes>
+              <Route
+                path="/login"
+                element={<LoginPage isLoading={isAuthLoading} onLogin={handleLogin} onGoogleLogin={handleGoogleLogin} />}
               />
-              <SidebarInset className="app-shell-main min-w-0 flex-1 overflow-x-auto rounded-[1.5rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.82),rgba(248,250,252,0.74))] shadow-[0_28px_70px_-50px_rgba(15,23,42,0.2),0_18px_40px_-34px_rgba(79,70,229,0.08),inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl">
-                <Routes>
-                  <Route
-                    path="/"
-                    element={
-                      <DashboardPage
-                        tasks={tasks}
-                        projects={projects}
-                        teamMembers={teamMembers}
-                        onEdit={handleEdit}
-                        onDelete={handleDeleteTask}
-                        onAddProject={handleNewProject}
-                        onNew={handleNew}
-                        onAddMember={() => setMemberDialogOpen(true)}
-                        onScheduleMeeting={handleNewMeeting}
-                      />
-                    }
-                  />
-                  <Route
-                    path="/tasks"
-                    element={
-                      <TasksPage
-                        tasks={tasks}
-                        projects={projects}
-                        teamMembers={teamMembers}
-                        onEdit={handleEdit}
-                        onDelete={handleDeleteTask}
-                        onNew={handleNew}
-                      />
-                    }
-                  />
-                  <Route
-                    path="/board"
-                    element={
-                      <BoardPage
-                        tasks={tasks}
-                        projects={projects}
-                        teamMembers={teamMembers}
-                        onEdit={handleEdit}
-                        onDelete={handleDeleteTask}
-                        onNew={handleNew}
-                        onUpdateStatus={handleUpdateStatus}
-                      />
-                    }
-                  />
-                  <Route
-                    path="/meetings"
-                    element={
-                      <MeetingsPage
-                        meetings={meetings}
-                        projects={projects}
-                        teamMembers={teamMembers}
-                        onAddMeeting={handleNewMeeting}
-                        onEditMeeting={handleEditMeeting}
-                      />
-                    }
-                  />
-                  <Route
-                    path="/projects/:projectId"
-                    element={
-                      <ProjectDetailsPage
-                        tasks={tasks}
-                        projects={projects}
-                        teamMembers={teamMembers}
-                        onEdit={handleEdit}
-                        onNew={handleNew}
-                        onEditProject={handleEditProject}
-                      />
-                    }
-                  />
-                  <Route
-                    path="/members"
-                    element={
-                      <MembersPage
-                        tasks={tasks}
-                        teamMembers={teamMembers}
-                        onAddMember={() => setMemberDialogOpen(true)}
-                      />
-                    }
-                  />
-                  <Route
-                    path="/members/:memberId"
-                    element={
-                      <MemberDetailsPage
-                        tasks={tasks}
-                        projects={projects}
-                        teamMembers={teamMembers}
-                        onEdit={handleEdit}
-                      />
-                    }
-                  />
-                  <Route path="/settings" element={<SettingsPage />} />
-                  <Route path="/help" element={<HelpPage />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </SidebarInset>
-            </div>
-          </SidebarProvider>
+              <Route
+                path="/signup"
+                element={<SignupPage isLoading={isAuthLoading} onSignup={handleLogin} onGoogleLogin={handleGoogleLogin} />}
+              />
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          ) : (
+            <SidebarProvider>
+              <div className="app-shell flex min-h-screen w-full bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_28%),linear-gradient(180deg,#f5f6fb_0%,#eef2ff_100%)] p-2 md:p-4">
+                <AppSidebar
+                  onAddProject={handleNewProject}
+                  onAddMember={() => setMemberDialogOpen(true)}
+                  onLogout={handleLogout}
+                />
+                <SidebarInset className="app-shell-main min-w-0 flex-1 overflow-x-auto rounded-[1.5rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.82),rgba(248,250,252,0.74))] shadow-[0_28px_70px_-50px_rgba(15,23,42,0.2),0_18px_40px_-34px_rgba(79,70,229,0.08),inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl">
+                  <Routes>
+                    <Route
+                      path="/"
+                      element={
+                        <DashboardPage
+                          tasks={tasks}
+                          projects={projects}
+                          teamMembers={teamMembers}
+                          onEdit={handleEdit}
+                          onDelete={handleDeleteTask}
+                          onAddProject={handleNewProject}
+                          onNew={handleNew}
+                          onAddMember={() => setMemberDialogOpen(true)}
+                          onScheduleMeeting={handleNewMeeting}
+                        />
+                      }
+                    />
+                    <Route
+                      path="/tasks"
+                      element={
+                        <TasksPage
+                          tasks={tasks}
+                          projects={projects}
+                          teamMembers={teamMembers}
+                          onEdit={handleEdit}
+                          onDelete={handleDeleteTask}
+                          onNew={handleNew}
+                        />
+                      }
+                    />
+                    <Route
+                      path="/board"
+                      element={
+                        <BoardPage
+                          tasks={tasks}
+                          projects={projects}
+                          teamMembers={teamMembers}
+                          onEdit={handleEdit}
+                          onDelete={handleDeleteTask}
+                          onNew={handleNew}
+                          onUpdateStatus={handleUpdateStatus}
+                        />
+                      }
+                    />
+                    <Route
+                      path="/meetings"
+                      element={
+                        <MeetingsPage
+                          meetings={meetings}
+                          projects={projects}
+                          teamMembers={teamMembers}
+                          onAddMeeting={handleNewMeeting}
+                          onEditMeeting={handleEditMeeting}
+                        />
+                      }
+                    />
+                    <Route
+                      path="/projects/:projectId"
+                      element={
+                        <ProjectDetailsPage
+                          tasks={tasks}
+                          projects={projects}
+                          teamMembers={teamMembers}
+                          onEdit={handleEdit}
+                          onNew={handleNew}
+                          onEditProject={handleEditProject}
+                        />
+                      }
+                    />
+                    <Route
+                      path="/members"
+                      element={
+                        <MembersPage
+                          tasks={tasks}
+                          teamMembers={teamMembers}
+                          onAddMember={() => setMemberDialogOpen(true)}
+                        />
+                      }
+                    />
+                    <Route
+                      path="/members/:memberId"
+                      element={
+                        <MemberDetailsPage
+                          tasks={tasks}
+                          projects={projects}
+                          teamMembers={teamMembers}
+                          onEdit={handleEdit}
+                        />
+                      }
+                    />
+                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/help" element={<HelpPage />} />
+                    <Route path="/login" element={<Navigate to="/" replace />} />
+                    <Route path="/signup" element={<Navigate to="/" replace />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </SidebarInset>
+              </div>
+            </SidebarProvider>
+          )}
         </BrowserRouter>
       )}
       <TaskDialog
@@ -653,7 +747,8 @@ const App = () => {
         projects={projects}
         meeting={editingMeeting}
       />
-    </TooltipProvider>
+      </TooltipProvider>
+    </AuthUserProvider>
   );
 };
 

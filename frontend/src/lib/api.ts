@@ -125,6 +125,17 @@ export const api = {
     request<AuthSession>("/auth/demo-login/", {
       method: "POST",
     }),
+    googleLogin: (idToken: string) =>
+  request<AuthSession>("/auth/google/", {
+    method: "POST",
+    body: JSON.stringify({ id_token: idToken }),
+  }),
+  googleTokenLogin: (accessToken: string) =>
+    request<AuthSession>("/auth/google/token/", {
+      method: "POST",
+      body: JSON.stringify({ access_token: accessToken }),
+    }),
+
   logout: () =>
     request<{ authenticated: boolean }>("/auth/logout/", {
       method: "POST",

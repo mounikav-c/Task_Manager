@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 class TeamMember(models.Model):
@@ -139,3 +140,32 @@ class Meeting(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class AuthUserProfile(models.Model):
+    PROVIDER_CHOICES = [
+        ("demo", "Demo"),
+        ("google", "Google"),
+    ]
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="auth_profile",
+    )
+    provider = models.CharField(max_length=20, choices=PROVIDER_CHOICES, default="demo")
+    email = models.EmailField(blank=True)
+    full_name = models.CharField(max_length=200, blank=True)
+    given_name = models.CharField(max_length=120, blank=True)
+    family_name = models.CharField(max_length=120, blank=True)
+    picture_url = models.URLField(blank=True)
+    google_sub = models.CharField(max_length=255, blank=True)
+    last_login_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return f"{self.user.username} ({self.provider})"

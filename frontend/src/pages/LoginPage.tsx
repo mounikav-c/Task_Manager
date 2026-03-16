@@ -1,9 +1,11 @@
 import { Eye, LockKeyhole, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 interface LoginPageProps {
   isLoading: boolean;
   onLogin: () => void;
+  onGoogleLogin: () => void;
 }
 
 function GoogleMark() {
@@ -17,7 +19,7 @@ function GoogleMark() {
   );
 }
 
-export function LoginPage({ isLoading, onLogin }: LoginPageProps) {
+export function LoginPage({ isLoading, onLogin, onGoogleLogin }: LoginPageProps) {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#eef2ff] px-6 py-12">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,#fff7ed_0%,#fdf2f8_22%,#f5f3ff_48%,#eef2ff_72%,#f0f9ff_100%)]" />
@@ -91,6 +93,8 @@ export function LoginPage({ isLoading, onLogin }: LoginPageProps) {
         <div className="relative mt-6">
           <button
             type="button"
+            onClick={onGoogleLogin}
+            disabled={isLoading}
             className="flex h-12 w-full items-center justify-center gap-2 rounded-[16px] border border-white/65 bg-[linear-gradient(180deg,rgba(255,255,255,0.76),rgba(255,255,255,0.5))] text-sm font-semibold text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_16px_30px_-26px_rgba(15,23,42,0.4)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,250,252,0.68))]"
           >
             <GoogleMark />
@@ -104,7 +108,14 @@ export function LoginPage({ isLoading, onLogin }: LoginPageProps) {
           </button>
         </div>
 
-        <p className="relative mt-10 text-center text-sm text-slate-400">Need help?</p>
+        <p className="relative mt-8 text-center text-sm text-slate-500">
+          New here?{" "}
+          <Link to="/signup" className="font-semibold text-indigo-600 transition-colors hover:text-indigo-500">
+            Create an account
+          </Link>
+        </p>
+
+        <p className="relative mt-6 text-center text-sm text-slate-400">Need help?</p>
       </div>
     </div>
   );

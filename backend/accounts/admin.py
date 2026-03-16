@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Meeting, Project, Task, TeamMember
+from .models import AuthUserProfile, Meeting, Project, Task, TeamMember
 
 
 @admin.register(TeamMember)
@@ -30,3 +30,10 @@ class MeetingAdmin(admin.ModelAdmin):
     search_fields = ("title", "agenda", "location")
     list_filter = ("status", "project")
     filter_horizontal = ("attendees",)
+
+
+@admin.register(AuthUserProfile)
+class AuthUserProfileAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "provider", "email", "full_name", "last_login_at", "updated_at")
+    search_fields = ("user__username", "email", "full_name", "google_sub")
+    list_filter = ("provider",)

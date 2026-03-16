@@ -1,7 +1,18 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import MeetingViewSet, ProjectViewSet, TaskViewSet, TeamMemberViewSet, auth_logout, auth_session, demo_login, health_check
+from .views import (
+    MeetingViewSet,
+    ProjectViewSet,
+    TaskViewSet,
+    TeamMemberViewSet,
+    auth_logout,
+    auth_session,
+    demo_login,
+    google_login,
+    google_token_login,
+    health_check,
+)
 
 router = DefaultRouter()
 router.register("members", TeamMemberViewSet, basename="members")
@@ -13,6 +24,8 @@ urlpatterns = [
     path("health/", health_check, name="health-check"),
     path("auth/session/", auth_session, name="auth-session"),
     path("auth/demo-login/", demo_login, name="auth-demo-login"),
+    path("auth/google/", google_login, name="auth-google-login"),
+    path("auth/google/token/", google_token_login, name="auth-google-token-login"),
     path("auth/logout/", auth_logout, name="auth-logout"),
     path("", include(router.urls)),
 ]
