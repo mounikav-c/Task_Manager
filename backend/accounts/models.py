@@ -160,6 +160,8 @@ class AuthUserProfile(models.Model):
     family_name = models.CharField(max_length=120, blank=True)
     picture_url = models.URLField(blank=True)
     google_sub = models.CharField(max_length=255, blank=True)
+    session_id = models.CharField(max_length=128, blank=True)
+    session_expires_at = models.DateTimeField(null=True, blank=True)
     last_login_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

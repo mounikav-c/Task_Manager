@@ -1,16 +1,19 @@
+import requests
+import re
+from datetime import timedelta
+
+from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import viewsets
-import requests
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
-from django.conf import settings
+from rest_framework import viewsets
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
-from .models import Meeting, Project, Task, TeamMember
 from .models import AuthUserProfile
+from .models import Meeting, Project, Task, TeamMember
 from .serializers import MeetingSerializer, ProjectSerializer, TaskSerializer, TeamMemberSerializer
 
 
@@ -19,7 +22,54 @@ def health_check(request):
     return Response({"message": "Backend is running"})
 
 
+def generate_username_from_email(email: str) -> str:
+    user_model = get_user_model()
+    base = email.split("@", 1)[0].lower().strip()
+    base = re.sub(r"[^a-z0-9_]+", "_", base).strip("_") or "user"
+    base = base[:150]
+
+    username = base
+    suffix = 1
+    while user_model.objects.filter(username=username).exists():
+        token = f"_{suffix}"
+        username = f"{base[:150 - len(token)]}{token}"
+        suffix += 1
+
+    return username
+
+
+def get_or_create_google_user(email: str, name: str = ""):
+    user_model = get_user_model()
+    user = user_model.objects.filter(email__iexact=email).order_by("id").first()
+
+    if user is None:
+        username = generate_username_from_email(email)
+        user = user_model.objects.create_user(username=username, email=email)
+        user.set_unusable_password()
+        if hasattr(user, "first_name") and name:
+            user.first_name = name[:150]
+            user.save(update_fields=["password", "first_name"])
+        else:
+            user.save(update_fields=["password"])
+        return user
+
+    update_fields = []
+    if user.email != email:
+        user.email = email
+        update_fields.append("email")
+
+    if hasattr(user, "first_name") and name and user.first_name != name[:150]:
+        user.first_name = name[:150]
+        update_fields.append("first_name")
+
+    if update_fields:
+        user.save(update_fields=update_fields)
+
+    return user
+
+
 def upsert_auth_profile(
+    request,
     user,
     *,
     provider: str,
@@ -30,6 +80,13 @@ def upsert_auth_profile(
     picture_url: str = "",
     google_sub: str = "",
 ):
+    session_key = request.session.session_key
+    if not session_key:
+        request.session.save()
+        session_key = request.session.session_key
+
+    session_expires_at = timezone.now() + timedelta(seconds=settings.SESSION_COOKIE_AGE)
+
     AuthUserProfile.objects.update_or_create(
         user=user,
         defaults={
@@ -40,6 +97,8 @@ def upsert_auth_profile(
             "family_name": family_name,
             "picture_url": picture_url,
             "google_sub": google_sub,
+            "session_id": session_key or "",
+            "session_expires_at": session_expires_at,
             "last_login_at": timezone.now(),
         },
     )
@@ -72,6 +131,7 @@ def demo_login(request):
 
     login(request, user)
     upsert_auth_profile(
+        request,
         user,
         provider="demo",
         email=user.email or "",
@@ -109,26 +169,22 @@ def google_login(request):
     email = payload.get("email")
     if not email:
         return Response({"detail": "Google account email not available"}, status=400)
+    name = payload.get("name", "")
+    google_sub = payload.get("sub", "")
 
-    User = get_user_model()
-    user, _ = User.objects.get_or_create(
-        username=email,
-        defaults={"email": email},
-    )
-    if user.email != email:
-        user.email = email
-        user.save(update_fields=["email"])
+    user = get_or_create_google_user(email=email, name=name)
 
     login(request, user)
     upsert_auth_profile(
+        request,
         user,
         provider="google",
         email=email,
-        full_name=payload.get("name", ""),
+        full_name=name,
         given_name=payload.get("given_name", ""),
         family_name=payload.get("family_name", ""),
         picture_url=payload.get("picture", ""),
-        google_sub=payload.get("sub", ""),
+        google_sub=google_sub,
     )
 
     return Response(
@@ -164,26 +220,22 @@ def google_token_login(request):
     email = profile.get("email")
     if not email:
         return Response({"detail": "Google account email not available"}, status=400)
+    name = profile.get("name", "")
+    google_sub = profile.get("sub", "")
 
-    User = get_user_model()
-    user, _ = User.objects.get_or_create(
-        username=email,
-        defaults={"email": email},
-    )
-    if user.email != email:
-        user.email = email
-        user.save(update_fields=["email"])
+    user = get_or_create_google_user(email=email, name=name)
 
     login(request, user)
     upsert_auth_profile(
+        request,
         user,
         provider="google",
         email=email,
-        full_name=profile.get("name", ""),
+        full_name=name,
         given_name=profile.get("given_name", ""),
         family_name=profile.get("family_name", ""),
         picture_url=profile.get("picture", ""),
-        google_sub=profile.get("sub", ""),
+        google_sub=google_sub,
     )
 
     return Response(

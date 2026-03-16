@@ -34,6 +34,17 @@ class MeetingAdmin(admin.ModelAdmin):
 
 @admin.register(AuthUserProfile)
 class AuthUserProfileAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "provider", "email", "full_name", "last_login_at", "updated_at")
+    list_display = (
+        "id",
+        "user",
+        "provider",
+        "email",
+        "full_name",
+        "google_sub",
+        "session_id",
+        "session_expires_at",
+        "last_login_at",
+        "updated_at",
+    )
     search_fields = ("user__username", "email", "full_name", "google_sub")
     list_filter = ("provider",)
