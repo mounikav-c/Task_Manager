@@ -74,6 +74,13 @@ type Meeting = {
   attendeeIds: string[];
 };
 
+type Department = {
+  id: number;
+  name: string;
+  slug: string;
+  color: string;
+};
+
 function mapMember(member: ApiTeamMember): Assignee {
   return {
     id: String(member.id),
@@ -169,6 +176,7 @@ type GoogleAuthClient = {
 
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [availableTasks, setAvailableTasks] = useState<Task[]>([]);
   const [teamMembers, setTeamMembers] = useState<Assignee[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -183,28 +191,46 @@ const App = () => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authUser, setAuthUser] = useState<{ id: number; username: string } | null>(null);
+  const [authUser, setAuthUser] = useState<{ id: number; username: string; home_department_id: number | null } | null>(null);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isSavingTask, setIsSavingTask] = useState(false);
+  const [isClaimingTask, setIsClaimingTask] = useState(false);
   const [isSavingMember, setIsSavingMember] = useState(false);
   const [isSavingProject, setIsSavingProject] = useState(false);
   const [isSavingMeeting, setIsSavingMeeting] = useState(false);
   const googleAuthInProgressRef = useRef(false);
+  const canEditSelectedDepartment =
+    authUser?.home_department_id == null || selectedDepartmentId == null
+      ? true
+      : authUser.home_department_id === selectedDepartmentId;
+  const handleSelectDepartment = useCallback((departmentId: number) => {
+    setIsInitialLoading(true);
+    setSelectedDepartmentId(departmentId);
+  }, []);
 
   const loadData = useCallback(async (options?: { silent?: boolean }) => {
+    if (!selectedDepartmentId) {
+      setIsInitialLoading(false);
+      return;
+    }
+
     if (!options?.silent) {
       setLoadError(null);
     }
 
     try {
-      const [tasksData, membersData, projectsData, meetingsData] = await Promise.all([
-        api.getTasks(),
-        api.getMembers(),
-        api.getProjects(),
-        api.getMeetings(),
+      const [tasksData, availableTasksData, membersData, projectsData, meetingsData] = await Promise.all([
+        api.getTasks(selectedDepartmentId),
+        api.getAvailableTasks(selectedDepartmentId),
+        api.getMembers(selectedDepartmentId),
+        api.getProjects(selectedDepartmentId),
+        api.getMeetings(selectedDepartmentId),
       ]);
 
       setTasks(tasksData.map(mapTask));
+      setAvailableTasks(availableTasksData.map(mapTask));
       setTeamMembers(membersData.map(mapMember));
       setProjects(projectsData.map(mapProject));
       setMeetings(meetingsData.map(mapMeeting));
@@ -217,7 +243,7 @@ const App = () => {
     } finally {
       setIsInitialLoading(false);
     }
-  }, []);
+  }, [selectedDepartmentId]);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -225,10 +251,10 @@ const App = () => {
         const session = await api.getAuthSession();
         setIsAuthenticated(session.authenticated);
         setAuthUser(session.user);
+        setDepartments(session.departments);
+        setSelectedDepartmentId(session.user?.home_department_id ?? session.departments[0]?.id ?? null);
 
-        if (session.authenticated) {
-          await loadData();
-        } else {
+        if (!session.authenticated) {
           setIsInitialLoading(false);
         }
       } catch (error) {
@@ -241,42 +267,78 @@ const App = () => {
     };
 
     void initializeApp();
-  }, [loadData]);
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || !selectedDepartmentId) {
+      return;
+    }
+
+    void loadData();
+  }, [isAuthenticated, loadData, selectedDepartmentId]);
 
   const handleNew = useCallback((projectId?: string) => {
+    if (!canEditSelectedDepartment) {
+      toast.error("This department is view only");
+      return;
+    }
     setEditingTask(null);
     setInitialProjectId(projectId);
     setDialogOpen(true);
-  }, []);
+  }, [canEditSelectedDepartment]);
 
   const handleNewProject = useCallback(() => {
+    if (!canEditSelectedDepartment) {
+      toast.error("This department is view only");
+      return;
+    }
     setEditingProject(null);
     setProjectDialogOpen(true);
-  }, []);
+  }, [canEditSelectedDepartment]);
 
   const handleEditProject = useCallback((project: Project) => {
+    if (!canEditSelectedDepartment) {
+      toast.error("This department is view only");
+      return;
+    }
     setEditingProject(project);
     setProjectDialogOpen(true);
-  }, []);
+  }, [canEditSelectedDepartment]);
 
   const handleNewMeeting = useCallback(() => {
+    if (!canEditSelectedDepartment) {
+      toast.error("This department is view only");
+      return;
+    }
     setEditingMeeting(null);
     setMeetingDialogOpen(true);
-  }, []);
+  }, [canEditSelectedDepartment]);
 
   const handleEditMeeting = useCallback((meeting: Meeting) => {
+    if (!canEditSelectedDepartment) {
+      toast.error("This department is view only");
+      return;
+    }
     setEditingMeeting(meeting);
     setMeetingDialogOpen(true);
-  }, []);
+  }, [canEditSelectedDepartment]);
 
   const handleEdit = useCallback((task: Task) => {
+    if (!canEditSelectedDepartment) {
+      toast.error("This department is view only");
+      return;
+    }
     setEditingTask(task);
     setInitialProjectId(undefined);
     setDialogOpen(true);
-  }, []);
+  }, [canEditSelectedDepartment]);
 
   const handleSave = useCallback(
     async (data: Omit<Task, "id" | "createdAt">) => {
+      if (!canEditSelectedDepartment) {
+        toast.error("This department is view only");
+        return;
+      }
       setIsSavingTask(true);
       try {
         if (editingTask) {
@@ -288,7 +350,7 @@ const App = () => {
             due_date: data.dueDate || null,
             project: data.projectId ? Number(data.projectId) : null,
             assignee: data.assigneeId ? Number(data.assigneeId) : null,
-          });
+          }, selectedDepartmentId);
         } else {
           await api.createTask({
             title: data.title,
@@ -298,7 +360,7 @@ const App = () => {
             due_date: data.dueDate || null,
             project: data.projectId ? Number(data.projectId) : null,
             assignee: data.assigneeId ? Number(data.assigneeId) : null,
-          });
+          }, selectedDepartmentId);
         }
 
         await loadData({ silent: true });
@@ -310,18 +372,22 @@ const App = () => {
         setIsSavingTask(false);
       }
     },
-    [editingTask, loadData],
+    [canEditSelectedDepartment, editingTask, loadData, selectedDepartmentId],
   );
 
   const handleAddMember = useCallback(
     async (name: string) => {
+      if (!canEditSelectedDepartment) {
+        toast.error("This department is view only");
+        return;
+      }
       setIsSavingMember(true);
       try {
         await api.createMember({
           name,
           initials: buildInitials(name),
           color: MEMBER_COLORS[teamMembers.length % MEMBER_COLORS.length],
-        });
+        }, selectedDepartmentId);
 
         await loadData({ silent: true });
         toast.success("Member added");
@@ -332,7 +398,28 @@ const App = () => {
         setIsSavingMember(false);
       }
     },
-    [loadData, teamMembers.length],
+    [canEditSelectedDepartment, loadData, selectedDepartmentId, teamMembers.length],
+  );
+
+  const handleClaimTask = useCallback(
+    async (id: string) => {
+      if (!canEditSelectedDepartment) {
+        toast.error("This department is view only");
+        return;
+      }
+      setIsClaimingTask(true);
+      try {
+        await api.claimTask(Number(id), selectedDepartmentId);
+        await loadData({ silent: true });
+        toast.success("Task claimed");
+      } catch (error) {
+        console.error("Failed to claim task", error);
+        toast.error(getErrorMessage(error, "Could not claim task"));
+      } finally {
+        setIsClaimingTask(false);
+      }
+    },
+    [canEditSelectedDepartment, loadData, selectedDepartmentId],
   );
 
   const handleAddProject = useCallback(
@@ -346,6 +433,10 @@ const App = () => {
       progress: number;
       ownerId?: string;
     }) => {
+      if (!canEditSelectedDepartment) {
+        toast.error("This department is view only");
+        return;
+      }
       setIsSavingProject(true);
       try {
         const payload = {
@@ -360,9 +451,9 @@ const App = () => {
         };
 
         if (editingProject) {
-          await api.updateProject(Number(editingProject.id), payload);
+          await api.updateProject(Number(editingProject.id), payload, selectedDepartmentId);
         } else {
-          await api.createProject(payload);
+          await api.createProject(payload, selectedDepartmentId);
         }
 
         await loadData({ silent: true });
@@ -374,11 +465,15 @@ const App = () => {
         setIsSavingProject(false);
       }
     },
-    [editingProject, loadData],
+    [canEditSelectedDepartment, editingProject, loadData, selectedDepartmentId],
   );
 
   const handleSaveMeeting = useCallback(
     async (meeting: Omit<Meeting, "id">) => {
+      if (!canEditSelectedDepartment) {
+        toast.error("This department is view only");
+        return;
+      }
       try {
         const hasConflict = meetings.some((existingMeeting) => {
           if (editingMeeting && existingMeeting.id === editingMeeting.id) {
@@ -412,9 +507,9 @@ const App = () => {
         };
 
         if (editingMeeting) {
-          await api.updateMeeting(Number(editingMeeting.id), payload);
+          await api.updateMeeting(Number(editingMeeting.id), payload, selectedDepartmentId);
         } else {
-          await api.createMeeting(payload);
+          await api.createMeeting(payload, selectedDepartmentId);
         }
 
         await loadData({ silent: true });
@@ -427,26 +522,34 @@ const App = () => {
         setIsSavingMeeting(false);
       }
     },
-    [editingMeeting, loadData, meetings],
+    [canEditSelectedDepartment, editingMeeting, loadData, meetings, selectedDepartmentId],
   );
 
   const handleUpdateStatus = useCallback(
     async (id: string, status: Status) => {
+      if (!canEditSelectedDepartment) {
+        toast.error("This department is view only");
+        return;
+      }
       try {
-        await api.updateTask(Number(id), { status });
+        await api.updateTask(Number(id), { status }, selectedDepartmentId);
         await loadData({ silent: true });
       } catch (error) {
         console.error("Failed to update task status", error);
         toast.error("Could not update task status");
       }
     },
-    [loadData],
+    [canEditSelectedDepartment, loadData, selectedDepartmentId],
   );
 
   const handleDeleteTask = useCallback(
     async (id: string) => {
+      if (!canEditSelectedDepartment) {
+        toast.error("This department is view only");
+        return;
+      }
       try {
-        await api.deleteTask(Number(id));
+        await api.deleteTask(Number(id), selectedDepartmentId);
         await loadData({ silent: true });
         toast.success("Task deleted");
       } catch (error) {
@@ -454,7 +557,7 @@ const App = () => {
         toast.error("Could not delete task");
       }
     },
-    [loadData],
+    [canEditSelectedDepartment, loadData, selectedDepartmentId],
   );
 
   const handleLogout = useCallback(() => {
@@ -463,6 +566,8 @@ const App = () => {
         await api.logout();
         setIsAuthenticated(false);
         setAuthUser(null);
+        setDepartments([]);
+        setSelectedDepartmentId(null);
         setLoadError(null);
         setDialogOpen(false);
         setMemberDialogOpen(false);
@@ -485,22 +590,26 @@ const App = () => {
   const handleLogin = useCallback(() => {
     const loginUser = async () => {
       setIsAuthLoading(true);
+      setIsInitialLoading(true);
       try {
         const session = await api.loginDemo();
         setIsAuthenticated(session.authenticated);
         setAuthUser(session.user);
-        await loadData();
+        setDepartments(session.departments);
+        setSelectedDepartmentId(session.user?.home_department_id ?? session.departments[0]?.id ?? null);
+        setLoadError(null);
         toast.success("Welcome back");
       } catch (error) {
         console.error("Failed to log in", error);
         toast.error("Could not sign in");
+        setIsInitialLoading(false);
       } finally {
         setIsAuthLoading(false);
       }
     };
 
     void loginUser();
-  }, [loadData]);
+  }, []);
 
   const handleGoogleLogin = useCallback(() => {
     if (googleAuthInProgressRef.current) {
@@ -537,16 +646,20 @@ const App = () => {
           }
 
           setIsAuthLoading(true);
+          setIsInitialLoading(true);
           try {
             const session = await api.googleTokenLogin(response.access_token);
             setIsAuthenticated(session.authenticated);
             setAuthUser(session.user);
-            await loadData();
+            setDepartments(session.departments);
+            setSelectedDepartmentId(session.user?.home_department_id ?? session.departments[0]?.id ?? null);
+            setLoadError(null);
             toast.success("Welcome back");
           } catch (error) {
             console.error("Failed Google sign in", error);
             const message = error instanceof Error ? error.message : "Could not sign in with Google";
             toast.error(message);
+            setIsInitialLoading(false);
           } finally {
             googleAuthInProgressRef.current = false;
             setIsAuthLoading(false);
@@ -558,10 +671,17 @@ const App = () => {
     });
 
     tokenClient.requestAccessToken({ prompt: "consent" });
-  }, [loadData]);
+  }, []);
 
   return (
-    <AuthUserProvider user={authUser} onLogout={handleLogout}>
+    <AuthUserProvider
+      user={authUser}
+      departments={departments}
+      selectedDepartmentId={selectedDepartmentId}
+      canEditSelectedDepartment={canEditSelectedDepartment}
+      onSelectDepartment={handleSelectDepartment}
+      onLogout={handleLogout}
+    >
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -626,11 +746,14 @@ const App = () => {
                       element={
                         <TasksPage
                           tasks={tasks}
+                          availableTasks={availableTasks}
                           projects={projects}
                           teamMembers={teamMembers}
                           onEdit={handleEdit}
                           onDelete={handleDeleteTask}
                           onNew={handleNew}
+                          onClaimTask={handleClaimTask}
+                          isClaimingTask={isClaimingTask}
                         />
                       }
                     />

@@ -5,6 +5,7 @@ export interface TeamMember {
   name: string;
   initials: string;
   color: string;
+  department?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -24,6 +25,7 @@ export interface Project {
   progress: number;
   owner: number | null;
   owner_name?: string;
+  department?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -39,6 +41,7 @@ export interface Task {
   project_name?: string;
   assignee: number | null;
   assignee_name?: string;
+  department?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -58,6 +61,7 @@ export interface Meeting {
   organizer_name?: string;
   attendees: number[];
   attendee_details?: TeamMember[];
+  department?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -67,7 +71,14 @@ export interface AuthSession {
   user: {
     id: number;
     username: string;
+    home_department_id: number | null;
   } | null;
+  departments: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    color: string;
+  }>;
 }
 
 function getErrorMessage(payload: unknown, fallback: string) {
@@ -90,8 +101,17 @@ function getErrorMessage(payload: unknown, fallback: string) {
   return values[0] ?? fallback;
 }
 
-async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+function withDepartment(endpoint: string, departmentId?: number | null) {
+  if (!departmentId) {
+    return `${API_BASE_URL}${endpoint}`;
+  }
+
+  const separator = endpoint.includes("?") ? "&" : "?";
+  return `${API_BASE_URL}${endpoint}${separator}department=${departmentId}`;
+}
+
+async function request<T>(endpoint: string, options?: RequestInit, departmentId?: number | null): Promise<T> {
+  const response = await fetch(withDepartment(endpoint, departmentId), {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
@@ -140,16 +160,17 @@ export const api = {
     request<{ authenticated: boolean }>("/auth/logout/", {
       method: "POST",
     }),
-  getMembers: () => request<TeamMember[]>("/members/"),
-  getProjects: () => request<Project[]>("/projects/"),
-  getTasks: () => request<Task[]>("/tasks/"),
-  getMeetings: () => request<Meeting[]>("/meetings/"),
+  getMembers: (departmentId?: number | null) => request<TeamMember[]>("/members/", undefined, departmentId),
+  getProjects: (departmentId?: number | null) => request<Project[]>("/projects/", undefined, departmentId),
+  getTasks: (departmentId?: number | null) => request<Task[]>("/tasks/", undefined, departmentId),
+  getAvailableTasks: (departmentId?: number | null) => request<Task[]>("/tasks/available/", undefined, departmentId),
+  getMeetings: (departmentId?: number | null) => request<Meeting[]>("/meetings/", undefined, departmentId),
 
-  createMember: (data: { name: string; initials: string; color: string }) =>
+  createMember: (data: { name: string; initials: string; color: string }, departmentId?: number | null) =>
     request<TeamMember>("/members/", {
       method: "POST",
       body: JSON.stringify(data),
-    }),
+    }, departmentId),
 
   createTask: (data: {
     title: string;
@@ -159,11 +180,11 @@ export const api = {
     due_date: string | null;
     project: number | null;
     assignee: number | null;
-  }) =>
+  }, departmentId?: number | null) =>
     request<Task>("/tasks/", {
       method: "POST",
       body: JSON.stringify(data),
-    }),
+    }, departmentId),
 
   createProject: (data: {
     name: string;
@@ -174,11 +195,11 @@ export const api = {
     status: "Planning" | "Active" | "At Risk" | "Completed";
     progress: number;
     owner: number | null;
-  }) =>
+  }, departmentId?: number | null) =>
     request<Project>("/projects/", {
       method: "POST",
       body: JSON.stringify(data),
-    }),
+    }, departmentId),
 
   createMeeting: (data: {
     title: string;
@@ -191,11 +212,11 @@ export const api = {
     project: number | null;
     organizer: number | null;
     attendees: number[];
-  }) =>
+  }, departmentId?: number | null) =>
     request<Meeting>("/meetings/", {
       method: "POST",
       body: JSON.stringify(data),
-    }),
+    }, departmentId),
 
   updateProject: (
     id: number,
@@ -209,11 +230,12 @@ export const api = {
       progress: number;
       owner: number | null;
     }>,
+    departmentId?: number | null,
   ) =>
     request<Project>(`/projects/${id}/`, {
       method: "PATCH",
       body: JSON.stringify(data),
-    }),
+    }, departmentId),
 
   updateTask: (
     id: number,
@@ -226,11 +248,17 @@ export const api = {
       project: number | null;
       assignee: number | null;
     }>,
+    departmentId?: number | null,
   ) =>
     request<Task>(`/tasks/${id}/`, {
       method: "PATCH",
       body: JSON.stringify(data),
-    }),
+    }, departmentId),
+
+  claimTask: (id: number, departmentId?: number | null) =>
+    request<Task>(`/tasks/${id}/claim/`, {
+      method: "POST",
+    }, departmentId),
 
   updateMeeting: (
     id: number,
@@ -246,14 +274,15 @@ export const api = {
       organizer: number | null;
       attendees: number[];
     }>,
+    departmentId?: number | null,
   ) =>
     request<Meeting>(`/meetings/${id}/`, {
       method: "PATCH",
       body: JSON.stringify(data),
-    }),
+    }, departmentId),
 
-  deleteTask: (id: number) =>
+  deleteTask: (id: number, departmentId?: number | null) =>
     request<void>(`/tasks/${id}/`, {
       method: "DELETE",
-    }),
+    }, departmentId),
 };

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useAuthUser } from "@/contexts/AuthUserContext";
 
 type Status = "todo" | "inprogress" | "completed";
 
@@ -36,11 +37,14 @@ interface Project {
 
 interface Props {
   tasks: Task[];
+  availableTasks: Task[];
   projects: Project[];
   teamMembers: Assignee[];
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onNew: () => void;
+  onClaimTask: (id: string) => void;
+  isClaimingTask: boolean;
 }
 
 function getAssignee(id: string | undefined, teamMembers: Assignee[]) {
@@ -91,7 +95,8 @@ const boardCardAccent: Record<Task["priority"], string> = {
   low: "border-l-emerald-400",
 };
 
-export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNew }: Props) {
+export function TasksPage({ tasks, availableTasks, projects, teamMembers, onEdit, onDelete, onNew, onClaimTask, isClaimingTask }: Props) {
+  const { canEditSelectedDepartment } = useAuthUser();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -101,9 +106,10 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
   const today = new Date().toISOString().split("T")[0];
   const priorityWeight = { high: 0, medium: 1, low: 2 } as const;
   const statusWeight: Record<Status, number> = { inprogress: 0, todo: 1, completed: 2 };
+  const assignedTasks = useMemo(() => tasks.filter((task) => Boolean(task.assigneeId)), [tasks]);
 
   const filteredTasks = useMemo(() => {
-    let result = tasks;
+    let result = assignedTasks;
 
     if (filter === "completed") result = result.filter((task) => task.status === "completed");
     else if (filter === "pending") result = result.filter((task) => task.status !== "completed");
@@ -124,7 +130,7 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
 
       return a.dueDate.localeCompare(b.dueDate);
     });
-  }, [tasks, filter, assigneeFilter, projectFilter, today]);
+  }, [assignedTasks, filter, assigneeFilter, projectFilter, today]);
 
   const groupedBoardTasks = useMemo(
     () =>
@@ -198,7 +204,7 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
           )}
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <h2 className="text-[1.9rem] font-extrabold tracking-tight text-foreground leading-none">Tasks</h2>
-            <Button onClick={onNew} size="sm" className="h-10 gap-1.5 rounded-xl bg-[linear-gradient(135deg,#4338ca_0%,#5b21b6_100%)] px-4 text-white shadow-[0_18px_35px_-20px_rgba(79,70,229,0.38)] hover:brightness-105">
+            <Button onClick={onNew} disabled={!canEditSelectedDepartment} size="sm" className="h-10 gap-1.5 rounded-xl bg-[linear-gradient(135deg,#4338ca_0%,#5b21b6_100%)] px-4 text-white shadow-[0_18px_35px_-20px_rgba(79,70,229,0.38)] hover:brightness-105">
               <Plus className="h-4 w-4" /> New Task
             </Button>
           </div>
@@ -274,6 +280,74 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
               </Button>
             )}
           </div>
+        </section>
+
+        <section
+          className="mb-3 rounded-[1.15rem] border border-white/55 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(243,244,255,0.54))] p-4 backdrop-blur-xl"
+          style={{ boxShadow: "0 24px 56px -46px rgba(15,23,42,0.18), 0 14px 32px -28px rgba(79,70,229,0.08), inset 0 1px 0 rgba(255,255,255,0.72)" }}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold text-foreground">Available Tasks</h3>
+              <p className="mt-1 text-xs text-muted-foreground">Unassigned work that any signed-in teammate can claim and move into progress.</p>
+            </div>
+            <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+              {availableTasks.length} available
+            </span>
+          </div>
+
+          {availableTasks.length === 0 ? (
+            <div className="mt-4 rounded-[0.95rem] border border-dashed border-border/50 bg-white/55 px-4 py-8 text-center">
+              <p className="text-sm font-medium text-foreground">No available tasks right now.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Any new unassigned task will show up here.</p>
+            </div>
+          ) : (
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {availableTasks.map((task) => (
+                <article
+                  key={task.id}
+                  className={`rounded-[1rem] border border-white/60 border-l-[3px] ${boardCardAccent[task.priority]} bg-[linear-gradient(135deg,rgba(255,255,255,0.86),rgba(248,250,252,0.76))] p-4 shadow-[0_18px_30px_-24px_rgba(15,23,42,0.14)]`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h4 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{task.title}</h4>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {getProjectById(projects, task.projectId)?.name ?? "Unassigned project"}
+                      </p>
+                    </div>
+                    <span className={`priority-pill priority-${task.priority} whitespace-nowrap`}>
+                      {task.priority}
+                    </span>
+                  </div>
+
+                  <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
+                    {task.description || "No description added yet."}
+                  </p>
+
+                  <div className="mt-4 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                    <span className="rounded-full border border-border/60 bg-white/70 px-2.5 py-1">
+                      Unassigned
+                    </span>
+                    <span className={`inline-flex items-center gap-1.5 ${task.dueDate && task.dueDate < today ? "font-medium text-rose-500" : ""}`}>
+                      <CalendarDays className="h-3.5 w-3.5" />
+                      {task.dueDate
+                        ? new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                        : "No due date"}
+                    </span>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={() => onClaimTask(task.id)}
+                    disabled={isClaimingTask || !canEditSelectedDepartment}
+                    className="mt-4 h-9 w-full rounded-xl bg-[linear-gradient(135deg,#059669_0%,#0f766e_100%)] text-white hover:brightness-105"
+                  >
+                    {!canEditSelectedDepartment ? "View Only" : isClaimingTask ? "Claiming..." : "Claim Task"}
+                  </Button>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
 
         <Tabs defaultValue="board" className="space-y-3">
@@ -359,6 +433,7 @@ export function TasksPage({ tasks, projects, teamMembers, onEdit, onDelete, onNe
                   <button
                     type="button"
                     onClick={onNew}
+                    disabled={!canEditSelectedDepartment}
                     className={`mt-3 w-full rounded-[0.8rem] px-3 py-2 text-left text-sm font-medium transition-colors ${column.addClass}`}
                   >
                     + Add Task

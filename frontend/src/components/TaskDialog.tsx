@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { api, type Project } from "@/lib/api";
+import { useAuthUser } from "@/contexts/AuthUserContext";
 
 type Status = "todo" | "inprogress" | "completed";
 type Priority = "low" | "medium" | "high";
@@ -39,6 +40,7 @@ interface TaskDialogProps {
 }
 
 export function TaskDialog({ open, onClose, onSave, task, teamMembers, initialProjectId }: TaskDialogProps) {
+  const { selectedDepartmentId } = useAuthUser();
   const [projects, setProjects] = useState<Project[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -53,7 +55,7 @@ export function TaskDialog({ open, onClose, onSave, task, teamMembers, initialPr
 
     const loadProjects = async () => {
       try {
-        const data = await api.getProjects();
+        const data = await api.getProjects(selectedDepartmentId);
         setProjects(data);
       } catch (error) {
         console.error("Failed to load projects", error);
@@ -61,7 +63,7 @@ export function TaskDialog({ open, onClose, onSave, task, teamMembers, initialPr
     };
 
     void loadProjects();
-  }, [open]);
+  }, [open, selectedDepartmentId]);
 
   useEffect(() => {
     if (task) {

@@ -2,6 +2,7 @@ import { CalendarDays, Clock3, MapPin, Plus, Users } from "lucide-react";
 import { TopNav } from "@/components/TopNav";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuthUser } from "@/contexts/AuthUserContext";
 
 interface Assignee {
   id: string;
@@ -100,13 +101,11 @@ function MeetingDurationRing({ durationMinutes }: { durationMinutes: number }) {
 }
 
 export function MeetingsPage({ meetings, projects, teamMembers, onAddMeeting, onEditMeeting }: Props) {
+  const { canEditSelectedDepartment } = useAuthUser();
   const now = Date.now();
   const upcomingMeetings = [...meetings]
     .filter((meeting) => new Date(meeting.scheduledFor).getTime() >= now && meeting.status === "scheduled")
-    .sort((left, right) => new Date(left.scheduledFor).getTime() - new Date(right.scheduledFor).getTime())
-    .filter((meeting, index, sortedMeetings) => {
-      return sortedMeetings.findIndex((entry) => entry.scheduledFor === meeting.scheduledFor) === index;
-    });
+    .sort((left, right) => new Date(left.scheduledFor).getTime() - new Date(right.scheduledFor).getTime());
 
   const todayMeetings = upcomingMeetings.filter((meeting) => {
     const date = new Date(meeting.scheduledFor);
@@ -145,6 +144,7 @@ export function MeetingsPage({ meetings, projects, teamMembers, onAddMeeting, on
                 </div>
                 <Button
                   onClick={onAddMeeting}
+                  disabled={!canEditSelectedDepartment}
                   className="h-10 shrink-0 self-start rounded-xl bg-[linear-gradient(135deg,#4338ca_0%,#5b21b6_100%)] px-4 text-sm font-medium text-white shadow-[0_18px_35px_-20px_rgba(79,70,229,0.45)] hover:brightness-105"
                 >
                   <Plus className="h-4 w-4" />

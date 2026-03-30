@@ -2,10 +2,32 @@ from django.db import models
 from django.conf import settings
 
 
+class Department(models.Model):
+    name = models.CharField(max_length=120, unique=True)
+    slug = models.SlugField(unique=True)
+    color = models.CharField(max_length=50, default="hsl(252 82% 55%)")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class TeamMember(models.Model):
     name = models.CharField(max_length=120)
     initials = models.CharField(max_length=10)
     color = models.CharField(max_length=50)
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.CASCADE,
+        related_name="team_members",
+        null=True,
+        blank=True,
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -44,6 +66,13 @@ class Project(models.Model):
         null=True,
         blank=True,
         related_name="owned_projects",
+    )
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.CASCADE,
+        related_name="projects",
+        null=True,
+        blank=True,
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -90,6 +119,13 @@ class Task(models.Model):
         blank=True,
         related_name="tasks",
     )
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.CASCADE,
+        related_name="tasks",
+        null=True,
+        blank=True,
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -131,6 +167,13 @@ class Meeting(models.Model):
         related_name="organized_meetings",
     )
     attendees = models.ManyToManyField(TeamMember, blank=True, related_name="meetings")
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.CASCADE,
+        related_name="meetings",
+        null=True,
+        blank=True,
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -152,6 +195,13 @@ class AuthUserProfile(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="auth_profile",
+    )
+    home_department = models.ForeignKey(
+        Department,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="memberships",
     )
     provider = models.CharField(max_length=20, choices=PROVIDER_CHOICES, default="demo")
     email = models.EmailField(blank=True)

@@ -100,6 +100,11 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8080",
 ]
 
+# Use app-specific cookie names so other localhost projects don't overwrite
+# this app's auth/session cookies in the same browser profile.
+SESSION_COOKIE_NAME = "taskmanager_sessionid"
+CSRF_COOKIE_NAME = "taskmanager_csrftoken"
+
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",

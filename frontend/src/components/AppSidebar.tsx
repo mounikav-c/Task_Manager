@@ -1,6 +1,8 @@
 import { CalendarDays, FolderKanban, HelpCircle, LayoutDashboard, ListTodo, LogOut, Settings, Users, Sparkles } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuthUser } from "@/contexts/AuthUserContext";
 import {
   Sidebar,
   SidebarContent,
@@ -37,7 +39,9 @@ interface AppSidebarProps {
 
 export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarProps) {
   const { state } = useSidebar();
+  const { departments, selectedDepartmentId, canEditSelectedDepartment, onSelectDepartment } = useAuthUser();
   const collapsed = state === "collapsed";
+  const selectedDepartment = departments.find((department) => department.id === selectedDepartmentId);
 
   return (
     <Sidebar collapsible="icon" variant="floating" className="p-3">
@@ -56,11 +60,35 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
 
         {!collapsed && (
           <div className="sidebar-workspace-card mt-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 text-sm font-bold text-primary-foreground">G</div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-foreground">GoldenHills India</p>
-              <p className="text-[11px] text-muted-foreground">Company workspace</p>
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-primary-foreground"
+              style={{ background: `linear-gradient(135deg, ${selectedDepartment?.color ?? "#34d399"} 0%, rgba(15,23,42,0.85) 100%)` }}
+            >
+              {selectedDepartment?.name?.[0] ?? "D"}
             </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-foreground">{selectedDepartment?.name ?? "Department"}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {canEditSelectedDepartment ? "Default department" : "View-only department"}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!collapsed && departments.length > 0 && (
+          <div className="mt-3">
+            <Select value={selectedDepartmentId ? String(selectedDepartmentId) : undefined} onValueChange={(value) => onSelectDepartment(Number(value))}>
+              <SelectTrigger className="h-10 rounded-xl border-white/60 bg-white/70 text-sm">
+                <SelectValue placeholder="Choose department" />
+              </SelectTrigger>
+              <SelectContent>
+                {departments.map((department) => (
+                  <SelectItem key={department.id} value={String(department.id)}>
+                    {department.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
       </SidebarHeader>
@@ -117,11 +145,11 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
       {!collapsed && (
         <SidebarFooter className="px-3 pb-4 pt-2">
           <div className="rounded-xl border border-white/55 bg-[linear-gradient(135deg,rgba(255,255,255,0.74),rgba(245,243,255,0.52))] p-2.5 space-y-1.5 shadow-[0_26px_50px_-42px_rgba(15,23,42,0.26),inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl">
-            <Button onClick={onAddProject} className="h-10 w-full justify-start rounded-lg bg-[linear-gradient(135deg,#4338ca_0%,#5b21b6_100%)] text-primary-foreground hover:brightness-105 shadow-[0_18px_34px_-18px_rgba(79,70,229,0.36)] gap-2 text-sm">
+            <Button onClick={onAddProject} disabled={!canEditSelectedDepartment} className="h-10 w-full justify-start rounded-lg bg-[linear-gradient(135deg,#4338ca_0%,#5b21b6_100%)] text-primary-foreground hover:brightness-105 shadow-[0_18px_34px_-18px_rgba(79,70,229,0.36)] gap-2 text-sm">
               <Sparkles className="h-3.5 w-3.5" />
               New Project
             </Button>
-            <Button onClick={onAddMember} variant="ghost" className="h-9 w-full justify-start rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 text-sm gap-2">
+            <Button onClick={onAddMember} disabled={!canEditSelectedDepartment} variant="ghost" className="h-9 w-full justify-start rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 text-sm gap-2">
               <Users className="h-3.5 w-3.5" />
               Add Member
             </Button>

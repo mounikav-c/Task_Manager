@@ -10,14 +10,20 @@ interface TopNavProps {
 }
 
 export function TopNav({ title }: TopNavProps) {
-  const { user, onLogout } = useAuthUser();
+  const { user, departments, selectedDepartmentId, canEditSelectedDepartment, onLogout } = useAuthUser();
   const profile = buildUserProfile(user);
+  const selectedDepartment = departments.find((department) => department.id === selectedDepartmentId);
 
   return (
     <header className="flex h-14 items-center justify-between gap-4 border-b border-border/70 bg-white px-5 shrink-0">
       <div className="flex items-center gap-3">
         <SidebarTrigger className="rounded-lg border border-border/50 text-muted-foreground hover:bg-accent hover:text-foreground h-8 w-8" />
         <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
+        {selectedDepartment && (
+          <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${canEditSelectedDepartment ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+            {selectedDepartment.name} {canEditSelectedDepartment ? "" : "Read Only"}
+          </span>
+        )}
       </div>
 
       <div className="flex items-center gap-2">

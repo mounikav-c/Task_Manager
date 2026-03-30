@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useAuthUser } from "@/contexts/AuthUserContext";
 
 interface Assignee {
   id: string;
@@ -81,6 +82,7 @@ function getProgressRing(progress: number) {
 }
 
 export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProject, onNew, onAddMember, onScheduleMeeting }: Props) {
+  const { canEditSelectedDepartment } = useAuthUser();
   const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0];
 
@@ -199,6 +201,7 @@ export function DashboardPage({ tasks, projects, teamMembers, onEdit, onAddProje
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + index * 0.04 }}
                 onClick={actionHandlers[index]}
+                disabled={!canEditSelectedDepartment}
                 className="dashboard-action-card text-left"
               >
                 <div className={`dashboard-action-icon ${action.tone}`}>

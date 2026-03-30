@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useAuthUser } from "@/contexts/AuthUserContext";
 
 interface Assignee {
   id: string;
@@ -31,6 +32,7 @@ interface Props {
 }
 
 export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
+  const { canEditSelectedDepartment } = useAuthUser();
   const navigate = useNavigate();
   const members = teamMembers.map((member) => {
     const assignedTasks = tasks.filter((task) => task.assigneeId === member.id);
@@ -54,7 +56,7 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
             <div>
               <h2 className="text-lg font-extrabold tracking-tight">Team Members</h2>
             </div>
-            <Button onClick={onAddMember} className="h-9 rounded-lg bg-[linear-gradient(135deg,#4338ca_0%,#5b21b6_100%)] text-sm text-white shadow-[0_18px_35px_-20px_rgba(79,70,229,0.38)] hover:brightness-105">
+            <Button onClick={onAddMember} disabled={!canEditSelectedDepartment} className="h-9 rounded-lg bg-[linear-gradient(135deg,#4338ca_0%,#5b21b6_100%)] text-sm text-white shadow-[0_18px_35px_-20px_rgba(79,70,229,0.38)] hover:brightness-105">
               <Plus className="h-4 w-4" />
               Add Member
             </Button>
