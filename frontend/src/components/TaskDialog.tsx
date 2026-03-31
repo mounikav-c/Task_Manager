@@ -39,6 +39,8 @@ interface TaskDialogProps {
   initialProjectId?: string;
 }
 
+const allowedProjectNames = new Set(["72ipo", "midas", "realestate"]);
+
 export function TaskDialog({ open, onClose, onSave, task, teamMembers, initialProjectId }: TaskDialogProps) {
   const { selectedDepartmentId } = useAuthUser();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -55,11 +57,17 @@ export function TaskDialog({ open, onClose, onSave, task, teamMembers, initialPr
 
     return projects.filter((project) => {
       const normalizedName = project.name.replace(/\s+/g, " ").trim().toLowerCase();
-      if (seen.has(normalizedName)) {
+      const compactNormalizedName = normalizedName.replace(/\s+/g, "");
+
+      if (!allowedProjectNames.has(compactNormalizedName)) {
         return false;
       }
 
-      seen.add(normalizedName);
+      if (seen.has(compactNormalizedName)) {
+        return false;
+      }
+
+      seen.add(compactNormalizedName);
       return true;
     });
   }, [projects]);

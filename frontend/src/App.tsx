@@ -118,6 +118,38 @@ function mapProject(project: ApiProject): Project {
   };
 }
 
+const allowedProjectNames = new Map<string, string>([
+  ["72ipo", "72ipo"],
+  ["midas", "Midas"],
+  ["realestate", "Realestate"],
+]);
+
+function normalizeProjectName(name: string) {
+  return name.replace(/\s+/g, "").trim().toLowerCase();
+}
+
+function remapTaskProject(task: Task, projectIdMap: Map<string, string>) {
+  if (!task.projectId) {
+    return task;
+  }
+
+  return {
+    ...task,
+    projectId: projectIdMap.get(task.projectId),
+  };
+}
+
+function remapMeetingProject(meeting: Meeting, projectIdMap: Map<string, string>) {
+  if (!meeting.projectId) {
+    return meeting;
+  }
+
+  return {
+    ...meeting,
+    projectId: projectIdMap.get(meeting.projectId),
+  };
+}
+
 function mapMeeting(meeting: ApiMeeting): Meeting {
   return {
     id: String(meeting.id),
@@ -229,11 +261,41 @@ const App = () => {
         api.getMeetings(selectedDepartmentId),
       ]);
 
-      setTasks(tasksData.map(mapTask));
-      setAvailableTasks(availableTasksData.map(mapTask));
+      const rawProjects = projectsData.map(mapProject);
+      const canonicalProjects: Project[] = [];
+      const projectIdMap = new Map<string, string>();
+
+      rawProjects.forEach((project) => {
+        const projectKey = normalizeProjectName(project.name);
+        const canonicalName = allowedProjectNames.get(projectKey);
+
+        if (!canonicalName) {
+          return;
+        }
+
+        const existingProject = canonicalProjects.find(
+          (entry) => normalizeProjectName(entry.name) === projectKey,
+        );
+
+        if (existingProject) {
+          projectIdMap.set(project.id, existingProject.id);
+          return;
+        }
+
+        const canonicalProject = {
+          ...project,
+          name: canonicalName,
+        };
+
+        canonicalProjects.push(canonicalProject);
+        projectIdMap.set(project.id, canonicalProject.id);
+      });
+
+      setTasks(tasksData.map(mapTask).map((task) => remapTaskProject(task, projectIdMap)));
+      setAvailableTasks(availableTasksData.map(mapTask).map((task) => remapTaskProject(task, projectIdMap)));
       setTeamMembers(membersData.map(mapMember));
-      setProjects(projectsData.map(mapProject));
-      setMeetings(meetingsData.map(mapMeeting));
+      setProjects(canonicalProjects);
+      setMeetings(meetingsData.map(mapMeeting).map((meeting) => remapMeetingProject(meeting, projectIdMap)));
     } catch (error) {
       console.error("Failed to load API data", error);
       setLoadError("Could not load workspace data. Check that the Django server is running.");
@@ -438,13 +500,20 @@ const App = () => {
         return;
       }
 
-      const normalizedName = project.name.replace(/\s+/g, " ").trim().toLowerCase();
+      const normalizedName = normalizeProjectName(project.name);
+      const canonicalName = allowedProjectNames.get(normalizedName);
+
+      if (!canonicalName) {
+        toast.error("Project name must be one of: 72ipo, Midas, Realestate");
+        return;
+      }
+
       const duplicateProject = projects.find((existingProject) => {
         if (editingProject && existingProject.id === editingProject.id) {
           return false;
         }
 
-        return existingProject.name.replace(/\s+/g, " ").trim().toLowerCase() === normalizedName;
+        return normalizeProjectName(existingProject.name) === normalizedName;
       });
 
       if (duplicateProject) {
@@ -455,7 +524,7 @@ const App = () => {
       setIsSavingProject(true);
       try {
         const payload = {
-          name: project.name,
+          name: canonicalName,
           description: project.description,
           summary: project.summary,
           start_date: project.startDate || null,
