@@ -437,6 +437,21 @@ const App = () => {
         toast.error("This department is view only");
         return;
       }
+
+      const normalizedName = project.name.replace(/\s+/g, " ").trim().toLowerCase();
+      const duplicateProject = projects.find((existingProject) => {
+        if (editingProject && existingProject.id === editingProject.id) {
+          return false;
+        }
+
+        return existingProject.name.replace(/\s+/g, " ").trim().toLowerCase() === normalizedName;
+      });
+
+      if (duplicateProject) {
+        toast.error("A project with this name already exists in this department");
+        return;
+      }
+
       setIsSavingProject(true);
       try {
         const payload = {
@@ -465,7 +480,7 @@ const App = () => {
         setIsSavingProject(false);
       }
     },
-    [canEditSelectedDepartment, editingProject, loadData, selectedDepartmentId],
+    [canEditSelectedDepartment, editingProject, loadData, projects, selectedDepartmentId],
   );
 
   const handleSaveMeeting = useCallback(
@@ -787,6 +802,7 @@ const App = () => {
                       element={
                         <MeetingsPage
                           meetings={meetings}
+                          tasks={tasks}
                           projects={projects}
                           teamMembers={teamMembers}
                           onAddMeeting={handleNewMeeting}

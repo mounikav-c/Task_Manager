@@ -49,6 +49,8 @@ const progressMap: Record<Status, number> = {
   completed: 100,
 };
 
+const featuredProjectOrder = ["Midas", "Realestate", "72Ipo"] as const;
+
 const projectIcons = [
   { icon: Globe, tone: "bg-indigo-100 text-indigo-700" },
   { icon: BarChart3, tone: "bg-violet-100 text-violet-700" },
@@ -62,10 +64,18 @@ function getAssignee(id: string | undefined, teamMembers: Assignee[]) {
   return teamMembers.find((member) => member.id === id);
 }
 
+function normalizeProjectName(name: string) {
+  return name.replace(/\s+/g, "").toLowerCase();
+}
+
 export function BoardPage({ tasks, projects, teamMembers, onNew }: Props) {
   const navigate = useNavigate();
 
-  const projectCards = projects.map((project, index) => {
+  const visibleProjects = featuredProjectOrder
+    .map((name) => projects.find((project) => normalizeProjectName(project.name) === normalizeProjectName(name)))
+    .filter((project): project is Project => Boolean(project));
+
+  const projectCards = visibleProjects.map((project, index) => {
     const projectTasks = tasks.filter((task) => task.projectId === project.id);
     const team = Array.from(new Set(projectTasks.map((task) => task.assigneeId).filter(Boolean)))
       .map((assigneeId) => getAssignee(assigneeId, teamMembers))

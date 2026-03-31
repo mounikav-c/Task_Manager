@@ -31,6 +31,10 @@ interface Props {
   onAddMember: () => void;
 }
 
+function getStatusLabel(status: Task["status"]) {
+  return status === "completed" ? "Completed" : status === "inprogress" ? "In progress" : "Todo";
+}
+
 export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
   const { canEditSelectedDepartment } = useAuthUser();
   const navigate = useNavigate();
@@ -122,12 +126,12 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
 
                 <div className="mt-4 flex-1">
                   <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Assigned Tasks</p>
-                  <div className="space-y-1.5">
+                  <div className="min-h-[9rem] space-y-1.5">
                     {member.assignedTasks.slice(0, 3).map((task) => (
                       <div key={task.id} className="rounded-lg border border-white/55 bg-white/72 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
                         <p className="truncate text-xs font-medium text-foreground">{task.title}</p>
                         <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          {task.status === "completed" ? "Completed" : task.status === "inprogress" ? "In progress" : "Todo"}
+                          {getStatusLabel(task.status)}
                         </p>
                       </div>
                     ))}
@@ -135,9 +139,6 @@ export function MembersPage({ tasks, teamMembers, onAddMember }: Props) {
                       <div className="rounded-lg border border-dashed border-border/50 px-3 py-3 text-xs text-muted-foreground">
                         No assigned tasks yet.
                       </div>
-                    )}
-                    {member.assignedTasks.length > 0 && member.assignedTasks.length < 2 && (
-                      <div className="min-h-[3.75rem]" />
                     )}
                   </div>
                 </div>

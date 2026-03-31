@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,20 @@ export function TaskDialog({ open, onClose, onSave, task, teamMembers, initialPr
   const [projectId, setProjectId] = useState("");
   const [assigneeId, setAssigneeId] = useState<string>("");
 
+  const uniqueProjects = useMemo(() => {
+    const seen = new Set<string>();
+
+    return projects.filter((project) => {
+      const normalizedName = project.name.replace(/\s+/g, " ").trim().toLowerCase();
+      if (seen.has(normalizedName)) {
+        return false;
+      }
+
+      seen.add(normalizedName);
+      return true;
+    });
+  }, [projects]);
+
   useEffect(() => {
     if (!open) return;
 
@@ -87,10 +101,10 @@ export function TaskDialog({ open, onClose, onSave, task, teamMembers, initialPr
   }, [task, open, initialProjectId]);
 
   useEffect(() => {
-    if (!task && !projectId && projects.length > 0) {
-      setProjectId(initialProjectId || String(projects[0].id));
+    if (!task && !projectId && uniqueProjects.length > 0) {
+      setProjectId(initialProjectId || String(uniqueProjects[0].id));
     }
-  }, [projects, projectId, task, initialProjectId]);
+  }, [uniqueProjects, projectId, task, initialProjectId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,7 +158,7 @@ export function TaskDialog({ open, onClose, onSave, task, teamMembers, initialPr
               <Select value={projectId} onValueChange={setProjectId}>
                 <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
                 <SelectContent>
-                  {projects.map((project) => (
+                  {uniqueProjects.map((project) => (
                     <SelectItem key={project.id} value={String(project.id)}>{project.name}</SelectItem>
                   ))}
                 </SelectContent>
