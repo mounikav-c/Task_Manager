@@ -1,4 +1,19 @@
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+const API_HOST =
+  typeof window !== "undefined" && window.location.hostname
+    ? window.location.hostname
+    : "127.0.0.1";
+
+const API_BASE_URL = `http://${API_HOST}:8000/api`;
+
+function getCookie(name: string) {
+  if (typeof document === "undefined") {
+    return "";
+  }
+
+  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = document.cookie.match(new RegExp(`(?:^|; )${escapedName}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : "";
+}
 
 export interface TeamMember {
   id: number;
@@ -111,10 +126,16 @@ function withDepartment(endpoint: string, departmentId?: number | null) {
 }
 
 async function request<T>(endpoint: string, options?: RequestInit, departmentId?: number | null): Promise<T> {
+  const method = (options?.method ?? "GET").toUpperCase();
+  const csrfToken = getCookie("taskmanager_csrftoken");
+
   const response = await fetch(withDepartment(endpoint, departmentId), {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...(method !== "GET" && method !== "HEAD" && csrfToken
+        ? { "X-CSRFToken": csrfToken }
+        : {}),
       ...(options?.headers || {}),
     },
     ...options,

@@ -561,26 +561,37 @@ const App = () => {
   );
 
   const handleLogout = useCallback(() => {
+    const resetWorkspaceState = () => {
+      setIsAuthenticated(false);
+      setAuthUser(null);
+      setDepartments([]);
+      setSelectedDepartmentId(null);
+      setTasks([]);
+      setAvailableTasks([]);
+      setTeamMembers([]);
+      setProjects([]);
+      setMeetings([]);
+      setLoadError(null);
+      setDialogOpen(false);
+      setMemberDialogOpen(false);
+      setProjectDialogOpen(false);
+      setMeetingDialogOpen(false);
+      setEditingTask(null);
+      setEditingProject(null);
+      setEditingMeeting(null);
+      setInitialProjectId(undefined);
+      setIsInitialLoading(false);
+    };
+
     const logoutUser = async () => {
       try {
         await api.logout();
-        setIsAuthenticated(false);
-        setAuthUser(null);
-        setDepartments([]);
-        setSelectedDepartmentId(null);
-        setLoadError(null);
-        setDialogOpen(false);
-        setMemberDialogOpen(false);
-        setProjectDialogOpen(false);
-        setMeetingDialogOpen(false);
-        setEditingTask(null);
-        setEditingProject(null);
-        setEditingMeeting(null);
-        setInitialProjectId(undefined);
+        resetWorkspaceState();
         toast.success("Logged out");
       } catch (error) {
         console.error("Failed to log out", error);
-        toast.error("Could not log out");
+        resetWorkspaceState();
+        toast.success("Logged out");
       }
     };
 

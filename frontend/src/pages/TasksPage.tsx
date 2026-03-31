@@ -302,48 +302,58 @@ export function TasksPage({ tasks, availableTasks, projects, teamMembers, onEdit
               <p className="mt-1 text-xs text-muted-foreground">Any new unassigned task will show up here.</p>
             </div>
           ) : (
-            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-4 space-y-2.5">
               {availableTasks.map((task) => (
                 <article
                   key={task.id}
-                  className={`rounded-[1rem] border border-white/60 border-l-[3px] ${boardCardAccent[task.priority]} bg-[linear-gradient(135deg,rgba(255,255,255,0.86),rgba(248,250,252,0.76))] p-4 shadow-[0_18px_30px_-24px_rgba(15,23,42,0.14)]`}
+                  className={`group rounded-[0.95rem] border border-white/65 border-l-4 ${boardCardAccent[task.priority]} bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(247,250,252,0.9))] px-4 py-3 shadow-[0_18px_32px_-34px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.84)] transition-all duration-200 hover:border-indigo-200/50 hover:shadow-[0_22px_36px_-34px_rgba(15,23,42,0.2)]`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h4 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{task.title}</h4>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {getProjectById(projects, task.projectId)?.name ?? "Unassigned project"}
+                  <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="inline-flex items-center rounded-full border border-indigo-200/45 bg-indigo-50/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-700">
+                          {getProjectById(projects, task.projectId)?.name ?? "Unassigned Project"}
+                        </div>
+                        <span className={`priority-pill priority-${task.priority} whitespace-nowrap shadow-sm`}>
+                          {task.priority}
+                        </span>
+                        <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                          Unassigned
+                        </span>
+                        <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                          task.dueDate && task.dueDate < today
+                            ? "border-rose-200 bg-rose-50 text-rose-600"
+                            : "border-amber-200 bg-amber-50 text-amber-700"
+                        }`}>
+                          <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
+                          {task.dueDate
+                            ? new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                            : "No due date"}
+                        </span>
+                      </div>
+
+                      <h4 className="mt-2 text-[0.98rem] font-semibold leading-6 text-slate-900 transition-colors group-hover:text-primary">
+                        {task.title}
+                      </h4>
+                      <p className="mt-1 line-clamp-1 text-sm text-slate-600">
+                        {task.description || "No description added yet."}
                       </p>
                     </div>
-                    <span className={`priority-pill priority-${task.priority} whitespace-nowrap`}>
-                      {task.priority}
-                    </span>
+
+                    <div className="flex items-center justify-between gap-3 xl:min-w-[220px] xl:justify-end">
+                      <div className="text-[11px] text-slate-500 xl:text-right">
+                        Ready to be claimed
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={() => onClaimTask(task.id)}
+                        disabled={isClaimingTask || !canEditSelectedDepartment}
+                        className="h-9 rounded-full border border-indigo-200/70 bg-[linear-gradient(135deg,#eef2ff_0%,#e9e7ff_52%,#f5f3ff_100%)] px-4 text-sm font-semibold text-indigo-700 shadow-[0_14px_24px_-20px_rgba(79,70,229,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300/80 hover:bg-[linear-gradient(135deg,#e0e7ff_0%,#ede9fe_52%,#f5f3ff_100%)] hover:text-indigo-800"
+                      >
+                        {!canEditSelectedDepartment ? "View Only" : isClaimingTask ? "Claiming..." : "Claim Task"}
+                      </Button>
+                    </div>
                   </div>
-
-                  <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
-                    {task.description || "No description added yet."}
-                  </p>
-
-                  <div className="mt-4 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                    <span className="rounded-full border border-border/60 bg-white/70 px-2.5 py-1">
-                      Unassigned
-                    </span>
-                    <span className={`inline-flex items-center gap-1.5 ${task.dueDate && task.dueDate < today ? "font-medium text-rose-500" : ""}`}>
-                      <CalendarDays className="h-3.5 w-3.5" />
-                      {task.dueDate
-                        ? new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-                        : "No due date"}
-                    </span>
-                  </div>
-
-                  <Button
-                    type="button"
-                    onClick={() => onClaimTask(task.id)}
-                    disabled={isClaimingTask || !canEditSelectedDepartment}
-                    className="mt-4 h-9 w-full rounded-xl bg-[linear-gradient(135deg,#059669_0%,#0f766e_100%)] text-white hover:brightness-105"
-                  >
-                    {!canEditSelectedDepartment ? "View Only" : isClaimingTask ? "Claiming..." : "Claim Task"}
-                  </Button>
                 </article>
               ))}
             </div>
