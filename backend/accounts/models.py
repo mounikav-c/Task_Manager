@@ -11,7 +11,7 @@ class Department(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["name"]
+        db_table = "department"
 
     def __str__(self):
         return self.name
@@ -33,7 +33,7 @@ class TeamMember(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["name"]
+        db_table = "team_member"
 
     def __str__(self):
         return self.name
@@ -79,7 +79,7 @@ class Project(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["name"]
+        db_table = "project"
 
     def __str__(self):
         return self.name
@@ -131,7 +131,7 @@ class Task(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-created_at"]
+        db_table = "task"
 
     def __str__(self):
         return self.title
@@ -179,7 +179,7 @@ class Meeting(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["scheduled_for", "title"]
+        db_table = "meeting"
 
     def __str__(self):
         return self.title
@@ -217,7 +217,7 @@ class AuthUserProfile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-updated_at"]
+        db_table = "auth_user_profile"
 
     def __str__(self):
         return f"{self.user.username} ({self.provider})"
@@ -237,7 +237,7 @@ class ContactMessage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["-created_at"]
+        db_table = "contact_message"
 
     def __str__(self):
         return f"{self.name} <{self.email}>"
