@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.db import transaction
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -1019,19 +1019,27 @@ class ContactMessageView(APIView):
 
         if support_email:
             try:
-                send_mail(
+                email = EmailMessage(
                     subject=f"TaskFlow support request from {contact_message.name}",
-                    message=(
+                    body=(
                         f"Name: {contact_message.name}\n"
                         f"Email: {contact_message.email}\n\n"
                         f"Message:\n{contact_message.message}"
                     ),
                     from_email=from_email or None,
-                    recipient_list=[support_email],
-                    fail_silently=False,
+                    to=[support_email],
+                    reply_to=[contact_message.email],
                 )
-            except Exception:
-                pass
+                email.send(fail_silently=False)
+            except Exception as exc:
+                return Response(
+                    {
+                        "detail": "Message was saved, but the support email could not be delivered.",
+                        "error": str(exc),
+                        "message": ContactMessageSerializer(contact_message).data,
+                    },
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
 
         return Response(
             {
