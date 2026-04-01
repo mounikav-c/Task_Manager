@@ -1,5 +1,5 @@
 import { ArrowLeft, CalendarDays, LayoutGrid, List, Plus, Users, X } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { TopNav } from "@/components/TopNav";
@@ -100,6 +100,7 @@ export function TasksPage({ tasks, availableTasks, projects, teamMembers, onEdit
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [workloadViewByMember, setWorkloadViewByMember] = useState<Record<string, "active" | "completed">>({});
   const filter = searchParams.get("filter") || "all";
   const assigneeFilter = searchParams.get("assignee") || "all";
   const projectFilter = searchParams.get("project") || "all";
@@ -161,6 +162,8 @@ export function TasksPage({ tasks, availableTasks, projects, teamMembers, onEdit
           completedCount: completed.length,
           overdueCount: overdue,
           nextTask: open[0],
+          activeTasks: open,
+          completedTasks: completed,
           loadWidth: `${Math.max(10, Math.round((open.length / maxOpen) * 100))}%`,
         };
       })
@@ -582,22 +585,71 @@ export function TasksPage({ tasks, availableTasks, projects, teamMembers, onEdit
                     </div>
 
                     <div className="mt-4 flex items-center justify-between text-xs">
-                      <span className="rounded-full border border-border/60 bg-card px-2.5 py-1 text-muted-foreground">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setWorkloadViewByMember((current) => ({
+                            ...current,
+                            [entry.member.id]: "completed",
+                          }));
+                        }}
+                        className={`rounded-full border px-2.5 py-1 ${
+                          (workloadViewByMember[entry.member.id] ?? "active") === "completed"
+                            ? "border-border/80 bg-card text-foreground"
+                            : "border-border/60 bg-card text-muted-foreground"
+                        }`}
+                      >
                         {entry.completedCount} completed
-                      </span>
-                      <span className="rounded-full border border-primary/15 bg-primary/8 px-2.5 py-1 text-primary">
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setWorkloadViewByMember((current) => ({
+                            ...current,
+                            [entry.member.id]: "active",
+                          }));
+                        }}
+                        className={`rounded-full border px-2.5 py-1 ${
+                          (workloadViewByMember[entry.member.id] ?? "active") === "active"
+                            ? "border-primary/20 bg-primary/10 text-primary"
+                            : "border-primary/15 bg-primary/8 text-primary"
+                        }`}
+                      >
                         {entry.openCount} active
-                      </span>
+                      </button>
                     </div>
 
                     <div className="mt-4 rounded-xl border border-border/60 bg-card/70 px-3 py-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Next Task</p>
-                      <p className="mt-2 truncate text-sm font-medium text-foreground">
-                        {entry.nextTask?.title ?? "No open tasks"}
-                      </p>
-                      <p className="mt-1 truncate text-xs text-muted-foreground">
-                        {entry.nextTask ? getProjectById(projects, entry.nextTask.projectId)?.name ?? "Unassigned" : "Nothing pending"}
-                      </p>
+                      {(() => {
+                        const selectedView = workloadViewByMember[entry.member.id] ?? "active";
+                        const visibleTasks = selectedView === "completed" ? entry.completedTasks : entry.activeTasks;
+
+                        return (
+                          <>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                              {selectedView === "completed" ? "Completed Tasks" : "Active Tasks"}
+                            </p>
+                            {visibleTasks.length === 0 ? (
+                              <p className="mt-2 text-sm text-muted-foreground">
+                                {selectedView === "completed" ? "No completed tasks" : "No active tasks"}
+                              </p>
+                            ) : (
+                              <div className="mt-2 space-y-2">
+                                {visibleTasks.map((task) => (
+                                  <div key={task.id} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
+                                    <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
+                                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                                      {getProjectById(projects, task.projectId)?.name ?? "Unassigned"}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   </button>
                 ))}
