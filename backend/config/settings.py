@@ -1,3 +1,4 @@
+import importlib.util
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -57,14 +58,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DB_ENGINE = os.getenv("DB_ENGINE")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
+def _env(name: str) -> str:
+    return os.getenv(name, "").strip()
 
-if DB_ENGINE:
+
+DB_ENGINE = _env("DB_ENGINE")
+DB_NAME = _env("DB_NAME")
+DB_USER = _env("DB_USER")
+DB_PASSWORD = _env("DB_PASSWORD")
+DB_HOST = _env("DB_HOST")
+DB_PORT = _env("DB_PORT")
+POSTGRES_DRIVER_INSTALLED = importlib.util.find_spec("psycopg") or importlib.util.find_spec("psycopg2")
+
+if DB_ENGINE and POSTGRES_DRIVER_INSTALLED:
     DATABASES = {
         "default": {
             "ENGINE": DB_ENGINE,
