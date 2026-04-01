@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Meeting, Project, Task, TeamMember
+from .models import AuthUserProfile, Meeting, Project, Task, TeamMember
 
 
 class TeamMemberSerializer(serializers.ModelSerializer):
@@ -104,3 +104,60 @@ class MeetingSerializer(serializers.ModelSerializer):
                 )
 
         return attrs
+
+
+class UserProfileSerializer(serializers.Serializer):
+    first_name = serializers.CharField(max_length=150, allow_blank=True)
+    last_name = serializers.CharField(max_length=150, allow_blank=True)
+    email = serializers.EmailField(read_only=True)
+
+    def to_representation(self, instance):
+        user = instance["user"]
+        profile = instance.get("profile")
+
+        first_name = getattr(user, "first_name", "") or (profile.given_name if profile else "")
+        last_name = getattr(user, "last_name", "") or (profile.family_name if profile else "")
+        email = user.email or (profile.email if profile else "")
+
+        return {
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": email,
+        }
+
+    def update(self, instance, validated_data):
+        user = instance["user"]
+        profile = instance.get("profile")
+
+        first_name = validated_data.get("first_name", "")
+        last_name = validated_data.get("last_name", "")
+
+        changed_fields = []
+        if getattr(user, "first_name", "") != first_name:
+            user.first_name = first_name
+            changed_fields.append("first_name")
+        if getattr(user, "last_name", "") != last_name:
+            user.last_name = last_name
+            changed_fields.append("last_name")
+
+        if changed_fields:
+            user.save(update_fields=changed_fields)
+
+        full_name = " ".join(part for part in [first_name, last_name] if part).strip()
+        profile_defaults = {
+            "provider": profile.provider if profile else "demo",
+            "email": user.email or (profile.email if profile else ""),
+            "full_name": full_name,
+            "given_name": first_name,
+            "family_name": last_name,
+            "home_department": profile.home_department if profile else None,
+            "picture_url": profile.picture_url if profile else "",
+            "google_sub": profile.google_sub if profile else "",
+            "session_id": profile.session_id if profile else "",
+            "session_expires_at": profile.session_expires_at if profile else None,
+            "last_login_at": profile.last_login_at if profile else None,
+        }
+
+        AuthUserProfile.objects.update_or_create(user=user, defaults=profile_defaults)
+        refreshed_profile = AuthUserProfile.objects.filter(user=user).first()
+        return {"user": user, "profile": refreshed_profile}
