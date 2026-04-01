@@ -20,8 +20,8 @@ export function TopNav({ title }: TopNavProps) {
         <SidebarTrigger className="rounded-lg border border-border/50 text-muted-foreground hover:bg-accent hover:text-foreground h-8 w-8" />
         <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
         {selectedDepartment && (
-          <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${canEditSelectedDepartment ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
-            {selectedDepartment.name} {canEditSelectedDepartment ? "" : "Read Only"}
+          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+            {selectedDepartment.name}
           </span>
         )}
       </div>

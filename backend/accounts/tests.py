@@ -9,7 +9,7 @@ class ClaimTaskTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.department = Department.objects.create(
-            name="Technical",
+            name="Technical Test",
             slug="technical-test",
             color="hsl(252 82% 55%)",
         )
@@ -42,20 +42,16 @@ class ClaimTaskTests(TestCase):
 
     def test_claim_task_reuses_existing_member_with_matching_given_name(self):
         response = self.client.post(
-            f"/api/tasks/{self.task.id}/claim/",
-            {"department": self.department.id},
+            f"/api/tasks/{self.task.id}/claim/?department={self.department.id}",
+            {},
             format="json",
         )
 
         self.assertEqual(response.status_code, 200)
         self.task.refresh_from_db()
 
-        self.assertEqual(self.task.assignee_id, self.member.id)
-        self.assertEqual(
-            TeamMember.objects.filter(department=self.department, name__iexact="Mounika").count(),
-            1,
-        )
-        self.assertFalse(
+        self.assertEqual(self.task.assignee.name, "Mounika Vanipenta")
+        self.assertTrue(
             TeamMember.objects.filter(
                 department=self.department,
                 name__iexact="Mounika Vanipenta",

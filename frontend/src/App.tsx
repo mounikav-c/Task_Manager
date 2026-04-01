@@ -241,10 +241,7 @@ const App = () => {
   const [isSavingProject, setIsSavingProject] = useState(false);
   const [isSavingMeeting, setIsSavingMeeting] = useState(false);
   const googleAuthInProgressRef = useRef(false);
-  const canEditSelectedDepartment =
-    authUser?.home_department_id == null || selectedDepartmentId == null
-      ? true
-      : authUser.home_department_id === selectedDepartmentId;
+  const canEditSelectedDepartment = true;
   const handleSelectDepartment = useCallback((departmentId: number) => {
     setIsInitialLoading(true);
     setSelectedDepartmentId(departmentId);

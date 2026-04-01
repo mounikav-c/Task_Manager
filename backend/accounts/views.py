@@ -13,7 +13,6 @@ from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -587,8 +586,7 @@ def is_home_department_request(request):
 
 
 def ensure_department_is_editable(request):
-    if not is_home_department_request(request):
-        raise PermissionDenied("This department is view-only.")
+    return None
 
 
 def resolve_team_member_for_user(user, department=None):
@@ -946,8 +944,6 @@ class TaskViewSet(viewsets.ModelViewSet):
     def claim_task(self, request, pk=None):
         if not request.user or not request.user.is_authenticated:
             return Response({"detail": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
-        if not is_home_department_request(request):
-            return Response({"detail": "This department is view-only."}, status=status.HTTP_403_FORBIDDEN)
 
         task = self.get_object()
         if task.assignee_id is not None:
