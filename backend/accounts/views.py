@@ -13,11 +13,13 @@ from google.oauth2 import id_token
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import AuthUserProfile
 from .models import Department, Meeting, Project, Task, TeamMember
-from .serializers import MeetingSerializer, ProjectSerializer, TaskSerializer, TeamMemberSerializer
+from .serializers import MeetingSerializer, ProjectSerializer, TaskSerializer, TeamMemberSerializer, UserProfileSerializer
 
 
 @api_view(["GET"])
@@ -981,3 +983,23 @@ class MeetingViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         ensure_department_is_editable(self.request)
         instance.delete()
+
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        profile = get_auth_profile(request.user)
+        serializer = UserProfileSerializer({"user": request.user, "profile": profile})
+        return Response(serializer.data)
+
+    def patch(self, request):
+        profile = get_auth_profile(request.user)
+        serializer = UserProfileSerializer(
+            {"user": request.user, "profile": profile},
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.save()
+        return Response(UserProfileSerializer(payload).data)

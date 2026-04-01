@@ -12,6 +12,7 @@ from .views import (
     google_login,
     google_token_login,
     health_check,
+    UserProfileView,
 )
 
 router = DefaultRouter()
@@ -27,5 +28,6 @@ urlpatterns = [
     path("auth/google/", google_login, name="auth-google-login"),
     path("auth/google/token/", google_token_login, name="auth-google-token-login"),
     path("auth/logout/", auth_logout, name="auth-logout"),
+    path("auth/profile/", UserProfileView.as_view(), name="auth-profile"),
     path("", include(router.urls)),
 ]

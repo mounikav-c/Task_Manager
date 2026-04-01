@@ -96,6 +96,12 @@ export interface AuthSession {
   }>;
 }
 
+export interface UserProfile {
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
 function getErrorMessage(payload: unknown, fallback: string) {
   if (!payload || typeof payload !== "object") {
     return fallback;
@@ -162,6 +168,7 @@ async function request<T>(endpoint: string, options?: RequestInit, departmentId?
 
 export const api = {
   getAuthSession: () => request<AuthSession>("/auth/session/"),
+  getUserProfile: () => request<UserProfile>("/auth/profile/"),
   loginDemo: () =>
     request<AuthSession>("/auth/demo-login/", {
       method: "POST",
@@ -180,6 +187,11 @@ export const api = {
   logout: () =>
     request<{ authenticated: boolean }>("/auth/logout/", {
       method: "POST",
+    }),
+  updateUserProfile: (data: { first_name: string; last_name: string }) =>
+    request<UserProfile>("/auth/profile/", {
+      method: "PATCH",
+      body: JSON.stringify(data),
     }),
   getMembers: (departmentId?: number | null) => request<TeamMember[]>("/members/", undefined, departmentId),
   getProjects: (departmentId?: number | null) => request<Project[]>("/projects/", undefined, departmentId),
