@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+CONTACT_SUPPORT_EMAIL = os.getenv("CONTACT_SUPPORT_EMAIL", "support@taskflow.app")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@taskflow.app")
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 
 
 SECRET_KEY = "django-insecure-change-this-later"

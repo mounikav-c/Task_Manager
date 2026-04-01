@@ -2,6 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
+    ContactMessageView,
     MeetingViewSet,
     ProjectViewSet,
     TaskViewSet,
@@ -29,5 +30,6 @@ urlpatterns = [
     path("auth/google/token/", google_token_login, name="auth-google-token-login"),
     path("auth/logout/", auth_logout, name="auth-logout"),
     path("auth/profile/", UserProfileView.as_view(), name="auth-profile"),
+    path("contact/", ContactMessageView.as_view(), name="contact-message"),
     path("", include(router.urls)),
 ]

@@ -221,3 +221,23 @@ class AuthUserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} ({self.provider})"
+
+
+class ContactMessage(models.Model):
+    name = models.CharField(max_length=120)
+    email = models.EmailField()
+    message = models.TextField()
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contact_messages",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.name} <{self.email}>"

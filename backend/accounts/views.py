@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
+from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -18,8 +19,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import AuthUserProfile
-from .models import Department, Meeting, Project, Task, TeamMember
-from .serializers import MeetingSerializer, ProjectSerializer, TaskSerializer, TeamMemberSerializer, UserProfileSerializer
+from .models import ContactMessage, Department, Meeting, Project, Task, TeamMember
+from .serializers import ContactMessageSerializer, MeetingSerializer, ProjectSerializer, TaskSerializer, TeamMemberSerializer, UserProfileSerializer
 
 
 @api_view(["GET"])
@@ -1003,3 +1004,39 @@ class UserProfileView(APIView):
         serializer.is_valid(raise_exception=True)
         payload = serializer.save()
         return Response(UserProfileSerializer(payload).data)
+
+
+class ContactMessageView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ContactMessageSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        contact_message = serializer.save(user=request.user)
+
+        support_email = getattr(settings, "CONTACT_SUPPORT_EMAIL", "").strip()
+        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "").strip()
+
+        if support_email:
+            try:
+                send_mail(
+                    subject=f"TaskFlow support request from {contact_message.name}",
+                    message=(
+                        f"Name: {contact_message.name}\n"
+                        f"Email: {contact_message.email}\n\n"
+                        f"Message:\n{contact_message.message}"
+                    ),
+                    from_email=from_email or None,
+                    recipient_list=[support_email],
+                    fail_silently=False,
+                )
+            except Exception:
+                pass
+
+        return Response(
+            {
+                "detail": "Message sent successfully.",
+                "message": ContactMessageSerializer(contact_message).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )

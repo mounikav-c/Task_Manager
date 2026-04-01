@@ -102,6 +102,12 @@ export interface UserProfile {
   email: string;
 }
 
+export interface ContactMessagePayload {
+  name: string;
+  email: string;
+  message: string;
+}
+
 function getErrorMessage(payload: unknown, fallback: string) {
   if (!payload || typeof payload !== "object") {
     return fallback;
@@ -193,6 +199,14 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
+  createContactMessage: (data: ContactMessagePayload) =>
+    request<{ detail: string; message: { id: number; name: string; email: string; message: string; created_at: string } }>(
+      "/contact/",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    ),
   getMembers: (departmentId?: number | null) => request<TeamMember[]>("/members/", undefined, departmentId),
   getProjects: (departmentId?: number | null) => request<Project[]>("/projects/", undefined, departmentId),
   getTasks: (departmentId?: number | null) => request<Task[]>("/tasks/", undefined, departmentId),
