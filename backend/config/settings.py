@@ -1,14 +1,32 @@
+import importlib.util
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 
 
+def _env(name: str) -> str:
+    return os.getenv(name, "").strip()
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
-CONTACT_SUPPORT_EMAIL = os.getenv("CONTACT_SUPPORT_EMAIL", "support@taskflow.app")
+CONTACT_SUPPORT_EMAIL = os.getenv("CONTACT_SUPPORT_EMAIL", "mounikavanipenta95@gmail.com")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@taskflow.app")
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = _env("EMAIL_HOST")
+EMAIL_PORT = int(_env("EMAIL_PORT") or "587")
+EMAIL_HOST_USER = _env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = _env("EMAIL_HOST_PASSWORD")
+EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", False)
 
 
 SECRET_KEY = "django-insecure-change-this-later"
@@ -58,14 +76,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DB_ENGINE = os.getenv("DB_ENGINE")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
+DB_ENGINE = _env("DB_ENGINE")
+DB_NAME = _env("DB_NAME")
+DB_USER = _env("DB_USER")
+DB_PASSWORD = _env("DB_PASSWORD")
+DB_HOST = _env("DB_HOST")
+DB_PORT = _env("DB_PORT")
+POSTGRES_DRIVER_INSTALLED = importlib.util.find_spec("psycopg") or importlib.util.find_spec("psycopg2")
 
-if DB_ENGINE:
+if DB_ENGINE and POSTGRES_DRIVER_INSTALLED:
     DATABASES = {
         "default": {
             "ENGINE": DB_ENGINE,

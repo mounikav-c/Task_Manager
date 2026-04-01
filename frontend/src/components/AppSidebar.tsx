@@ -1,8 +1,10 @@
-import { CalendarDays, FolderKanban, HelpCircle, LayoutDashboard, ListTodo, LogOut, Settings, Users, Sparkles, MessageCircle } from "lucide-react";
+import { CalendarDays, FolderKanban, HelpCircle, LayoutDashboard, ListTodo, LogOut, MessageCircleMore, Settings, Users, Sparkles } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuthUser } from "@/contexts/AuthUserContext";
+import type { DirectMessageMember } from "@/lib/api";
 import {
   Sidebar,
   SidebarContent,
@@ -36,11 +38,12 @@ interface AppSidebarProps {
   onAddProject: () => void;
   onAddMember: () => void;
   onLogout: () => void;
+  directMessageMembers: DirectMessageMember[];
 }
 
-export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarProps) {
+export function AppSidebar({ onAddProject, onAddMember, onLogout, directMessageMembers }: AppSidebarProps) {
   const { state } = useSidebar();
-  const { departments, selectedDepartmentId, canEditSelectedDepartment, onSelectDepartment } = useAuthUser();
+  const { user, departments, selectedDepartmentId, canEditSelectedDepartment, onSelectDepartment } = useAuthUser();
   const collapsed = state === "collapsed";
   const selectedDepartment = departments.find((department) => department.id === selectedDepartmentId);
 
@@ -114,6 +117,63 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout }: AppSidebarPr
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator className="my-3 bg-sidebar-border/50" />
+
+        <SidebarGroup className="px-0">
+          {!collapsed && <SidebarGroupLabel className="px-2 text-[10px] uppercase tracking-[0.2em] text-sidebar-foreground/35 font-semibold">Direct Messages</SidebarGroupLabel>}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/messages"
+                    className="sidebar-nav-link flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-150"
+                    activeClassName="text-indigo-700 border border-indigo-300/30 font-semibold"
+                  >
+                    <MessageCircleMore className="h-4 w-4 shrink-0" />
+                    {!collapsed && <span>Direct Messages</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {!collapsed &&
+                directMessageMembers.map((member) => (
+                  <SidebarMenuItem key={member.id}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={`/messages/${member.id}`}
+                        className={`sidebar-nav-link flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
+                          member.unread_count > 0
+                            ? "border-emerald-300/60 bg-emerald-50/80 shadow-[0_16px_30px_-24px_rgba(16,185,129,0.5)]"
+                            : "border-transparent"
+                        }`}
+                        activeClassName="text-indigo-700 border border-indigo-300/30 font-semibold"
+                      >
+                        <Avatar className="h-7 w-7 ring-1 ring-white/60">
+                          <AvatarFallback className="text-[10px] font-semibold text-white" style={{ backgroundColor: member.color }}>
+                            {member.initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="truncate">
+                              {member.name}
+                              {member.id === user?.id ? " (You)" : ""}
+                            </span>
+                            {member.unread_count > 0 && (
+                              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-semibold text-white">
+                                {member.unread_count > 9 ? "9+" : member.unread_count}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

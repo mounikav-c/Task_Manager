@@ -15,6 +15,7 @@ import { MemberDetailsPage } from "@/pages/MemberDetailsPage";
 import { ProjectDetailsPage } from "@/pages/ProjectDetailsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { HelpPage } from "@/pages/HelpPage";
+import { DirectMessagesPage } from "@/pages/DirectMessagesPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { SignupPage } from "@/pages/SignupPage";
 import { ChatbotPage } from "@/pages/ChatbotPage";
@@ -23,7 +24,14 @@ import { MemberDialog } from "@/components/MemberDialog";
 import { ProjectDialog } from "@/components/ProjectDialog";
 import { MeetingDialog } from "@/components/MeetingDialog";
 import NotFound from "./pages/NotFound";
-import { api, type Meeting as ApiMeeting, type Project as ApiProject, type Task as ApiTask, type TeamMember as ApiTeamMember } from "@/lib/api";
+import {
+  api,
+  type DirectMessageMember,
+  type Meeting as ApiMeeting,
+  type Project as ApiProject,
+  type Task as ApiTask,
+  type TeamMember as ApiTeamMember,
+} from "@/lib/api";
 import { toast } from "@/components/ui/sonner";
 import { AuthUserProvider } from "@/contexts/AuthUserContext";
 
@@ -221,6 +229,7 @@ const App = () => {
   const [teamMembers, setTeamMembers] = useState<Assignee[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [directMessageMembers, setDirectMessageMembers] = useState<DirectMessageMember[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
@@ -262,12 +271,13 @@ const App = () => {
     }
 
     try {
-      const [tasksData, availableTasksData, membersData, projectsData, meetingsData] = await Promise.all([
+      const [tasksData, availableTasksData, membersData, projectsData, meetingsData, directMessageMembersData] = await Promise.all([
         api.getTasks(selectedDepartmentId),
         api.getAvailableTasks(selectedDepartmentId),
         api.getMembers(selectedDepartmentId),
         api.getProjects(selectedDepartmentId),
         api.getMeetings(selectedDepartmentId),
+        api.getDirectMessageMembers(selectedDepartmentId),
       ]);
 
       const rawProjects = projectsData.map(mapProject);
@@ -305,6 +315,7 @@ const App = () => {
       setTeamMembers(membersData.map(mapMember));
       setProjects(canonicalProjects);
       setMeetings(meetingsData.map(mapMeeting).map((meeting) => remapMeetingProject(meeting, projectIdMap)));
+      setDirectMessageMembers(directMessageMembersData);
     } catch (error) {
       console.error("Failed to load API data", error);
       setLoadError("Could not load workspace data. Check that the Django server is running.");
@@ -313,6 +324,19 @@ const App = () => {
       }
     } finally {
       setIsInitialLoading(false);
+    }
+  }, [selectedDepartmentId]);
+
+  const loadDirectMessageMembers = useCallback(async () => {
+    if (!selectedDepartmentId) {
+      return;
+    }
+
+    try {
+      const members = await api.getDirectMessageMembers(selectedDepartmentId);
+      setDirectMessageMembers(members);
+    } catch (error) {
+      console.error("Failed to refresh direct message members", error);
     }
   }, [selectedDepartmentId]);
 
@@ -347,6 +371,18 @@ const App = () => {
 
     void loadData();
   }, [isAuthenticated, loadData, selectedDepartmentId]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !selectedDepartmentId) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      void loadDirectMessageMembers();
+    }, 4000);
+
+    return () => window.clearInterval(interval);
+  }, [isAuthenticated, loadDirectMessageMembers, selectedDepartmentId]);
 
   const handleNew = useCallback((projectId?: string) => {
     if (!canEditSelectedDepartment) {
@@ -672,6 +708,7 @@ const App = () => {
       setTeamMembers([]);
       setProjects([]);
       setMeetings([]);
+      setDirectMessageMembers([]);
       setLoadError(null);
       setDialogOpen(false);
       setMemberDialogOpen(false);
@@ -834,6 +871,7 @@ const App = () => {
                   onAddProject={handleNewProject}
                   onAddMember={() => setMemberDialogOpen(true)}
                   onLogout={handleLogout}
+                  directMessageMembers={directMessageMembers}
                 />
                 <SidebarInset className="app-shell-main min-w-0 flex-1 overflow-x-auto rounded-[1.5rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.82),rgba(248,250,252,0.74))] shadow-[0_28px_70px_-50px_rgba(15,23,42,0.2),0_18px_40px_-34px_rgba(79,70,229,0.08),inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl">
                   <Routes>
@@ -934,6 +972,8 @@ const App = () => {
                         />
                       }
                     />
+                    <Route path="/messages" element={<DirectMessagesPage members={directMessageMembers} />} />
+                    <Route path="/messages/:memberId" element={<DirectMessagesPage members={directMessageMembers} />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="/help" element={<HelpPage />} />
                     <Route path="/login" element={<Navigate to="/" replace />} />
