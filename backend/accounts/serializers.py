@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import AuthUserProfile, Meeting, Project, Task, TeamMember
+from .models import AuthUserProfile, ContactMessage, Meeting, Project, Task, TeamMember
 
 
 class TeamMemberSerializer(serializers.ModelSerializer):
@@ -161,3 +161,10 @@ class UserProfileSerializer(serializers.Serializer):
         AuthUserProfile.objects.update_or_create(user=user, defaults=profile_defaults)
         refreshed_profile = AuthUserProfile.objects.filter(user=user).first()
         return {"user": user, "profile": refreshed_profile}
+
+
+class ContactMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = ["id", "name", "email", "message", "created_at"]
+        read_only_fields = ["id", "created_at"]
