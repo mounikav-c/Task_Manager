@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
 from django.core.mail import EmailMessage
 from django.db import transaction
+from django.db.models import Count
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.csrf import csrf_exempt
@@ -19,8 +20,20 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import AuthUserProfile
-from .models import ContactMessage, Department, Meeting, Project, Task, TeamMember
-from .serializers import ContactMessageSerializer, MeetingSerializer, ProjectSerializer, TaskSerializer, TeamMemberSerializer, UserProfileSerializer
+from .models import ContactMessage, Conversation, Department, Meeting, Message, Project, Task, TeamMember
+from .serializers import (
+    ContactMessageSerializer,
+    ConversationCreateSerializer,
+    ConversationSerializer,
+    DirectMessageTeamMemberSerializer,
+    MeetingSerializer,
+    MessageCreateSerializer,
+    MessageSerializer,
+    ProjectSerializer,
+    TaskSerializer,
+    TeamMemberSerializer,
+    UserProfileSerializer,
+)
 
 
 @api_view(["GET"])
@@ -44,6 +57,25 @@ def generate_username_from_email(email: str) -> str:
     return username
 
 
+def generate_username_from_name(name: str, suffix: str = "") -> str:
+    user_model = get_user_model()
+    base = re.sub(r"[^a-z0-9_]+", "_", (name or "").strip().lower()).strip("_") or "user"
+    if suffix:
+        suffix_token = re.sub(r"[^a-z0-9_]+", "_", suffix.strip().lower()).strip("_")
+        if suffix_token:
+            base = f"{base}_{suffix_token}"
+    base = base[:150]
+
+    username = base
+    counter = 1
+    while user_model.objects.filter(username=username).exists():
+        token = f"_{counter}"
+        username = f"{base[:150 - len(token)]}{token}"
+        counter += 1
+
+    return username
+
+
 def build_initials(name: str) -> str:
     parts = [part for part in name.strip().split() if part]
     if not parts:
@@ -57,11 +89,97 @@ def normalize_person_name(name: str) -> str:
     return re.sub(r"\s+", " ", (name or "").strip()).casefold()
 
 
+def normalize_person_name_compact(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", normalize_person_name(name))
+
+
+def names_look_like_same_person(left: str, right: str) -> bool:
+    left_normalized = normalize_person_name(left)
+    right_normalized = normalize_person_name(right)
+    if not left_normalized or not right_normalized:
+        return False
+
+    if left_normalized == right_normalized:
+        return True
+
+    left_compact = normalize_person_name_compact(left)
+    right_compact = normalize_person_name_compact(right)
+    if not left_compact or not right_compact:
+        return False
+
+    if left_compact == right_compact:
+        return True
+    return False
+
+
 def get_auth_profile(user):
     if not user or not getattr(user, "is_authenticated", False):
         return None
 
     return AuthUserProfile.objects.filter(user=user).select_related("home_department").first()
+
+
+def get_display_name_for_user(user):
+    profile = get_auth_profile(user)
+    if profile:
+        if profile.full_name.strip():
+            return profile.full_name.strip()
+        combined_name = " ".join(part for part in [profile.given_name, profile.family_name] if part).strip()
+        if combined_name:
+            return combined_name
+
+    full_name = user.get_full_name().strip() if hasattr(user, "get_full_name") else ""
+    return full_name or user.username
+
+
+def ensure_user_profile_for_team_member(team_member):
+    normalized_name = normalize_person_name(team_member.name)
+    existing_profile = (
+        AuthUserProfile.objects.select_related("user", "home_department")
+        .filter(full_name__iexact=team_member.name, home_department=team_member.department)
+        .order_by("id")
+        .first()
+    )
+    if existing_profile is not None:
+        changed_fields = []
+        if existing_profile.home_department_id != team_member.department_id:
+            existing_profile.home_department = team_member.department
+            changed_fields.append("home_department")
+        if not existing_profile.full_name.strip():
+            existing_profile.full_name = team_member.name
+            changed_fields.append("full_name")
+        if changed_fields:
+            existing_profile.save(update_fields=[*changed_fields, "updated_at"])
+        return existing_profile
+
+    for profile in AuthUserProfile.objects.select_related("user", "home_department").filter(home_department=team_member.department):
+        profile_name = normalize_person_name(profile.full_name or profile.user.get_full_name() or profile.user.username)
+        if profile_name == normalized_name:
+            if profile.full_name != team_member.name:
+                profile.full_name = team_member.name
+                profile.save(update_fields=["full_name", "updated_at"])
+            return profile
+
+    user_model = get_user_model()
+    username = generate_username_from_name(team_member.name, team_member.department.slug if team_member.department else "")
+    user = user_model.objects.create_user(
+        username=username,
+        email="",
+        first_name=team_member.name[:150],
+    )
+    user.set_unusable_password()
+    user.save(update_fields=["password", "first_name"])
+
+    profile = AuthUserProfile.objects.create(
+        user=user,
+        home_department=team_member.department,
+        provider="demo",
+        email="",
+        full_name=team_member.name,
+        given_name=team_member.name.split()[0] if team_member.name.strip() else "",
+        family_name=" ".join(team_member.name.split()[1:]) if len(team_member.name.split()) > 1 else "",
+    )
+    return profile
 
 
 DEFAULT_DEPARTMENTS = [
@@ -490,6 +608,7 @@ def ensure_demo_workspace_data():
             if changed_fields and not created:
                 member.save(update_fields=[*changed_fields, "updated_at"])
             members.append(member)
+            ensure_user_profile_for_team_member(member)
 
         for project_index, project_seed in enumerate(PROJECT_SEEDS):
             owner = members[project_index % len(members)] if members else None
@@ -1060,3 +1179,194 @@ class ContactMessageView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class DirectMessageTeamMembersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        active_department = get_active_department(request)
+        if active_department is None:
+            return Response([])
+
+        for team_member in TeamMember.objects.filter(department=active_department).order_by("name", "id"):
+            ensure_user_profile_for_team_member(team_member)
+
+        profiles = list(
+            AuthUserProfile.objects.select_related("user", "home_department")
+            .filter(home_department=active_department, user__is_active=True)
+            .order_by("full_name", "user__username")
+        )
+
+        current_user_profile = get_auth_profile(request.user)
+        if current_user_profile is None or current_user_profile.home_department_id != active_department.id:
+            profiles.insert(
+                0,
+                AuthUserProfile(
+                    user=request.user,
+                    home_department=active_department,
+                    email=request.user.email or "",
+                    full_name=get_display_name_for_user(request.user),
+                ),
+            )
+
+        def profile_priority(profile):
+            return (
+                1 if profile.user_id == request.user.id else 0,
+                1 if (profile.email or profile.user.email or "").strip() else 0,
+                1 if profile.provider != "demo" else 0,
+                len((profile.full_name or "").strip()),
+            )
+
+        payload = []
+        visible_names = []
+
+        for profile in sorted(profiles, key=profile_priority, reverse=True):
+            display_name = profile.full_name.strip() or profile.user.get_full_name().strip() or profile.user.username
+            if any(names_look_like_same_person(display_name, visible_name) for visible_name in visible_names):
+                continue
+
+            visible_names.append(display_name)
+            if profile.user_id == request.user.id:
+                conversation = (
+                    Conversation.objects.annotate(participant_count=Count("participants"))
+                    .filter(participant_count=1, participants=request.user)
+                    .order_by("-updated_at", "-id")
+                    .first()
+                )
+            else:
+                conversation = (
+                    Conversation.objects.annotate(participant_count=Count("participants"))
+                    .filter(participant_count=2, participants=request.user)
+                    .filter(participants=profile.user)
+                    .order_by("-updated_at", "-id")
+                    .first()
+                )
+
+            unread_count = 0
+            last_message_at = None
+            if conversation is not None:
+                unread_count = conversation.messages.exclude(sender=request.user).filter(is_read=False).count()
+                last_message = conversation.messages.order_by("-created_at", "-id").first()
+                last_message_at = last_message.created_at if last_message is not None else conversation.updated_at
+
+            payload.append(
+                {
+                    "id": profile.user_id,
+                    "username": profile.user.username,
+                    "name": display_name,
+                    "initials": build_initials(display_name),
+                    "color": get_member_color(len(payload)),
+                    "email": profile.email or profile.user.email or "",
+                    "unread_count": unread_count,
+                    "last_message_at": last_message_at,
+                }
+            )
+
+        payload.sort(
+            key=lambda item: (
+                item["unread_count"] == 0,
+                item["last_message_at"] is None,
+                -(item["last_message_at"].timestamp() if item["last_message_at"] is not None else 0),
+                item["name"].casefold(),
+            )
+        )
+
+        serializer = DirectMessageTeamMemberSerializer(payload, many=True)
+        return Response(serializer.data)
+
+
+class ConversationCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ConversationCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user_model = get_user_model()
+        receiver = user_model.objects.filter(pk=serializer.validated_data["user_id"], is_active=True).first()
+        if receiver is None:
+            return Response({"detail": "Team member not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        active_department = get_active_department(request)
+        receiver_profile = get_auth_profile(receiver)
+        if active_department is None:
+            return Response({"detail": "Department not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if receiver.pk != request.user.pk and (
+            receiver_profile is None or receiver_profile.home_department_id != active_department.id
+        ):
+            return Response({"detail": "This team member is not in the current department."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if receiver.pk == request.user.pk:
+            conversation = (
+                Conversation.objects.annotate(participant_count=Count("participants"))
+                .filter(participant_count=1, participants=request.user)
+                .order_by("-updated_at", "-id")
+                .first()
+            )
+        else:
+            conversation = (
+                Conversation.objects.annotate(participant_count=Count("participants"))
+                .filter(participant_count=2, participants=request.user)
+                .filter(participants=receiver)
+                .order_by("-updated_at", "-id")
+                .first()
+            )
+
+        if conversation is None:
+            conversation = Conversation.objects.create()
+            if receiver.pk == request.user.pk:
+                conversation.participants.set([request.user])
+            else:
+                conversation.participants.set([request.user, receiver])
+
+        return Response(ConversationSerializer(conversation).data, status=status.HTTP_200_OK)
+
+
+class ConversationMessagesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_conversation(self, request, conversation_id):
+        return (
+            Conversation.objects.prefetch_related("participants")
+            .filter(pk=conversation_id, participants=request.user)
+            .first()
+        )
+
+    def get(self, request, conversation_id):
+        conversation = self.get_conversation(request, conversation_id)
+        if conversation is None:
+            return Response({"detail": "Conversation not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        messages = conversation.messages.select_related("sender").all()
+        unread_messages = messages.exclude(sender=request.user).filter(is_read=False)
+        if unread_messages.exists():
+            unread_messages.update(is_read=True)
+
+        return Response(MessageSerializer(messages, many=True).data)
+
+
+class MessageCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = MessageCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        conversation = (
+            Conversation.objects.prefetch_related("participants")
+            .filter(pk=serializer.validated_data["conversation_id"], participants=request.user)
+            .first()
+        )
+        if conversation is None:
+            return Response({"detail": "Conversation not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        message = Message.objects.create(
+            conversation=conversation,
+            sender=request.user,
+            content=serializer.validated_data["content"].strip(),
+        )
+        conversation.save(update_fields=["updated_at"])
+
+        return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)

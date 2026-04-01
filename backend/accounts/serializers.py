@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import AuthUserProfile, ContactMessage, Meeting, Project, Task, TeamMember
+from .models import AuthUserProfile, ContactMessage, Conversation, Meeting, Message, Project, Task, TeamMember
 
 
 class TeamMemberSerializer(serializers.ModelSerializer):
@@ -168,3 +168,53 @@ class ContactMessageSerializer(serializers.ModelSerializer):
         model = ContactMessage
         fields = ["id", "name", "email", "message", "created_at"]
         read_only_fields = ["id", "created_at"]
+
+
+class DirectMessageTeamMemberSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    username = serializers.CharField()
+    name = serializers.CharField()
+    initials = serializers.CharField()
+    color = serializers.CharField()
+    email = serializers.EmailField(allow_blank=True)
+    unread_count = serializers.IntegerField()
+    last_message_at = serializers.DateTimeField(allow_null=True)
+
+
+class ConversationSerializer(serializers.ModelSerializer):
+    participant_ids = serializers.PrimaryKeyRelatedField(source="participants", many=True, read_only=True)
+
+    class Meta:
+        model = Conversation
+        fields = ["id", "participant_ids", "created_at", "updated_at"]
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Message
+        fields = [
+            "id",
+            "conversation",
+            "sender",
+            "sender_name",
+            "content",
+            "is_read",
+            "created_at",
+        ]
+        read_only_fields = ["id", "sender", "sender_name", "is_read", "created_at"]
+
+    def get_sender_name(self, obj):
+        profile = getattr(obj.sender, "auth_profile", None)
+        full_name = (profile.full_name if profile else "") or obj.sender.get_full_name().strip()
+        return full_name or obj.sender.username
+
+
+class ConversationCreateSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+
+
+class MessageCreateSerializer(serializers.Serializer):
+    conversation_id = serializers.IntegerField()
+    content = serializers.CharField(allow_blank=False, trim_whitespace=True)

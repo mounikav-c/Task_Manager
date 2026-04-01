@@ -102,6 +102,34 @@ export interface UserProfile {
   email: string;
 }
 
+export interface DirectMessageMember {
+  id: number;
+  username: string;
+  name: string;
+  initials: string;
+  color: string;
+  email: string;
+  unread_count: number;
+  last_message_at: string | null;
+}
+
+export interface Conversation {
+  id: number;
+  participant_ids: number[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DirectMessage {
+  id: number;
+  conversation: number;
+  sender: number;
+  sender_name: string;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+}
+
 export interface ContactMessagePayload {
   name: string;
   email: string;
@@ -207,6 +235,20 @@ export const api = {
         body: JSON.stringify(data),
       },
     ),
+  getDirectMessageMembers: (departmentId?: number | null) =>
+    request<DirectMessageMember[]>("/team-members/", undefined, departmentId),
+  createOrGetConversation: (userId: number, departmentId?: number | null) =>
+    request<Conversation>("/conversations/", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId }),
+    }, departmentId),
+  getConversationMessages: (conversationId: number, departmentId?: number | null) =>
+    request<DirectMessage[]>(`/conversations/${conversationId}/messages/`, undefined, departmentId),
+  sendMessage: (conversationId: number, content: string, departmentId?: number | null) =>
+    request<DirectMessage>("/messages/", {
+      method: "POST",
+      body: JSON.stringify({ conversation_id: conversationId, content }),
+    }, departmentId),
   getMembers: (departmentId?: number | null) => request<TeamMember[]>("/members/", undefined, departmentId),
   getProjects: (departmentId?: number | null) => request<Project[]>("/projects/", undefined, departmentId),
   getTasks: (departmentId?: number | null) => request<Task[]>("/tasks/", undefined, departmentId),
