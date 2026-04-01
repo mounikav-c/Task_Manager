@@ -35,4 +35,6 @@ dist-ssr
 *.sln
 *.sw?
 
+backend/taskenv
+.env
 
