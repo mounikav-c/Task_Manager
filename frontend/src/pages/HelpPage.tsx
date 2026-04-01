@@ -189,10 +189,10 @@ export function HelpPage() {
                 <div className="rounded-2xl border border-border/60 bg-card/70 p-4">
                   <p className="text-sm text-muted-foreground">Email support</p>
                   <a
-                    href="mailto:support@taskflow.app"
+                    href="mailto:mounikavanipenta95@gmail.com"
                     className="mt-1 inline-flex text-sm font-semibold text-primary underline-offset-4 transition hover:underline"
                   >
-                    support@taskflow.app
+                    mounikavanipenta95@gmail.com
                   </a>
                 </div>
 
