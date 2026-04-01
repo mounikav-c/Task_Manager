@@ -108,6 +108,12 @@ DEPARTMENT_MEMBER_SEEDS = {
     ],
 }
 
+DEPARTMENT_MEMBER_LOOKUP = {
+    normalize_person_name(member_name): department_slug
+    for department_slug, member_names in DEPARTMENT_MEMBER_SEEDS.items()
+    for member_name in member_names
+}
+
 PROJECT_SEEDS = [
     {
         "name": "72ipo",
@@ -438,10 +444,16 @@ def infer_home_department(user=None, *, email: str = "", full_name: str = ""):
         getattr(user, "email", "") if user is not None else "",
         user.get_full_name() if user is not None and hasattr(user, "get_full_name") else "",
     ]
-    normalized = " ".join(value.strip().lower() for value in candidates if value)
+    normalized_candidates = [normalize_person_name(value) for value in candidates if value and value.strip()]
+    normalized = " ".join(normalized_candidates)
 
-    if "mounika" in normalized:
-        return get_department_by_slug("technical")
+    for member_name, department_slug in DEPARTMENT_MEMBER_LOOKUP.items():
+        if member_name and member_name in normalized:
+            return get_department_by_slug(department_slug)
+
+        name_parts = [part for part in member_name.split() if part]
+        if name_parts and all(part in normalized for part in name_parts[:2]):
+            return get_department_by_slug(department_slug)
 
     return None
 
