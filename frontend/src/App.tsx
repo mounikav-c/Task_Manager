@@ -18,6 +18,7 @@ import { HelpPage } from "@/pages/HelpPage";
 import { DirectMessagesPage } from "@/pages/DirectMessagesPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { SignupPage } from "@/pages/SignupPage";
+import { ChatbotPage } from "@/pages/ChatbotPage";
 import { TaskDialog } from "@/components/TaskDialog";
 import { MemberDialog } from "@/components/MemberDialog";
 import { ProjectDialog } from "@/components/ProjectDialog";
@@ -932,6 +933,10 @@ const App = () => {
                           onEditMeeting={handleEditMeeting}
                         />
                       }
+                    />
+                    <Route
+                      path="/chatbot"
+                      element={<ChatbotPage />}
                     />
                     <Route
                       path="/projects/:projectId"

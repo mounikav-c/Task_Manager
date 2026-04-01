@@ -26,6 +26,7 @@ const mainItems = [
   { title: "Projects", url: "/board", icon: FolderKanban },
   { title: "Meetings", url: "/meetings", icon: CalendarDays },
   { title: "Members", url: "/members", icon: Users },
+  { title: "Chatbot", url: "/chatbot", icon: MessageCircle },
 ];
 
 const generalItems = [
