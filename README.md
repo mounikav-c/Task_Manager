@@ -36,7 +36,7 @@ TaskFlow is a full-stack workspace and task management app with a Django backend
 ```powershell
 cd backend
 python -m venv venv
-.\venv\Scripts\Activate.ps1
+venv\Scripts\Activate
 ```
 
 2. Install Python dependencies:

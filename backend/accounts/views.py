@@ -50,6 +50,10 @@ def build_initials(name: str) -> str:
     return initials[:10]
 
 
+def normalize_person_name(name: str) -> str:
+    return re.sub(r"\s+", " ", (name or "").strip()).casefold()
+
+
 def get_auth_profile(user):
     if not user or not getattr(user, "is_authenticated", False):
         return None
@@ -77,7 +81,7 @@ DEFAULT_DEPARTMENTS = [
 
 DEPARTMENT_MEMBER_SEEDS = {
     "technical": [
-        "Mounika",
+        "Mounika Vanipenta",
         "Uma Bharathi",
         "Venkateswara Rao",
         "Sriya",
@@ -600,6 +604,20 @@ def resolve_team_member_for_user(user, department=None):
     team_member = team_member_query.order_by("id").first()
     if team_member is not None:
         return team_member
+
+    candidate_given_name = (profile.given_name.strip() if profile and profile.given_name else "").casefold()
+    if not candidate_given_name and fallback_name:
+        candidate_given_name = fallback_name.split()[0].casefold()
+
+    if candidate_given_name:
+        similar_members = list(team_member_query)
+        given_name_matches = [
+            member
+            for member in similar_members
+            if normalize_person_name(member.name).split(" ", 1)[0] == candidate_given_name
+        ]
+        if len(given_name_matches) == 1:
+            return given_name_matches[0]
 
     return TeamMember.objects.create(
         name=candidate_name,

@@ -166,6 +166,14 @@ function mapMeeting(meeting: ApiMeeting): Meeting {
   };
 }
 
+function dedupeTasksById(tasks: Task[]) {
+  const uniqueTasks = new Map<string, Task>();
+  tasks.forEach((task) => {
+    uniqueTasks.set(task.id, task);
+  });
+  return Array.from(uniqueTasks.values());
+}
+
 const MEMBER_COLORS = [
   "hsl(267 84% 57%)",
   "hsl(162 63% 41%)",
@@ -291,8 +299,8 @@ const App = () => {
         projectIdMap.set(project.id, canonicalProject.id);
       });
 
-      setTasks(tasksData.map(mapTask).map((task) => remapTaskProject(task, projectIdMap)));
-      setAvailableTasks(availableTasksData.map(mapTask).map((task) => remapTaskProject(task, projectIdMap)));
+      setTasks(dedupeTasksById(tasksData.map(mapTask).map((task) => remapTaskProject(task, projectIdMap))));
+      setAvailableTasks(dedupeTasksById(availableTasksData.map(mapTask).map((task) => remapTaskProject(task, projectIdMap))));
       setTeamMembers(membersData.map(mapMember));
       setProjects(canonicalProjects);
       setMeetings(meetingsData.map(mapMeeting).map((meeting) => remapMeetingProject(meeting, projectIdMap)));
@@ -471,7 +479,15 @@ const App = () => {
       }
       setIsClaimingTask(true);
       try {
-        await api.claimTask(Number(id), selectedDepartmentId);
+        const claimedTask = mapTask(await api.claimTask(Number(id), selectedDepartmentId));
+
+        setTasks((currentTasks) =>
+          dedupeTasksById([
+            ...currentTasks.filter((task) => task.id !== claimedTask.id),
+            claimedTask,
+          ]),
+        );
+        setAvailableTasks((currentTasks) => currentTasks.filter((task) => task.id !== claimedTask.id));
         await loadData({ silent: true });
         toast.success("Task claimed");
       } catch (error) {
