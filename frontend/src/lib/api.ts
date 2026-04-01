@@ -332,4 +332,52 @@ export const api = {
     request<void>(`/tasks/${id}/`, {
       method: "DELETE",
     }, departmentId),
+
+  // Chatbot API methods
+  sendChatMessage: (data: { message: string; session_id?: string }) =>
+    request<{
+      session_id: string;
+      user_message: string;
+      assistant_response: string;
+      meeting_scheduled: boolean;
+      meeting_details: unknown;
+    }>("/chat/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  getChatSessions: () =>
+    request<Array<{
+      id: number;
+      session_id: string;
+      title: string;
+      messages: Array<{
+        id: number;
+        role: "user" | "assistant";
+        content: string;
+        created_at: string;
+      }>;
+      created_at: string;
+      updated_at: string;
+    }>>("/sessions/"),
+
+  getChatHistory: (sessionId: string) =>
+    request<{
+      id: number;
+      session_id: string;
+      title: string;
+      messages: Array<{
+        id: number;
+        role: "user" | "assistant";
+        content: string;
+        created_at: string;
+      }>;
+      created_at: string;
+      updated_at: string;
+    }>(`/sessions/${sessionId}/`),
+
+  deleteChatSession: (sessionId: string) =>
+    request<{ message: string }>(`/sessions/${sessionId}/delete/`, {
+      method: "DELETE",
+    }),
 };

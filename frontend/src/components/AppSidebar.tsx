@@ -1,4 +1,4 @@
-import { CalendarDays, FolderKanban, HelpCircle, LayoutDashboard, ListTodo, LogOut, Settings, Users, Sparkles } from "lucide-react";
+import { CalendarDays, FolderKanban, HelpCircle, LayoutDashboard, ListTodo, LogOut, Settings, Users, Sparkles, MessageCircle } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,6 +24,7 @@ const mainItems = [
   { title: "Projects", url: "/board", icon: FolderKanban },
   { title: "Meetings", url: "/meetings", icon: CalendarDays },
   { title: "Members", url: "/members", icon: Users },
+  { title: "Chatbot", url: "/chatbot", icon: MessageCircle },
 ];
 
 const generalItems = [
