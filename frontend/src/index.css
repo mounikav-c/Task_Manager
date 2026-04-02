@@ -339,6 +339,43 @@
     border-color: rgba(129, 140, 248, 0.32);
   }
 
+  .dm-sidebar-link {
+    color: rgba(71, 85, 105, 0.92);
+    box-shadow: none;
+    border: 1px solid transparent;
+  }
+
+  .dm-sidebar-link:hover {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.04));
+    color: rgb(67 56 202);
+    border-color: rgba(129, 140, 248, 0.14);
+  }
+
+  .dm-sidebar-link-active,
+  .dm-sidebar-link[aria-current="page"] {
+    background: linear-gradient(135deg, rgba(244, 236, 255, 0.95), rgba(250, 245, 255, 0.92));
+    color: rgb(107 33 168);
+    border-color: rgba(196, 181, 253, 0.85);
+    box-shadow:
+      0 8px 18px -16px rgba(109, 40, 217, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  }
+
+  .dm-sidebar-link-active:hover,
+  .dm-sidebar-link[aria-current="page"]:hover {
+    background: linear-gradient(135deg, rgba(241, 232, 255, 0.98), rgba(248, 242, 255, 0.95));
+    border-color: rgba(167, 139, 250, 0.8);
+  }
+
+  .dm-sidebar-link-unread {
+    color: rgb(51 65 85);
+  }
+
+  .dm-sidebar-you-badge {
+    background: rgba(226, 232, 240, 0.9);
+    color: rgb(100 116 139);
+  }
+
   /* ─── Project Cards ─── */
   .project-card {
     @apply rounded-[1.4rem] border border-border/70 bg-card p-4 transition-all duration-200;

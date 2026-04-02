@@ -1,9 +1,11 @@
 import requests
 import re
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
 from django.core.mail import EmailMessage
+from django.db.models import Count
 from django.db import transaction
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -12,13 +14,27 @@ from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .helpers.taskdashboard import build_auth_response
 from .models import AuthUserProfile
-from .models import ContactMessage, Department, Meeting, Project, Task, TeamMember
-from .serializers import ContactMessageSerializer, MeetingSerializer, ProjectSerializer, TaskSerializer, TeamMemberSerializer, UserProfileSerializer
+from .models import ContactMessage, Conversation, Department, Meeting, Message, Project, Task, TeamMember
+from .serializers import (
+    ContactMessageSerializer,
+    ConversationCreateSerializer,
+    ConversationSerializer,
+    DirectMessageTeamMemberSerializer,
+    MeetingSerializer,
+    MessageCreateSerializer,
+    MessageSerializer,
+    ProjectSerializer,
+    TaskSerializer,
+    TeamMemberSerializer,
+    UserProfileSerializer,
+)
 
 
 @api_view(["GET"])
@@ -55,11 +71,85 @@ def normalize_person_name(name: str) -> str:
     return re.sub(r"\s+", " ", (name or "").strip()).casefold()
 
 
+def names_look_like_same_person(left_name: str, right_name: str) -> bool:
+    left_normalized = normalize_person_name(left_name)
+    right_normalized = normalize_person_name(right_name)
+    if not left_normalized or not right_normalized:
+        return False
+
+    if left_normalized == right_normalized:
+        return True
+
+    left_parts = left_normalized.split()
+    right_parts = right_normalized.split()
+
+    if left_parts and right_parts and left_parts[0] == right_parts[0]:
+        left_last = left_parts[-1]
+        right_last = right_parts[-1]
+        if left_last == right_last:
+            return True
+
+        if left_last.startswith(right_last) or right_last.startswith(left_last):
+            return True
+
+    return False
+
+
 def get_auth_profile(user):
     if not user or not getattr(user, "is_authenticated", False):
         return None
 
     return AuthUserProfile.objects.filter(user=user).select_related("home_department").first()
+
+
+def get_display_name_for_user(user) -> str:
+    profile = get_auth_profile(user)
+    if profile and profile.full_name.strip():
+        return profile.full_name.strip()
+
+    full_name = user.get_full_name().strip() if hasattr(user, "get_full_name") else ""
+    return full_name or user.username
+
+
+def ensure_user_profile_for_team_member(team_member):
+    if team_member is None:
+        return None
+
+    existing_profile = (
+        AuthUserProfile.objects.select_related("user", "home_department")
+        .filter(home_department=team_member.department, full_name__iexact=team_member.name)
+        .order_by("id")
+        .first()
+    )
+    if existing_profile is not None:
+        return existing_profile
+
+    user_model = get_user_model()
+    username_base = re.sub(r"[^a-z0-9_]+", "_", team_member.name.lower().strip()).strip("_") or "user"
+    username_base = username_base[:150]
+    username = username_base
+    suffix = 1
+    while user_model.objects.filter(username=username).exists():
+        token = f"_{suffix}"
+        username = f"{username_base[:150 - len(token)]}{token}"
+        suffix += 1
+
+    user = user_model.objects.create_user(
+        username=username,
+        email="",
+        first_name=team_member.name[:150],
+    )
+    user.set_unusable_password()
+    user.save(update_fields=["password"])
+
+    return AuthUserProfile.objects.create(
+        user=user,
+        home_department=team_member.department,
+        provider="demo",
+        email="",
+        full_name=team_member.name,
+        given_name=team_member.name.split()[0] if team_member.name.strip() else "",
+    )
 
 
 DEFAULT_DEPARTMENTS = [

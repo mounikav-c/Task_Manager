@@ -30,30 +30,35 @@ export function DirectMessagesPage({ members }: Props) {
   const [isLoadingConversation, setIsLoadingConversation] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const activeConversationKeyRef = useRef<string | null>(null);
 
   const selectedMember = useMemo(
     () => members.find((member) => String(member.id) === memberId) ?? null,
     [memberId, members],
   );
+  const selectedMemberId = selectedMember?.id ?? null;
 
   useEffect(() => {
-    if (!selectedMember) {
+    if (!selectedMember || !selectedMemberId) {
       setConversation(null);
       setMessages([]);
+      activeConversationKeyRef.current = null;
       return;
     }
 
     let isCancelled = false;
+    const conversationKey = `${selectedDepartmentId ?? "none"}:${selectedMemberId}`;
 
     const loadConversation = async () => {
-      setIsLoadingConversation(true);
+      setIsLoadingConversation(activeConversationKeyRef.current !== conversationKey);
 
       try {
-        const currentConversation = await api.createOrGetConversation(selectedMember.id, selectedDepartmentId);
+        const currentConversation = await api.createOrGetConversation(selectedMemberId, selectedDepartmentId);
         if (isCancelled) {
           return;
         }
 
+        activeConversationKeyRef.current = conversationKey;
         setConversation(currentConversation);
         const currentMessages = await api.getConversationMessages(currentConversation.id, selectedDepartmentId);
         if (!isCancelled) {
@@ -78,7 +83,7 @@ export function DirectMessagesPage({ members }: Props) {
     return () => {
       isCancelled = true;
     };
-  }, [selectedDepartmentId, selectedMember]);
+  }, [selectedDepartmentId, selectedMemberId]);
 
   useEffect(() => {
     if (!conversation || !selectedDepartmentId) {
