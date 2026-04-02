@@ -1,9 +1,11 @@
 import requests
 import re
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
 from django.core.mail import EmailMessage
+from django.db.models import Count
 from django.db import transaction
 from django.db.models import Count
 from django.utils import timezone
@@ -13,13 +15,27 @@ from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .helpers.taskdashboard import build_auth_response
 from .models import AuthUserProfile
 from .models import ContactMessage, Conversation, Department, Meeting, Message, Project, Task, TeamMember
-from .serializers import ContactMessageSerializer, MeetingSerializer, ProjectSerializer, TaskSerializer, TeamMemberSerializer, UserProfileSerializer,DirectMessageTeamMemberSerializer
+from .serializers import (
+    ContactMessageSerializer,
+    ConversationCreateSerializer,
+    ConversationSerializer,
+    DirectMessageTeamMemberSerializer,
+    MeetingSerializer,
+    MessageCreateSerializer,
+    MessageSerializer,
+    ProjectSerializer,
+    TaskSerializer,
+    TeamMemberSerializer,
+    UserProfileSerializer,
+)
 
 
 @api_view(["GET"])
@@ -56,80 +72,28 @@ def normalize_person_name(name: str) -> str:
     return re.sub(r"\s+", " ", (name or "").strip()).casefold()
 
 
-def names_look_like_same_person(name1: str, name2: str) -> bool:
-    """Check if two names are likely the same person."""
-    if not name1 or not name2:
+def names_look_like_same_person(left_name: str, right_name: str) -> bool:
+    left_normalized = normalize_person_name(left_name)
+    right_normalized = normalize_person_name(right_name)
+    if not left_normalized or not right_normalized:
         return False
-    norm1 = normalize_person_name(name1)
-    norm2 = normalize_person_name(name2)
-    if norm1 == norm2:
+
+    if left_normalized == right_normalized:
         return True
-    # Check if one is a substring of the other (for partial names)
-    if norm1 in norm2 or norm2 in norm1:
-        return True
+
+    left_parts = left_normalized.split()
+    right_parts = right_normalized.split()
+
+    if left_parts and right_parts and left_parts[0] == right_parts[0]:
+        left_last = left_parts[-1]
+        right_last = right_parts[-1]
+        if left_last == right_last:
+            return True
+
+        if left_last.startswith(right_last) or right_last.startswith(left_last):
+            return True
+
     return False
-
-
-def get_display_name_for_user(user) -> str:
-    """Get a display name for a user."""
-    if not user:
-        return ""
-    # Try to get full_name from auth profile
-    if hasattr(user, 'auth_profile') and user.auth_profile:
-        if user.auth_profile.full_name:
-            return user.auth_profile.full_name
-    # Fall back to built-in Django user fields
-    full_name = user.get_full_name().strip()
-    if full_name:
-        return full_name
-    return user.username
-
-
-def ensure_user_profile_for_team_member(team_member):
-    """Ensure a TeamMember has a corresponding AuthUserProfile."""
-    if not team_member:
-        return None
-    
-    # Try to find an existing AuthUserProfile with matching name
-    user_model = get_user_model()
-    
-    # Look for auth profile matching the team member name
-    auth_profiles = AuthUserProfile.objects.select_related('user').filter(
-        home_department=team_member.department
-    )
-    
-    for profile in auth_profiles:
-        display_name = profile.full_name.strip() or profile.user.get_full_name().strip() or profile.user.username
-        if names_look_like_same_person(display_name, team_member.name):
-            return profile
-    
-    # If no matching profile found, try to create one based on the team member name
-    try:
-        # Try to find a user by username derived from the team member name
-        username = generate_username_from_email(team_member.name.replace(" ", "_").lower())
-        user, created = user_model.objects.get_or_create(
-            username=username,
-            defaults={
-                'first_name': team_member.name.split()[0] if team_member.name else '',
-                'last_name': ' '.join(team_member.name.split()[1:]) if len(team_member.name.split()) > 1 else '',
-                'is_active': True,
-            }
-        )
-        
-        # Create or update the auth profile
-        profile, _ = AuthUserProfile.objects.update_or_create(
-            user=user,
-            defaults={
-                'provider': 'demo',
-                'home_department': team_member.department,
-                'full_name': team_member.name,
-                'email': '',
-            }
-        )
-        return profile
-    except Exception:
-        # If anything goes wrong, just return None
-        return None
 
 
 def get_auth_profile(user):
@@ -137,6 +101,56 @@ def get_auth_profile(user):
         return None
 
     return AuthUserProfile.objects.filter(user=user).select_related("home_department").first()
+
+
+def get_display_name_for_user(user) -> str:
+    profile = get_auth_profile(user)
+    if profile and profile.full_name.strip():
+        return profile.full_name.strip()
+
+    full_name = user.get_full_name().strip() if hasattr(user, "get_full_name") else ""
+    return full_name or user.username
+
+
+def ensure_user_profile_for_team_member(team_member):
+    if team_member is None:
+        return None
+
+    existing_profile = (
+        AuthUserProfile.objects.select_related("user", "home_department")
+        .filter(home_department=team_member.department, full_name__iexact=team_member.name)
+        .order_by("id")
+        .first()
+    )
+    if existing_profile is not None:
+        return existing_profile
+
+    user_model = get_user_model()
+    username_base = re.sub(r"[^a-z0-9_]+", "_", team_member.name.lower().strip()).strip("_") or "user"
+    username_base = username_base[:150]
+    username = username_base
+    suffix = 1
+    while user_model.objects.filter(username=username).exists():
+        token = f"_{suffix}"
+        username = f"{username_base[:150 - len(token)]}{token}"
+        suffix += 1
+
+    user = user_model.objects.create_user(
+        username=username,
+        email="",
+        first_name=team_member.name[:150],
+    )
+    user.set_unusable_password()
+    user.save(update_fields=["password"])
+
+    return AuthUserProfile.objects.create(
+        user=user,
+        home_department=team_member.department,
+        provider="demo",
+        email="",
+        full_name=team_member.name,
+        given_name=team_member.name.split()[0] if team_member.name.strip() else "",
+    )
 
 
 DEFAULT_DEPARTMENTS = [

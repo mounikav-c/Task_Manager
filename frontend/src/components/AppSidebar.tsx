@@ -26,7 +26,7 @@ const mainItems = [
   { title: "Projects", url: "/board", icon: FolderKanban },
   { title: "Meetings", url: "/meetings", icon: CalendarDays },
   { title: "Members", url: "/members", icon: Users },
-  { title: "Chatbot", url: "/chatbot", icon: MessageCircle },
+  { title: "Chatbot", url: "/chatbot", icon: MessageCircleMore },
 ];
 
 const generalItems = [
@@ -126,45 +126,35 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout, directMessageM
         <SidebarGroup className="px-0">
           {!collapsed && <SidebarGroupLabel className="px-2 text-[10px] uppercase tracking-[0.2em] text-sidebar-foreground/35 font-semibold">Direct Messages</SidebarGroupLabel>}
           <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink
-                    to="/messages"
-                    className="sidebar-nav-link flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-150"
-                    activeClassName="text-indigo-700 border border-indigo-300/30 font-semibold"
-                  >
-                    <MessageCircle className="h-4 w-4 shrink-0" />
-                    {!collapsed && <span>Direct Messages</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+            <SidebarMenu className={!collapsed ? "space-y-1" : undefined}>
               {!collapsed &&
                 directMessageMembers.map((member) => (
                   <SidebarMenuItem key={member.id}>
                     <SidebarMenuButton asChild>
                       <NavLink
                         to={`/messages/${member.id}`}
-                        className={`sidebar-nav-link flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
+                        className={`dm-sidebar-link flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 ${
                           member.unread_count > 0
-                            ? "border-emerald-300/60 bg-emerald-50/80 shadow-[0_16px_30px_-24px_rgba(16,185,129,0.5)]"
-                            : "border-transparent"
+                            ? "dm-sidebar-link-unread"
+                            : ""
                         }`}
-                        activeClassName="text-indigo-700 border border-indigo-300/30 font-semibold"
+                        activeClassName="dm-sidebar-link-active"
                       >
-                        <Avatar className="h-7 w-7 ring-1 ring-white/60">
-                          <AvatarFallback className="text-[10px] font-semibold text-white" style={{ backgroundColor: member.color }}>
+                        <Avatar className="h-5 w-5 shrink-0">
+                          <AvatarFallback className="text-[9px] font-semibold text-white" style={{ backgroundColor: member.color }}>
                             {member.initials}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="truncate">
-                              {member.name}
-                              {member.id === user?.id ? " (You)" : ""}
-                            </span>
+                          <div className="flex items-center gap-2">
+                            <span className="truncate">{member.name}</span>
+                            {member.id === user?.id && (
+                              <span className="dm-sidebar-you-badge shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold lowercase tracking-[0.01em]">
+                                you
+                              </span>
+                            )}
                             {member.unread_count > 0 && (
-                              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-semibold text-white">
+                              <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-400 px-1 text-[9px] font-semibold text-white">
                                 {member.unread_count > 9 ? "9+" : member.unread_count}
                               </span>
                             )}

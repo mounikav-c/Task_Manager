@@ -38,8 +38,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 from langgraph.graph import StateGraph, END
-from langchain.schema import HumanMessage, SystemMessage
-
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from django.contrib.auth import get_user_model
 
 from accounts.models import AuthUserProfile, TeamMember, Meeting
