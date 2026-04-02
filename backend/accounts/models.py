@@ -223,53 +223,10 @@ class AuthUserProfile(models.Model):
         return f"{self.user.username} ({self.provider})"
 
 
-class ContactMessage(models.Model):
-    name = models.CharField(max_length=120)
-    email = models.EmailField()
-    message = models.TextField()
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="contact_messages",
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = "contact_message"
-
-    def __str__(self):
-        return f"{self.name} <{self.email}>"
-
-
-class Conversation(models.Model):
-    participants = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        related_name="conversations",
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = "conversation"
-        ordering = ["-updated_at", "-id"]
-
-    def __str__(self):
-        return f"Conversation {self.pk}"
-
-
 class Message(models.Model):
-    conversation = models.ForeignKey(
-        Conversation,
-        on_delete=models.CASCADE,
-        related_name="messages",
-    )
-    sender = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="sent_messages",
-    )
+    conversation = models.TextField()
+    sender = models.IntegerField()
+    recipient = models.IntegerField(null=True, blank=True)
     content = models.TextField()
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -279,4 +236,4 @@ class Message(models.Model):
         ordering = ["created_at", "id"]
 
     def __str__(self):
-        return f"Message {self.pk} in conversation {self.conversation_id}"
+        return f"Message {self.pk} in conversation {self.conversation}"

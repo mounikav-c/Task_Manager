@@ -378,8 +378,12 @@ const App = () => {
     }
 
     const interval = window.setInterval(() => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+
       void loadDirectMessageMembers();
-    }, 4000);
+    }, 8000);
 
     return () => window.clearInterval(interval);
   }, [isAuthenticated, loadDirectMessageMembers, selectedDepartmentId]);
@@ -972,8 +976,14 @@ const App = () => {
                         />
                       }
                     />
-                    <Route path="/messages" element={<DirectMessagesPage members={directMessageMembers} />} />
-                    <Route path="/messages/:memberId" element={<DirectMessagesPage members={directMessageMembers} />} />
+                    <Route
+                      path="/messages"
+                      element={<DirectMessagesPage members={directMessageMembers} onConversationActivity={loadDirectMessageMembers} />}
+                    />
+                    <Route
+                      path="/messages/:memberId"
+                      element={<DirectMessagesPage members={directMessageMembers} onConversationActivity={loadDirectMessageMembers} />}
+                    />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="/help" element={<HelpPage />} />
                     <Route path="/login" element={<Navigate to="/" replace />} />

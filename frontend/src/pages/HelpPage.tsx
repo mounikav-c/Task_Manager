@@ -86,16 +86,14 @@ export function HelpPage() {
 
     setIsSubmitting(true);
     try {
-      await api.createContactMessage({
-        name: trimmedName,
-        email: trimmedEmail,
-        message: trimmedMessage,
-      });
-      setMessage("");
-      toast.success("Your support message has been sent.");
+      const supportEmail = "mounikavanipenta95@gmail.com";
+      const subject = encodeURIComponent(`TaskFlow support request from ${trimmedName}`);
+      const body = encodeURIComponent(`Name: ${trimmedName}\nEmail: ${trimmedEmail}\n\nMessage:\n${trimmedMessage}`);
+      window.location.href = `mailto:${supportEmail}?subject=${subject}&body=${body}`;
+      toast.success("Support email opened.");
     } catch (error) {
-      console.error("Failed to submit contact message", error);
-      toast.error(error instanceof Error ? error.message : "Could not send your message");
+      console.error("Failed to open support email", error);
+      toast.error("Could not open your email app");
     } finally {
       setIsSubmitting(false);
     }

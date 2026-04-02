@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
-from .models import AuthUserProfile, ContactMessage, Conversation, Meeting, Message, Project, Task, TeamMember
+from django.contrib.auth import get_user_model
+
+from .models import AuthUserProfile, Meeting, Message, Project, Task, TeamMember
 
 
 class TeamMemberSerializer(serializers.ModelSerializer):
@@ -163,13 +165,6 @@ class UserProfileSerializer(serializers.Serializer):
         return {"user": user, "profile": refreshed_profile}
 
 
-class ContactMessageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ContactMessage
-        fields = ["id", "name", "email", "message", "created_at"]
-        read_only_fields = ["id", "created_at"]
-
-
 class DirectMessageTeamMemberSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     username = serializers.CharField()
@@ -181,14 +176,6 @@ class DirectMessageTeamMemberSerializer(serializers.Serializer):
     last_message_at = serializers.DateTimeField(allow_null=True)
 
 
-class ConversationSerializer(serializers.ModelSerializer):
-    participant_ids = serializers.PrimaryKeyRelatedField(source="participants", many=True, read_only=True)
-
-    class Meta:
-        model = Conversation
-        fields = ["id", "participant_ids", "created_at", "updated_at"]
-
-
 class MessageSerializer(serializers.ModelSerializer):
     sender_name = serializers.SerializerMethodField()
 
@@ -198,23 +185,23 @@ class MessageSerializer(serializers.ModelSerializer):
             "id",
             "conversation",
             "sender",
+            "recipient",
             "sender_name",
             "content",
             "is_read",
             "created_at",
         ]
-        read_only_fields = ["id", "sender", "sender_name", "is_read", "created_at"]
+        read_only_fields = ["id", "sender", "recipient", "sender_name", "is_read", "created_at"]
 
     def get_sender_name(self, obj):
-        profile = getattr(obj.sender, "auth_profile", None)
-        full_name = (profile.full_name if profile else "") or obj.sender.get_full_name().strip()
-        return full_name or obj.sender.username
+        user = get_user_model().objects.filter(pk=obj.sender).select_related("auth_profile").first()
+        if user is None:
+            return f"User {obj.sender}"
 
-
-class ConversationCreateSerializer(serializers.Serializer):
-    user_id = serializers.IntegerField()
-
+        profile = getattr(user, "auth_profile", None)
+        full_name = (profile.full_name if profile else "") or user.get_full_name().strip()
+        return full_name or user.username
 
 class MessageCreateSerializer(serializers.Serializer):
-    conversation_id = serializers.IntegerField()
+    recipient_id = serializers.IntegerField()
     content = serializers.CharField(allow_blank=False, trim_whitespace=True)

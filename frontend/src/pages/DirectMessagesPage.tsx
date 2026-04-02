@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEventHandler } from "react";
-import { MessageCircleMore, Phone, Send, UserCircle2 } from "lucide-react";
+import { MessageCircleMore, Send, UserCircle2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { TopNav } from "@/components/TopNav";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { api, type Conversation, type DirectMessage, type DirectMessageMember } from "@/lib/api";
+import { api, type DirectMessage, type DirectMessageMember } from "@/lib/api";
 import { useAuthUser } from "@/contexts/AuthUserContext";
 import { toast } from "@/components/ui/sonner";
 
 interface Props {
   members: DirectMessageMember[];
+  onConversationActivity?: () => Promise<void> | void;
 }
 
 function formatTime(value: string) {
@@ -20,17 +21,32 @@ function formatTime(value: string) {
   }).format(new Date(value));
 }
 
-export function DirectMessagesPage({ members }: Props) {
+function areMessagesEqual(left: DirectMessage[], right: DirectMessage[]) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((message, index) => {
+    const candidate = right[index];
+    return (
+      message.id === candidate.id &&
+      message.is_read === candidate.is_read &&
+      message.content === candidate.content &&
+      message.created_at === candidate.created_at
+    );
+  });
+}
+
+export function DirectMessagesPage({ members, onConversationActivity }: Props) {
   const { memberId } = useParams();
   const navigate = useNavigate();
   const { user, selectedDepartmentId } = useAuthUser();
-  const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<DirectMessage[]>([]);
   const [draft, setDraft] = useState("");
-  const [isLoadingConversation, setIsLoadingConversation] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const activeConversationKeyRef = useRef<string | null>(null);
+  const activeMemberKeyRef = useRef<string | null>(null);
 
   const selectedMember = useMemo(
     () => members.find((member) => String(member.id) === memberId) ?? null,
@@ -40,82 +56,84 @@ export function DirectMessagesPage({ members }: Props) {
 
   useEffect(() => {
     if (!selectedMember || !selectedMemberId) {
-      setConversation(null);
       setMessages([]);
-      activeConversationKeyRef.current = null;
+      activeMemberKeyRef.current = null;
       return;
     }
 
     let isCancelled = false;
-    const conversationKey = `${selectedDepartmentId ?? "none"}:${selectedMemberId}`;
+    const memberKey = `${selectedDepartmentId ?? "none"}:${selectedMemberId}`;
 
-    const loadConversation = async () => {
-      setIsLoadingConversation(activeConversationKeyRef.current !== conversationKey);
+    const loadMessages = async () => {
+      setIsLoadingMessages(activeMemberKeyRef.current !== memberKey);
 
       try {
-        const currentConversation = await api.createOrGetConversation(selectedMemberId, selectedDepartmentId);
-        if (isCancelled) {
-          return;
-        }
-
-        activeConversationKeyRef.current = conversationKey;
-        setConversation(currentConversation);
-        const currentMessages = await api.getConversationMessages(currentConversation.id, selectedDepartmentId);
+        activeMemberKeyRef.current = memberKey;
+        const currentMessages = await api.getConversationMessages(selectedMemberId, selectedDepartmentId);
         if (!isCancelled) {
           setMessages(currentMessages);
+          void onConversationActivity?.();
         }
       } catch (error) {
         if (!isCancelled) {
           console.error("Failed to load conversation", error);
-          toast.error(error instanceof Error ? error.message : "Could not load conversation");
-          setConversation(null);
+          toast.error(error instanceof Error ? error.message : "Could not load messages");
           setMessages([]);
         }
       } finally {
         if (!isCancelled) {
-          setIsLoadingConversation(false);
+          setIsLoadingMessages(false);
         }
       }
     };
 
-    void loadConversation();
+    void loadMessages();
 
     return () => {
       isCancelled = true;
     };
-  }, [selectedDepartmentId, selectedMemberId]);
+  }, [onConversationActivity, selectedDepartmentId, selectedMemberId, selectedMember]);
 
   useEffect(() => {
-    if (!conversation || !selectedDepartmentId) {
+    if (!selectedMemberId || !selectedDepartmentId) {
       return;
     }
 
     const interval = window.setInterval(() => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+
       void api
-        .getConversationMessages(conversation.id, selectedDepartmentId)
+        .getConversationMessages(selectedMemberId, selectedDepartmentId)
         .then((latestMessages) => {
+          let didChange = false;
           setMessages((currentMessages) => {
-            if (JSON.stringify(currentMessages) === JSON.stringify(latestMessages)) {
+            if (areMessagesEqual(currentMessages, latestMessages)) {
               return currentMessages;
             }
 
+            didChange = true;
             return latestMessages;
           });
+          if (didChange) {
+            void onConversationActivity?.();
+          }
         })
         .catch((error) => {
           console.error("Failed to refresh conversation", error);
         });
-    }, 2500);
+    }, 4000);
 
     return () => window.clearInterval(interval);
-  }, [conversation, selectedDepartmentId]);
+  }, [onConversationActivity, selectedDepartmentId, selectedMemberId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages]);
 
   const handleSend = async () => {
-    if (!conversation || !draft.trim()) {
+    if (!selectedMemberId || !draft.trim()) {
       return;
     }
 
@@ -124,8 +142,9 @@ export function DirectMessagesPage({ members }: Props) {
 
     const optimisticMessage: DirectMessage = {
       id: Date.now(),
-      conversation: conversation.id,
+      conversation: `${Math.min(user?.id ?? 0, selectedMemberId)}:${Math.max(user?.id ?? 0, selectedMemberId)}`,
       sender: user?.id ?? 0,
+      recipient: selectedMemberId,
       sender_name: "You",
       content: trimmedDraft,
       is_read: false,
@@ -136,11 +155,12 @@ export function DirectMessagesPage({ members }: Props) {
     setIsSending(true);
 
     try {
-      const savedMessage = await api.sendMessage(conversation.id, trimmedDraft, selectedDepartmentId);
+      const savedMessage = await api.sendMessage(selectedMemberId, trimmedDraft, selectedDepartmentId);
       setMessages((currentMessages) => [
         ...currentMessages.filter((message) => message.id !== optimisticMessage.id),
         savedMessage,
       ]);
+      void onConversationActivity?.();
     } catch (error) {
       console.error("Failed to send message", error);
       setMessages((currentMessages) => currentMessages.filter((message) => message.id !== optimisticMessage.id));
@@ -237,16 +257,12 @@ export function DirectMessagesPage({ members }: Props) {
                 <UserCircle2 className="mr-2 h-4 w-4" />
                 View Profile
               </Button>
-              <Button variant="outline" className="rounded-xl border-slate-200 bg-white/70" type="button">
-                <Phone className="mr-2 h-4 w-4" />
-                Start Call
-              </Button>
             </div>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
-            {isLoadingConversation ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading conversation...</div>
+            {isLoadingMessages ? (
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading messages...</div>
             ) : !hasMessages ? (
               <div className="flex h-full items-center justify-center">
                 <div className="w-full max-w-xl text-center">
@@ -298,7 +314,7 @@ export function DirectMessagesPage({ members }: Props) {
               />
               <Button
                 onClick={() => void handleSend()}
-                disabled={!conversation || !draft.trim() || isSending}
+                disabled={!selectedMemberId || !draft.trim() || isSending}
                 className="h-11 rounded-xl bg-[linear-gradient(135deg,#4338ca_0%,#6d28d9_100%)] px-5 text-white shadow-[0_18px_30px_-22px_rgba(79,70,229,0.62)] hover:brightness-105"
               >
                 <Send className="mr-2 h-4 w-4" />

@@ -2,10 +2,6 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
-    ContactMessageView,
-    ConversationCreateView,
-    ConversationMessagesView,
-    DirectMessageTeamMembersView,
     MeetingViewSet,
     MessageCreateView,
     ProjectViewSet,
@@ -34,10 +30,6 @@ urlpatterns = [
     path("auth/google/token/", google_token_login, name="auth-google-token-login"),
     path("auth/logout/", auth_logout, name="auth-logout"),
     path("auth/profile/", UserProfileView.as_view(), name="auth-profile"),
-    path("contact/", ContactMessageView.as_view(), name="contact-message"),
-    path("team-members/", DirectMessageTeamMembersView.as_view(), name="dm-team-members"),
-    path("conversations/", ConversationCreateView.as_view(), name="conversation-create"),
-    path("conversations/<int:conversation_id>/messages/", ConversationMessagesView.as_view(), name="conversation-messages"),
     path("messages/", MessageCreateView.as_view(), name="message-create"),
     path("", include(router.urls)),
 ]
