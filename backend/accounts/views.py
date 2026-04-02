@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
 from django.core.mail import EmailMessage
 from django.db import transaction
+from django.db.models import Count
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.csrf import csrf_exempt
@@ -17,8 +18,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import AuthUserProfile
-from .models import ContactMessage, Department, Meeting, Project, Task, TeamMember
-from .serializers import ContactMessageSerializer, MeetingSerializer, ProjectSerializer, TaskSerializer, TeamMemberSerializer, UserProfileSerializer
+from .models import ContactMessage, Conversation, Department, Meeting, Message, Project, Task, TeamMember
+from .serializers import ContactMessageSerializer, MeetingSerializer, ProjectSerializer, TaskSerializer, TeamMemberSerializer, UserProfileSerializer,DirectMessageTeamMemberSerializer
 
 
 @api_view(["GET"])
@@ -53,6 +54,82 @@ def build_initials(name: str) -> str:
 
 def normalize_person_name(name: str) -> str:
     return re.sub(r"\s+", " ", (name or "").strip()).casefold()
+
+
+def names_look_like_same_person(name1: str, name2: str) -> bool:
+    """Check if two names are likely the same person."""
+    if not name1 or not name2:
+        return False
+    norm1 = normalize_person_name(name1)
+    norm2 = normalize_person_name(name2)
+    if norm1 == norm2:
+        return True
+    # Check if one is a substring of the other (for partial names)
+    if norm1 in norm2 or norm2 in norm1:
+        return True
+    return False
+
+
+def get_display_name_for_user(user) -> str:
+    """Get a display name for a user."""
+    if not user:
+        return ""
+    # Try to get full_name from auth profile
+    if hasattr(user, 'auth_profile') and user.auth_profile:
+        if user.auth_profile.full_name:
+            return user.auth_profile.full_name
+    # Fall back to built-in Django user fields
+    full_name = user.get_full_name().strip()
+    if full_name:
+        return full_name
+    return user.username
+
+
+def ensure_user_profile_for_team_member(team_member):
+    """Ensure a TeamMember has a corresponding AuthUserProfile."""
+    if not team_member:
+        return None
+    
+    # Try to find an existing AuthUserProfile with matching name
+    user_model = get_user_model()
+    
+    # Look for auth profile matching the team member name
+    auth_profiles = AuthUserProfile.objects.select_related('user').filter(
+        home_department=team_member.department
+    )
+    
+    for profile in auth_profiles:
+        display_name = profile.full_name.strip() or profile.user.get_full_name().strip() or profile.user.username
+        if names_look_like_same_person(display_name, team_member.name):
+            return profile
+    
+    # If no matching profile found, try to create one based on the team member name
+    try:
+        # Try to find a user by username derived from the team member name
+        username = generate_username_from_email(team_member.name.replace(" ", "_").lower())
+        user, created = user_model.objects.get_or_create(
+            username=username,
+            defaults={
+                'first_name': team_member.name.split()[0] if team_member.name else '',
+                'last_name': ' '.join(team_member.name.split()[1:]) if len(team_member.name.split()) > 1 else '',
+                'is_active': True,
+            }
+        )
+        
+        # Create or update the auth profile
+        profile, _ = AuthUserProfile.objects.update_or_create(
+            user=user,
+            defaults={
+                'provider': 'demo',
+                'home_department': team_member.department,
+                'full_name': team_member.name,
+                'email': '',
+            }
+        )
+        return profile
+    except Exception:
+        # If anything goes wrong, just return None
+        return None
 
 
 def get_auth_profile(user):

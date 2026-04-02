@@ -1,4 +1,4 @@
-import { CalendarDays, FolderKanban, HelpCircle, LayoutDashboard, ListTodo, LogOut, MessageCircleMore, Settings, Users, Sparkles } from "lucide-react";
+import { CalendarDays, FolderKanban, HelpCircle, LayoutDashboard, ListTodo, LogOut, MessageCircle, Settings, Users, Sparkles } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -134,7 +134,7 @@ export function AppSidebar({ onAddProject, onAddMember, onLogout, directMessageM
                     className="sidebar-nav-link flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-150"
                     activeClassName="text-indigo-700 border border-indigo-300/30 font-semibold"
                   >
-                    <MessageCircleMore className="h-4 w-4 shrink-0" />
+                    <MessageCircle className="h-4 w-4 shrink-0" />
                     {!collapsed && <span>Direct Messages</span>}
                   </NavLink>
                 </SidebarMenuButton>
