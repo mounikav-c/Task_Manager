@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime
 from uuid import uuid4
 from langgraph.graph import StateGraph, END
-from langchain.schema import HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from django.contrib.auth import get_user_model
 from accounts.models import AuthUserProfile, TeamMember, Meeting
 from .models import ChatMessage
