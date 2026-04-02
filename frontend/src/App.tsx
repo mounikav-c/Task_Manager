@@ -379,7 +379,7 @@ const App = () => {
 
     const interval = window.setInterval(() => {
       void loadDirectMessageMembers();
-    }, 4000);
+    }, 40000);
 
     return () => window.clearInterval(interval);
   }, [isAuthenticated, loadDirectMessageMembers, selectedDepartmentId]);

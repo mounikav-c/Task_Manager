@@ -26,13 +26,15 @@ def send_meeting_invitation(recipient_email: str, recipient_name: str, meeting_t
         bool: True if email sent successfully, False otherwise
     """
     try:
-        # Get Gmail credentials from environment
-        sender_email = os.getenv("GMAIL_EMAIL", "")
-        app_password = os.getenv("GMAIL_APP_PASSWORD", "")
+        # Get Gmail credentials from Django settings or environment
+        sender_email = getattr(settings, 'EMAIL_HOST_USER', '') or os.getenv("GMAIL_EMAIL", "")
+        app_password = getattr(settings, 'EMAIL_HOST_PASSWORD', '') or os.getenv("GMAIL_APP_PASSWORD", "")
         
         if not sender_email or not app_password:
-            logger.warning("Gmail credentials not configured in environment variables")
+            logger.error(f"❌ Email credentials not configured. sender={sender_email}, app_password={'***' if app_password else 'MISSING'}")
             return False
+
+        logger.info(f"📧 Sending email to {recipient_email} via {sender_email}")
 
         # Create email message
         message = MIMEMultipart("alternative")
@@ -103,11 +105,11 @@ This is an automated message from TaskFlow Meeting Scheduler.
             server.login(sender_email, app_password)
             server.sendmail(sender_email, recipient_email, message.as_string())
         
-        logger.info(f"Meeting invitation sent to {recipient_email}")
+        logger.info(f"✅ Meeting invitation sent to {recipient_email}")
         return True
         
     except Exception as e:
-        logger.error(f"Failed to send email to {recipient_email}: {str(e)}")
+        logger.error(f"❌ Failed to send email to {recipient_email}: {str(e)}")
         return False
 
 
@@ -132,14 +134,18 @@ def send_bulk_meeting_invitations(recipient_list: list, meeting_title: str,
         "total": len(recipient_list)
     }
     
+    logger.info(f"📨 Starting email distribution for '{meeting_title}' to {len(recipient_list)} recipients")
+    
     for recipient in recipient_list:
         email = recipient.get("email", "")
         name = recipient.get("name", "")
         
         if not email:
+            logger.warning(f"⚠️ Skipping {name} - no email provided")
             results["failed"].append({"name": name, "reason": "No email provided"})
             continue
         
+        logger.info(f"📤 Sending to {name} ({email})...")
         success = send_meeting_invitation(
             email, name, meeting_title, meeting_time, meeting_link, organizer_name
         )
@@ -149,4 +155,5 @@ def send_bulk_meeting_invitations(recipient_list: list, meeting_title: str,
         else:
             results["failed"].append({"email": email, "reason": "Failed to send"})
     
+    logger.info(f"📊 Email distribution complete: {len(results['sent'])} sent, {len(results['failed'])} failed")
     return results
