@@ -1,4 +1,4 @@
-import { CalendarDays, FolderKanban, HelpCircle, LayoutDashboard, ListTodo, LogOut, MessageCircleMore, Settings, Users, Sparkles } from "lucide-react";
+import { CalendarDays, FolderKanban, HelpCircle, LayoutDashboard, ListTodo, LogOut, MessageCircle, Settings, Users, Sparkles } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
