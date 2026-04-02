@@ -21,22 +21,6 @@ function formatTime(value: string) {
   }).format(new Date(value));
 }
 
-function areMessagesEqual(left: DirectMessage[], right: DirectMessage[]) {
-  if (left.length !== right.length) {
-    return false;
-  }
-
-  return left.every((message, index) => {
-    const candidate = right[index];
-    return (
-      message.id === candidate.id &&
-      message.is_read === candidate.is_read &&
-      message.content === candidate.content &&
-      message.created_at === candidate.created_at
-    );
-  });
-}
-
 export function DirectMessagesPage({ members, onConversationActivity }: Props) {
   const { memberId } = useParams();
   const navigate = useNavigate();
@@ -55,7 +39,7 @@ export function DirectMessagesPage({ members, onConversationActivity }: Props) {
   const selectedMemberId = selectedMember?.id ?? null;
 
   useEffect(() => {
-    if (!selectedMember || !selectedMemberId) {
+    if (!selectedMemberId) {
       setMessages([]);
       activeMemberKeyRef.current = null;
       return;
@@ -72,7 +56,6 @@ export function DirectMessagesPage({ members, onConversationActivity }: Props) {
         const currentMessages = await api.getConversationMessages(selectedMemberId, selectedDepartmentId);
         if (!isCancelled) {
           setMessages(currentMessages);
-          void onConversationActivity?.();
         }
       } catch (error) {
         if (!isCancelled) {
@@ -92,41 +75,7 @@ export function DirectMessagesPage({ members, onConversationActivity }: Props) {
     return () => {
       isCancelled = true;
     };
-  }, [onConversationActivity, selectedDepartmentId, selectedMemberId, selectedMember]);
-
-  useEffect(() => {
-    if (!selectedMemberId || !selectedDepartmentId) {
-      return;
-    }
-
-    const interval = window.setInterval(() => {
-      if (document.visibilityState !== "visible") {
-        return;
-      }
-
-      void api
-        .getConversationMessages(selectedMemberId, selectedDepartmentId)
-        .then((latestMessages) => {
-          let didChange = false;
-          setMessages((currentMessages) => {
-            if (areMessagesEqual(currentMessages, latestMessages)) {
-              return currentMessages;
-            }
-
-            didChange = true;
-            return latestMessages;
-          });
-          if (didChange) {
-            void onConversationActivity?.();
-          }
-        })
-        .catch((error) => {
-          console.error("Failed to refresh conversation", error);
-        });
-    }, 4000);
-
-    return () => window.clearInterval(interval);
-  }, [onConversationActivity, selectedDepartmentId, selectedMemberId]);
+  }, [selectedDepartmentId, selectedMemberId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });

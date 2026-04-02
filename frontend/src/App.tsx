@@ -372,22 +372,6 @@ const App = () => {
     void loadData();
   }, [isAuthenticated, loadData, selectedDepartmentId]);
 
-  useEffect(() => {
-    if (!isAuthenticated || !selectedDepartmentId) {
-      return;
-    }
-
-    const interval = window.setInterval(() => {
-      if (document.visibilityState !== "visible") {
-        return;
-      }
-
-      void loadDirectMessageMembers();
-    }, 8000);
-
-    return () => window.clearInterval(interval);
-  }, [isAuthenticated, loadDirectMessageMembers, selectedDepartmentId]);
-
   const handleNew = useCallback((projectId?: string) => {
     if (!canEditSelectedDepartment) {
       toast.error("This department is view only");
