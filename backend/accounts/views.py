@@ -4,10 +4,8 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
-from django.core.mail import EmailMessage
-from django.db.models import Count
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Q
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.csrf import csrf_exempt
@@ -22,11 +20,8 @@ from rest_framework.views import APIView
 
 from .helpers.taskdashboard import build_auth_response
 from .models import AuthUserProfile
-from .models import ContactMessage, Conversation, Department, Meeting, Message, Project, Task, TeamMember
+from .models import Department, Meeting, Message, Project, Task, TeamMember
 from .serializers import (
-    ContactMessageSerializer,
-    ConversationCreateSerializer,
-    ConversationSerializer,
     DirectMessageTeamMemberSerializer,
     MeetingSerializer,
     MessageCreateSerializer,
@@ -1081,57 +1076,54 @@ class UserProfileView(APIView):
         return Response(UserProfileSerializer(payload).data)
 
 
-class ContactMessageView(APIView):
+class MessageCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request):
-        serializer = ContactMessageSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        contact_message = serializer.save(user=request.user)
-
-        support_email = getattr(settings, "CONTACT_SUPPORT_EMAIL", "").strip()
-        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "").strip()
-
-        if support_email:
-            try:
-                email = EmailMessage(
-                    subject=f"TaskFlow support request from {contact_message.name}",
-                    body=(
-                        f"Name: {contact_message.name}\n"
-                        f"Email: {contact_message.email}\n\n"
-                        f"Message:\n{contact_message.message}"
-                    ),
-                    from_email=from_email or None,
-                    to=[support_email],
-                    reply_to=[contact_message.email],
-                )
-                email.send(fail_silently=False)
-            except Exception as exc:
-                return Response(
-                    {
-                        "detail": "Message was saved, but the support email could not be delivered.",
-                        "error": str(exc),
-                        "message": ContactMessageSerializer(contact_message).data,
-                    },
-                    status=status.HTTP_502_BAD_GATEWAY,
-                )
-
-        return Response(
-            {
-                "detail": "Message sent successfully.",
-                "message": ContactMessageSerializer(contact_message).data,
-            },
-            status=status.HTTP_201_CREATED,
+    def _get_profile_or_error(self, user_id):
+        profile = (
+            AuthUserProfile.objects.select_related("user", "home_department")
+            .filter(user_id=user_id)
+            .first()
         )
+        if profile is not None:
+            if not profile.user.is_active:
+                return None, Response({"detail": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
+            return profile, None
 
+        user_model = get_user_model()
+        user = user_model.objects.filter(id=user_id, is_active=True).first()
+        if user is None:
+            return None, Response({"detail": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
 
-class DirectMessageTeamMembersView(APIView):
-    permission_classes = [IsAuthenticated]
+        home_department = get_home_department_for_user(user)
+        profile = AuthUserProfile.objects.create(
+            user=user,
+            home_department=home_department,
+            provider="demo",
+            email=user.email or "",
+            full_name=get_display_name_for_user(user),
+            given_name=(user.first_name or "").strip(),
+            family_name=(user.last_name or "").strip(),
+        )
+        return profile, None
 
-    def get(self, request):
+    def _validate_participant(self, request, profile):
+        if profile.user_id == request.user.id:
+            return None
+
         active_department = get_active_department(request)
         if active_department is None:
-            return Response([])
+            return Response({"detail": "Department not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if profile.home_department_id != active_department.id:
+            return Response({"detail": "This team member is not in the current department."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return None
+
+    def _member_payload(self, request):
+        active_department = get_active_department(request)
+        if active_department is None:
+            return []
 
         for team_member in TeamMember.objects.filter(department=active_department).order_by("name", "id"):
             ensure_user_profile_for_team_member(team_member)
@@ -1154,45 +1146,28 @@ class DirectMessageTeamMembersView(APIView):
                 ),
             )
 
-        def profile_priority(profile):
-            return (
-                1 if profile.user_id == request.user.id else 0,
-                1 if (profile.email or profile.user.email or "").strip() else 0,
-                1 if profile.provider != "demo" else 0,
-                len((profile.full_name or "").strip()),
-            )
-
-        payload = []
         visible_names = []
+        payload = []
 
-        for profile in sorted(profiles, key=profile_priority, reverse=True):
+        for profile in profiles:
             display_name = profile.full_name.strip() or profile.user.get_full_name().strip() or profile.user.username
             if any(names_look_like_same_person(display_name, visible_name) for visible_name in visible_names):
                 continue
 
             visible_names.append(display_name)
-            if profile.user_id == request.user.id:
-                conversation = (
-                    Conversation.objects.annotate(participant_count=Count("participants"))
-                    .filter(participant_count=1, participants=request.user)
-                    .order_by("-updated_at", "-id")
-                    .first()
+            latest_message = (
+                Message.objects.filter(
+                    Q(sender_id=request.user.id, recipient_id=profile.user_id)
+                    | Q(sender_id=profile.user_id, recipient_id=request.user.id)
                 )
-            else:
-                conversation = (
-                    Conversation.objects.annotate(participant_count=Count("participants"))
-                    .filter(participant_count=2, participants=request.user)
-                    .filter(participants=profile.user)
-                    .order_by("-updated_at", "-id")
-                    .first()
-                )
-
-            unread_count = 0
-            last_message_at = None
-            if conversation is not None:
-                unread_count = conversation.messages.exclude(sender=request.user).filter(is_read=False).count()
-                last_message = conversation.messages.order_by("-created_at", "-id").first()
-                last_message_at = last_message.created_at if last_message is not None else conversation.updated_at
+                .order_by("-created_at", "-id")
+                .first()
+            )
+            unread_count = Message.objects.filter(
+                sender_id=profile.user_id,
+                recipient_id=request.user.id,
+                is_read=False,
+            ).count()
 
             payload.append(
                 {
@@ -1203,7 +1178,7 @@ class DirectMessageTeamMembersView(APIView):
                     "color": get_member_color(len(payload)),
                     "email": profile.email or profile.user.email or "",
                     "unread_count": unread_count,
-                    "last_message_at": last_message_at,
+                    "last_message_at": latest_message.created_at if latest_message is not None else None,
                 }
             )
 
@@ -1215,102 +1190,67 @@ class DirectMessageTeamMembersView(APIView):
                 item["name"].casefold(),
             )
         )
+        return payload
 
-        serializer = DirectMessageTeamMemberSerializer(payload, many=True)
-        return Response(serializer.data)
+    def get(self, request):
+        receiver_id = request.query_params.get("user_id")
+        if not receiver_id:
+            serializer = DirectMessageTeamMemberSerializer(self._member_payload(request), many=True)
+            return Response(serializer.data)
 
+        try:
+            receiver_id = int(receiver_id)
+        except (TypeError, ValueError):
+            return Response({"detail": "user_id must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
 
-class ConversationCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+        profile, error_response = self._get_profile_or_error(receiver_id)
+        if error_response is not None:
+            return error_response
 
-    def post(self, request):
-        serializer = ConversationCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        permission_error = self._validate_participant(request, profile)
+        if permission_error is not None:
+            return permission_error
 
-        user_model = get_user_model()
-        receiver = user_model.objects.filter(pk=serializer.validated_data["user_id"], is_active=True).first()
-        if receiver is None:
-            return Response({"detail": "Team member not found."}, status=status.HTTP_404_NOT_FOUND)
+        messages = Message.objects.filter(
+            Q(sender_id=request.user.id, recipient_id=receiver_id)
+            | Q(sender_id=receiver_id, recipient_id=request.user.id)
+        ).order_by("created_at", "id")
 
-        active_department = get_active_department(request)
-        receiver_profile = get_auth_profile(receiver)
-        if active_department is None:
-            return Response({"detail": "Department not found."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if receiver.pk != request.user.pk and (
-            receiver_profile is None or receiver_profile.home_department_id != active_department.id
-        ):
-            return Response({"detail": "This team member is not in the current department."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if receiver.pk == request.user.pk:
-            conversation = (
-                Conversation.objects.annotate(participant_count=Count("participants"))
-                .filter(participant_count=1, participants=request.user)
-                .order_by("-updated_at", "-id")
-                .first()
-            )
-        else:
-            conversation = (
-                Conversation.objects.annotate(participant_count=Count("participants"))
-                .filter(participant_count=2, participants=request.user)
-                .filter(participants=receiver)
-                .order_by("-updated_at", "-id")
-                .first()
-            )
-
-        if conversation is None:
-            conversation = Conversation.objects.create()
-            if receiver.pk == request.user.pk:
-                conversation.participants.set([request.user])
-            else:
-                conversation.participants.set([request.user, receiver])
-
-        return Response(ConversationSerializer(conversation).data, status=status.HTTP_200_OK)
-
-
-class ConversationMessagesView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get_conversation(self, request, conversation_id):
-        return (
-            Conversation.objects.prefetch_related("participants")
-            .filter(pk=conversation_id, participants=request.user)
-            .first()
-        )
-
-    def get(self, request, conversation_id):
-        conversation = self.get_conversation(request, conversation_id)
-        if conversation is None:
-            return Response({"detail": "Conversation not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        messages = conversation.messages.select_related("sender").all()
-        unread_messages = messages.exclude(sender=request.user).filter(is_read=False)
+        unread_messages = messages.filter(sender_id=receiver_id, recipient_id=request.user.id, is_read=False)
         if unread_messages.exists():
             unread_messages.update(is_read=True)
 
         return Response(MessageSerializer(messages, many=True).data)
 
-
-class MessageCreateView(APIView):
-    permission_classes = [IsAuthenticated]
-
     def post(self, request):
         serializer = MessageCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        conversation = (
-            Conversation.objects.prefetch_related("participants")
-            .filter(pk=serializer.validated_data["conversation_id"], participants=request.user)
-            .first()
-        )
-        if conversation is None:
-            return Response({"detail": "Conversation not found."}, status=status.HTTP_404_NOT_FOUND)
+        sender_id = serializer.validated_data["sender_id"]
+        receiver_id = serializer.validated_data["receiver_id"]
+        if sender_id != request.user.id:
+            return Response({"detail": "sender_id must match the logged-in user."}, status=status.HTTP_400_BAD_REQUEST)
+
+        sender_profile, error_response = self._get_profile_or_error(sender_id)
+        if error_response is not None:
+            return error_response
+
+        receiver_profile, error_response = self._get_profile_or_error(receiver_id)
+        if error_response is not None:
+            return error_response
+
+        permission_error = self._validate_participant(request, receiver_profile)
+        if permission_error is not None:
+            return permission_error
+
+        sender_text = serializer.validated_data["sender_conversation"].strip()
+        receiver_text = serializer.validated_data.get("receiver_conversation", "").strip() or sender_text
 
         message = Message.objects.create(
-            conversation=conversation,
-            sender=request.user,
-            content=serializer.validated_data["content"].strip(),
+            sender=sender_profile,
+            recipient=receiver_profile,
+            sender_conversation=sender_text,
+            receiver_conversation=receiver_text,
         )
-        conversation.save(update_fields=["updated_at"])
 
         return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)

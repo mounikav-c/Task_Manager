@@ -113,27 +113,14 @@ export interface DirectMessageMember {
   last_message_at: string | null;
 }
 
-export interface Conversation {
-  id: number;
-  participant_ids: number[];
-  created_at: string;
-  updated_at: string;
-}
-
 export interface DirectMessage {
   id: number;
-  conversation: number;
-  sender: number;
-  sender_name: string;
-  content: string;
+  sender_conversation: string;
+  receiver_conversation: string;
+  sender_id: number;
+  receiver_id: number;
   is_read: boolean;
   created_at: string;
-}
-
-export interface ContactMessagePayload {
-  name: string;
-  email: string;
-  message: string;
 }
 
 function getErrorMessage(payload: unknown, fallback: string) {
@@ -227,27 +214,18 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
-  createContactMessage: (data: ContactMessagePayload) =>
-    request<{ detail: string; message: { id: number; name: string; email: string; message: string; created_at: string } }>(
-      "/contact/",
-      {
-        method: "POST",
-        body: JSON.stringify(data),
-      },
-    ),
   getDirectMessageMembers: (departmentId?: number | null) =>
-    request<DirectMessageMember[]>("/team-members/", undefined, departmentId),
-  createOrGetConversation: (userId: number, departmentId?: number | null) =>
-    request<Conversation>("/conversations/", {
-      method: "POST",
-      body: JSON.stringify({ user_id: userId }),
-    }, departmentId),
-  getConversationMessages: (conversationId: number, departmentId?: number | null) =>
-    request<DirectMessage[]>(`/conversations/${conversationId}/messages/`, undefined, departmentId),
-  sendMessage: (conversationId: number, content: string, departmentId?: number | null) =>
+    request<DirectMessageMember[]>("/messages/", undefined, departmentId),
+  getConversationMessages: (userId: number, departmentId?: number | null) =>
+    request<DirectMessage[]>(`/messages/?user_id=${userId}`, undefined, departmentId),
+  sendMessage: (senderId: number, receiverId: number, message: string, departmentId?: number | null) =>
     request<DirectMessage>("/messages/", {
       method: "POST",
-      body: JSON.stringify({ conversation_id: conversationId, content }),
+      body: JSON.stringify({
+        sender_id: senderId,
+        receiver_id: receiverId,
+        sender_conversation: message,
+      }),
     }, departmentId),
   getMembers: (departmentId?: number | null) => request<TeamMember[]>("/members/", undefined, departmentId),
   getProjects: (departmentId?: number | null) => request<Project[]>("/projects/", undefined, departmentId),
