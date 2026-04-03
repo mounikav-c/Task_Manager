@@ -5,7 +5,7 @@ import { TopNav } from "@/components/TopNav";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { api, type Conversation, type DirectMessage, type DirectMessageMember } from "@/lib/api";
+import { api, type DirectMessage, type DirectMessageMember } from "@/lib/api";
 import { useAuthUser } from "@/contexts/AuthUserContext";
 import { toast } from "@/components/ui/sonner";
 
@@ -24,13 +24,12 @@ export function DirectMessagesPage({ members }: Props) {
   const { memberId } = useParams();
   const navigate = useNavigate();
   const { user, selectedDepartmentId } = useAuthUser();
-  const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<DirectMessage[]>([]);
   const [draft, setDraft] = useState("");
-  const [isLoadingConversation, setIsLoadingConversation] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const activeConversationKeyRef = useRef<string | null>(null);
+  const activeChatKeyRef = useRef<string | null>(null);
 
   const selectedMember = useMemo(
     () => members.find((member) => String(member.id) === memberId) ?? null,
@@ -38,8 +37,8 @@ export function DirectMessagesPage({ members }: Props) {
   );
   const selectedMemberId = selectedMember?.id ?? null;
 
-  const loadMessages = async (conversationId: number, departmentId?: number | null) => {
-    const latestMessages = await api.getConversationMessages(conversationId, departmentId);
+  const loadMessages = async (userId: number, departmentId?: number | null) => {
+    const latestMessages = await api.getConversationMessages(userId, departmentId);
     setMessages((currentMessages) => {
       if (JSON.stringify(currentMessages) === JSON.stringify(latestMessages)) {
         return currentMessages;
@@ -51,48 +50,44 @@ export function DirectMessagesPage({ members }: Props) {
 
   useEffect(() => {
     if (!selectedMember || !selectedMemberId) {
-      setConversation(null);
       setMessages([]);
-      activeConversationKeyRef.current = null;
+      activeChatKeyRef.current = null;
       return;
     }
 
     let isCancelled = false;
-    const conversationKey = `${selectedDepartmentId ?? "none"}:${selectedMemberId}`;
+    const chatKey = `${selectedDepartmentId ?? "none"}:${selectedMemberId}`;
 
-    const loadConversation = async () => {
-      setIsLoadingConversation(activeConversationKeyRef.current !== conversationKey);
+    const loadCurrentMessages = async () => {
+      setIsLoadingMessages(activeChatKeyRef.current !== chatKey);
 
       try {
-        const currentConversation = await api.createOrGetConversation(selectedMemberId, selectedDepartmentId);
-        if (isCancelled) {
-          return;
-        }
-
-        activeConversationKeyRef.current = conversationKey;
-        setConversation(currentConversation);
-        const currentMessages = await api.getConversationMessages(currentConversation.id, selectedDepartmentId);
+        const currentMessages = await api.getConversationMessages(selectedMemberId, selectedDepartmentId);
         if (!isCancelled) {
+          activeChatKeyRef.current = chatKey;
           setMessages(currentMessages);
         }
       } catch (error) {
         if (!isCancelled) {
-          console.error("Failed to load conversation", error);
-          toast.error(error instanceof Error ? error.message : "Could not load conversation");
-          setConversation(null);
+          console.error("Failed to load messages", error);
+          toast.error(error instanceof Error ? error.message : "Could not load messages");
           setMessages([]);
         }
       } finally {
         if (!isCancelled) {
-          setIsLoadingConversation(false);
+          setIsLoadingMessages(false);
         }
       }
     };
 
-    void loadConversation();
+    void loadCurrentMessages();
+    const interval = window.setInterval(() => {
+      void loadCurrentMessages();
+    }, 5000);
 
     return () => {
       isCancelled = true;
+      window.clearInterval(interval);
     };
   }, [selectedDepartmentId, selectedMemberId]);
 
@@ -101,7 +96,7 @@ export function DirectMessagesPage({ members }: Props) {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!conversation || !draft.trim()) {
+    if (!selectedMemberId || !user?.id || !draft.trim()) {
       return;
     }
 
@@ -110,10 +105,10 @@ export function DirectMessagesPage({ members }: Props) {
 
     const optimisticMessage: DirectMessage = {
       id: Date.now(),
-      conversation: conversation.id,
-      sender: user?.id ?? 0,
-      sender_name: "You",
-      content: trimmedDraft,
+      sender_conversation: trimmedDraft,
+      receiver_conversation: trimmedDraft,
+      sender_id: user.id,
+      receiver_id: selectedMemberId,
       is_read: false,
       created_at: new Date().toISOString(),
     };
@@ -122,12 +117,12 @@ export function DirectMessagesPage({ members }: Props) {
     setIsSending(true);
 
     try {
-      const savedMessage = await api.sendMessage(conversation.id, trimmedDraft, selectedDepartmentId);
+      const savedMessage = await api.sendMessage(user.id, selectedMemberId, trimmedDraft, selectedDepartmentId);
       setMessages((currentMessages) => [
         ...currentMessages.filter((message) => message.id !== optimisticMessage.id),
         savedMessage,
       ]);
-      await loadMessages(conversation.id, selectedDepartmentId);
+      await loadMessages(selectedMemberId, selectedDepartmentId);
     } catch (error) {
       console.error("Failed to send message", error);
       setMessages((currentMessages) => currentMessages.filter((message) => message.id !== optimisticMessage.id));
@@ -232,8 +227,8 @@ export function DirectMessagesPage({ members }: Props) {
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
-            {isLoadingConversation ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading conversation...</div>
+            {isLoadingMessages ? (
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading messages...</div>
             ) : !hasMessages ? (
               <div className="flex h-full items-center justify-center">
                 <div className="w-full max-w-xl text-center">
@@ -250,7 +245,8 @@ export function DirectMessagesPage({ members }: Props) {
             ) : (
               <div className="space-y-4">
                 {messages.map((message) => {
-                  const isOwnMessage = message.sender === user?.id;
+                  const isOwnMessage = message.sender_id === user?.id;
+                  const messageText = isOwnMessage ? message.sender_conversation : message.receiver_conversation;
 
                   return (
                     <div key={message.id} className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}>
@@ -261,7 +257,7 @@ export function DirectMessagesPage({ members }: Props) {
                             : "bg-slate-100 text-slate-900"
                         }`}
                       >
-                        <p className="whitespace-pre-wrap break-words text-sm leading-6">{message.content}</p>
+                        <p className="whitespace-pre-wrap break-words text-sm leading-6">{messageText}</p>
                         <p className={`mt-2 text-[11px] ${isOwnMessage ? "text-white/80" : "text-slate-500"}`}>
                           {formatTime(message.created_at)}
                         </p>
@@ -285,7 +281,7 @@ export function DirectMessagesPage({ members }: Props) {
               />
               <Button
                 onClick={() => void handleSend()}
-                disabled={!conversation || !draft.trim() || isSending}
+                disabled={!selectedMemberId || !draft.trim() || isSending}
                 className="h-11 rounded-xl bg-[linear-gradient(135deg,#4338ca_0%,#6d28d9_100%)] px-5 text-white shadow-[0_18px_30px_-22px_rgba(79,70,229,0.62)] hover:brightness-105"
               >
                 <Send className="mr-2 h-4 w-4" />
