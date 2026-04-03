@@ -264,7 +264,7 @@ class Message(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "message"
+        db_table = "message_conversation"
         ordering = ["created_at", "id"]
 
     def __str__(self):
