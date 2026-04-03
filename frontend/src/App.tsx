@@ -327,19 +327,6 @@ const App = () => {
     }
   }, [selectedDepartmentId]);
 
-  const loadDirectMessageMembers = useCallback(async () => {
-    if (!selectedDepartmentId) {
-      return;
-    }
-
-    try {
-      const members = await api.getDirectMessageMembers(selectedDepartmentId);
-      setDirectMessageMembers(members);
-    } catch (error) {
-      console.error("Failed to refresh direct message members", error);
-    }
-  }, [selectedDepartmentId]);
-
   useEffect(() => {
     const initializeApp = async () => {
       try {
@@ -371,18 +358,6 @@ const App = () => {
 
     void loadData();
   }, [isAuthenticated, loadData, selectedDepartmentId]);
-
-  useEffect(() => {
-    if (!isAuthenticated || !selectedDepartmentId) {
-      return;
-    }
-
-    const interval = window.setInterval(() => {
-      void loadDirectMessageMembers();
-    }, 40000);
-
-    return () => window.clearInterval(interval);
-  }, [isAuthenticated, loadDirectMessageMembers, selectedDepartmentId]);
 
   const handleNew = useCallback((projectId?: string) => {
     if (!canEditSelectedDepartment) {
