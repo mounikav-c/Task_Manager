@@ -21,10 +21,39 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isOpen, onClose })
   const [sessionId, setSessionId] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const CHAT_SESSION_STORAGE_KEY = 'meeting_assistant_session_id';
 
   useEffect(() => {
+    const savedSessionId = localStorage.getItem(CHAT_SESSION_STORAGE_KEY);
+    if (savedSessionId) {
+      setSessionId(savedSessionId);
+    }
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!sessionId) {
+      return;
+    }
+
+    localStorage.setItem(CHAT_SESSION_STORAGE_KEY, sessionId);
+
+    const loadHistory = async () => {
+      try {
+        const history = await api.getChatHistory(sessionId);
+        const persistedMessages = (history.messages || []).map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.created_at,
+        }));
+        setMessages(persistedMessages);
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+      }
+    };
+
+    loadHistory();
+  }, [sessionId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -83,6 +112,7 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isOpen, onClose })
     setMessages([]);
     setSessionId('');
     setInputValue('');
+    localStorage.removeItem(CHAT_SESSION_STORAGE_KEY);
   };
 
   if (!isMounted || !isOpen) return null;

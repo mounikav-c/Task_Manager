@@ -10,16 +10,19 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 
 
 class ChatSessionSerializer(serializers.ModelSerializer):
-    messages = ChatMessageSerializer(
-        source="chat_messages",
-        many=True,
-        read_only=True
-    )
+    messages = serializers.SerializerMethodField()
     
     class Meta:
         model = ChatSession
         fields = ["id", "session_id", "title", "messages", "created_at", "updated_at"]
         read_only_fields = ["id", "created_at", "updated_at"]
+    
+    def get_messages(self, obj):
+        """Fetch messages filtered by this specific session_id only."""
+        messages = ChatMessage.objects.filter(
+            session_id=obj.session_id
+        ).order_by("created_at")
+        return ChatMessageSerializer(messages, many=True).data
 
 
 class ChatRequestSerializer(serializers.Serializer):
