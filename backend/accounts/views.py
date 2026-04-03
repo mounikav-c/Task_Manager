@@ -4,7 +4,6 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
-from django.core.mail import EmailMessage
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -21,9 +20,8 @@ from rest_framework.views import APIView
 
 from .helpers.taskdashboard import build_auth_response
 from .models import AuthUserProfile
-from .models import ContactMessage, Department, Meeting, Message, Project, Task, TeamMember
+from .models import Department, Meeting, Message, Project, Task, TeamMember
 from .serializers import (
-    ContactMessageSerializer,
     DirectMessageTeamMemberSerializer,
     MeetingSerializer,
     MessageCreateSerializer,
@@ -1078,57 +1076,35 @@ class UserProfileView(APIView):
         return Response(UserProfileSerializer(payload).data)
 
 
-class ContactMessageView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        serializer = ContactMessageSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        contact_message = serializer.save(user=request.user)
-
-        support_email = getattr(settings, "CONTACT_SUPPORT_EMAIL", "").strip()
-        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "").strip()
-
-        if support_email:
-            try:
-                email = EmailMessage(
-                    subject=f"TaskFlow support request from {contact_message.name}",
-                    body=(
-                        f"Name: {contact_message.name}\n"
-                        f"Email: {contact_message.email}\n\n"
-                        f"Message:\n{contact_message.message}"
-                    ),
-                    from_email=from_email or None,
-                    to=[support_email],
-                    reply_to=[contact_message.email],
-                )
-                email.send(fail_silently=False)
-            except Exception as exc:
-                return Response(
-                    {
-                        "detail": "Message was saved, but the support email could not be delivered.",
-                        "error": str(exc),
-                        "message": ContactMessageSerializer(contact_message).data,
-                    },
-                    status=status.HTTP_502_BAD_GATEWAY,
-                )
-
-        return Response(
-            {
-                "detail": "Message sent successfully.",
-                "message": ContactMessageSerializer(contact_message).data,
-            },
-            status=status.HTTP_201_CREATED,
-        )
-
-
 class MessageCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def _get_profile_or_error(self, user_id):
-        profile = AuthUserProfile.objects.select_related("user", "home_department").filter(user_id=user_id).first()
-        if profile is None or not profile.user.is_active:
+        profile = (
+            AuthUserProfile.objects.select_related("user", "home_department")
+            .filter(user_id=user_id)
+            .first()
+        )
+        if profile is not None:
+            if not profile.user.is_active:
+                return None, Response({"detail": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
+            return profile, None
+
+        user_model = get_user_model()
+        user = user_model.objects.filter(id=user_id, is_active=True).first()
+        if user is None:
             return None, Response({"detail": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        home_department = get_home_department_for_user(user)
+        profile = AuthUserProfile.objects.create(
+            user=user,
+            home_department=home_department,
+            provider="demo",
+            email=user.email or "",
+            full_name=get_display_name_for_user(user),
+            given_name=(user.first_name or "").strip(),
+            family_name=(user.last_name or "").strip(),
+        )
         return profile, None
 
     def _validate_participant(self, request, profile):

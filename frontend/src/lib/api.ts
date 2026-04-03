@@ -123,12 +123,6 @@ export interface DirectMessage {
   created_at: string;
 }
 
-export interface ContactMessagePayload {
-  name: string;
-  email: string;
-  message: string;
-}
-
 function getErrorMessage(payload: unknown, fallback: string) {
   if (!payload || typeof payload !== "object") {
     return fallback;
@@ -220,14 +214,6 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
-  createContactMessage: (data: ContactMessagePayload) =>
-    request<{ detail: string; message: { id: number; name: string; email: string; message: string; created_at: string } }>(
-      "/contact/",
-      {
-        method: "POST",
-        body: JSON.stringify(data),
-      },
-    ),
   getDirectMessageMembers: (departmentId?: number | null) =>
     request<DirectMessageMember[]>("/messages/", undefined, departmentId),
   getConversationMessages: (userId: number, departmentId?: number | null) =>

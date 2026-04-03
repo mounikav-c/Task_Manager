@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
-import { LifeBuoy, Mail, MessageCircleQuestion, Send, Sparkles } from "lucide-react";
+import { LifeBuoy, Mail, MessageCircleQuestion, Sparkles } from "lucide-react";
 import { TopNav } from "@/components/TopNav";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
-import { toast } from "@/components/ui/sonner";
 
 export function HelpPage() {
   const [name, setName] = useState("");
@@ -73,33 +71,6 @@ export function HelpPage() {
 
     void loadProfile();
   }, []);
-
-  const handleSubmit = async () => {
-    const trimmedName = name.trim();
-    const trimmedEmail = email.trim();
-    const trimmedMessage = message.trim();
-
-    if (!trimmedName || !trimmedEmail || !trimmedMessage) {
-      toast.error("Please complete name, email, and message before sending.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await api.createContactMessage({
-        name: trimmedName,
-        email: trimmedEmail,
-        message: trimmedMessage,
-      });
-      setMessage("");
-      toast.success("Your support message has been sent.");
-    } catch (error) {
-      console.error("Failed to submit contact message", error);
-      toast.error(error instanceof Error ? error.message : "Could not send your message");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="flex h-full flex-col">
@@ -196,13 +167,7 @@ export function HelpPage() {
                   </a>
                 </div>
 
-                <form
-                  className="mt-4 space-y-3 rounded-2xl border border-border/60 bg-card/70 p-4"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void handleSubmit();
-                  }}
-                >
+                <div className="mt-4 space-y-3 rounded-2xl border border-border/60 bg-card/70 p-4">
                   <div className="space-y-2">
                     <label htmlFor="help-name" className="text-xs font-medium text-muted-foreground">
                       Name
@@ -246,11 +211,10 @@ export function HelpPage() {
                     />
                   </div>
 
-                  <Button type="submit" className="h-10 rounded-lg gap-2" disabled={isSubmitting}>
-                    <Send className="h-4 w-4" />
-                    {isSubmitting ? "Sending..." : "Send Message"}
-                  </Button>
-                </form>
+                  <p className="text-xs text-muted-foreground">
+                    Direct contact API is disabled. Use the support email above for help.
+                  </p>
+                </div>
               </section>
             </div>
           </div>

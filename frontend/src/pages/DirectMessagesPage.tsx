@@ -81,13 +81,8 @@ export function DirectMessagesPage({ members }: Props) {
     };
 
     void loadCurrentMessages();
-    const interval = window.setInterval(() => {
-      void loadCurrentMessages();
-    }, 5000);
-
     return () => {
       isCancelled = true;
-      window.clearInterval(interval);
     };
   }, [selectedDepartmentId, selectedMemberId]);
 
