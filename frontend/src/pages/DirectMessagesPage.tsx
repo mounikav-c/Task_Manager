@@ -38,6 +38,17 @@ export function DirectMessagesPage({ members }: Props) {
   );
   const selectedMemberId = selectedMember?.id ?? null;
 
+  const loadMessages = async (conversationId: number, departmentId?: number | null) => {
+    const latestMessages = await api.getConversationMessages(conversationId, departmentId);
+    setMessages((currentMessages) => {
+      if (JSON.stringify(currentMessages) === JSON.stringify(latestMessages)) {
+        return currentMessages;
+      }
+
+      return latestMessages;
+    });
+  };
+
   useEffect(() => {
     if (!selectedMember || !selectedMemberId) {
       setConversation(null);
@@ -86,31 +97,6 @@ export function DirectMessagesPage({ members }: Props) {
   }, [selectedDepartmentId, selectedMemberId]);
 
   useEffect(() => {
-    if (!conversation || !selectedDepartmentId) {
-      return;
-    }
-
-    const interval = window.setInterval(() => {
-      void api
-        .getConversationMessages(conversation.id, selectedDepartmentId)
-        .then((latestMessages) => {
-          setMessages((currentMessages) => {
-            if (JSON.stringify(currentMessages) === JSON.stringify(latestMessages)) {
-              return currentMessages;
-            }
-
-            return latestMessages;
-          });
-        })
-        .catch((error) => {
-          console.error("Failed to refresh conversation", error);
-        });
-    }, 2500);
-
-    return () => window.clearInterval(interval);
-  }, [conversation, selectedDepartmentId]);
-
-  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages]);
 
@@ -141,6 +127,7 @@ export function DirectMessagesPage({ members }: Props) {
         ...currentMessages.filter((message) => message.id !== optimisticMessage.id),
         savedMessage,
       ]);
+      await loadMessages(conversation.id, selectedDepartmentId);
     } catch (error) {
       console.error("Failed to send message", error);
       setMessages((currentMessages) => currentMessages.filter((message) => message.id !== optimisticMessage.id));
