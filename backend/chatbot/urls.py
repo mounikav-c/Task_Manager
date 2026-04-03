@@ -3,6 +3,7 @@ from .views import ChatView, ChatHistoryView, ChatSessionListView, ChatSessionDe
 
 urlpatterns = [
     path("chat/", ChatView.as_view(), name="chat"),
+    path("history/<str:session_id>/", ChatHistoryView.as_view(), name="chat-history-legacy"),
     path("sessions/", ChatSessionListView.as_view(), name="chat-sessions"),
     path("sessions/<str:session_id>/", ChatHistoryView.as_view(), name="chat-history"),
     path("sessions/<str:session_id>/delete/", ChatSessionDeleteView.as_view(), name="delete-session"),
